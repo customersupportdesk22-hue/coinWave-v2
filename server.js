@@ -9,7 +9,11 @@ const app = express();
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+['index.html', 'style.css', 'app.js'].forEach(function (f) {
+  app.get(f === 'index.html' ? '/' : '/' + f, function (req, res) {
+    res.sendFile(path.join(__dirname, f));
+  });
+});
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
