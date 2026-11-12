@@ -282,6 +282,17 @@
       .auth{margin:30px auto 45px}
       .country-option{min-height:69px}
     }
+/* Remove blue highlight when tapping on Android */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+button,
+a,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
   </style>
 </head>
 
