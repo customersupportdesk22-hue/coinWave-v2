@@ -53,7 +53,7 @@
     .hero-note{margin:20px 0 0;color:#a9c2e9;font-size:12px}
     .trust-strip{position:relative;margin-top:-1px;background:#fff;border-bottom:1px solid var(--cw-border)}
     .trust-strip .wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:20px 0}
-    .trust-item{display:flex;align-items:center;justify-content:center;gap:11px;color:#4e5d79;font-size:13px;font-weight:600;text-align:center}
+    .trust-item{display:flex;align-items:center;justify-content:center;gap:11px;color:#4e5d79;font-size:13px;font-weight:600;text-align:center;text-decoration:none;min-width:0;cursor:pointer;transition:color .15s,transform .15s}.trust-item:hover{color:#087cf0;transform:translateY(-1px)}.trust-item:focus-visible{outline:2px solid #9aa9bd;outline-offset:4px;border-radius:8px}.trust-item-links{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}.trust-item-links a{color:#087cf0;font-weight:750;text-decoration:underline;text-underline-offset:3px}
     .trust-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;color:#087cf0;background:#edf5ff;font-size:17px}
     section.content-section{padding:76px 0}
     .section-kicker{color:var(--cw-blue);font-size:11px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase}
@@ -185,16 +185,16 @@
     .mover-tag.positive{color:#13845a;background:#eaf7f1}
     .mover-tag.negative{color:#c04b55;background:#fff0f0}
     .mover-list{display:grid}
-    .mover-link{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:14px;min-height:61px;padding:10px 0;border-bottom:1px solid #f0f2f6;color:inherit;text-decoration:none;transition:background .15s}
+    .mover-link{display:grid;grid-template-columns:minmax(0,1fr) max-content minmax(70px,auto);align-items:center;gap:12px;min-height:61px;padding:10px 0;border-bottom:1px solid #f0f2f6;color:inherit;text-decoration:none;transition:background .15s}
     .mover-link:last-child{border-bottom:0}
     .mover-link:hover{background:#fafbfd}
-    .mover-identity{display:flex;align-items:center;gap:10px;min-width:0}
+    .mover-identity{display:flex;align-items:center;gap:10px;min-width:0;overflow:hidden}.mover-identity>span:last-child{display:block;min-width:0;overflow:hidden}.mover-name{display:block;max-width:100%;overflow:hidden;color:#1d2942;font-size:12px;font-weight:750;text-overflow:ellipsis;white-space:nowrap}
     .mover-identity img,.mover-icon{width:31px;height:31px;flex:0 0 31px;object-fit:contain;border-radius:50%}
     .mover-icon{display:grid;place-items:center;background:#f0f3f7;color:#526078;font-size:10px;font-weight:800}
     .mover-name{overflow:hidden;color:#1d2942;font-size:12px;font-weight:750;text-overflow:ellipsis;white-space:nowrap}
     .mover-symbol{display:block;margin-top:3px;color:#8a95a8;font-size:10px;font-weight:650}
-    .mover-price{color:#26334b;font-size:12px;font-weight:700;white-space:nowrap}
-    .mover-change{min-width:76px;text-align:right;font-size:12px;font-weight:800;white-space:nowrap}
+    .mover-price{color:#26334b;font-size:12px;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+    .mover-change{min-width:76px;text-align:right;font-size:12px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
     .mover-change.up{color:#13845a}.mover-change.down{color:#c04b55}
     .market-skeleton td{height:66px}.market-row{cursor:pointer}.market-row:active{background:#f7f8fa}.market-row:focus{outline:none}.market-row:focus-visible{outline:2px solid #aab5c5;outline-offset:-2px}
     .skeleton-line{display:inline-block;width:76px;height:11px;border-radius:7px;background:linear-gradient(90deg,#edf0f5 25%,#f7f8fa 38%,#edf0f5 63%);background-size:400% 100%;animation:cw-shimmer 1.35s ease infinite}
@@ -205,7 +205,7 @@
     .mover-skeleton span{display:block;width:65px;height:10px;border-radius:8px;background:#f0f2f6}
     .mover-skeleton span:first-child{width:120px}
     @keyframes cw-shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
-    @media(max-width:680px){.movers-heading{align-items:flex-start;flex-direction:column}.movers-grid{grid-template-columns:1fr}.mover-panel{padding:17px}.mover-link{gap:8px}.mover-price{font-size:11px}.mover-change{min-width:68px;font-size:11px}}
+    @media(max-width:680px){.movers-heading{align-items:flex-start;flex-direction:column}.movers-grid{grid-template-columns:1fr}.mover-panel{padding:17px}.mover-link{grid-template-columns:minmax(0,1fr) max-content minmax(66px,auto);gap:8px}.mover-price{font-size:11px}.mover-change{min-width:66px;font-size:11px}.trust-strip .wrap{grid-template-columns:1fr;gap:12px;padding:17px 0}.trust-item{justify-content:flex-start;text-align:left}.trust-item-links{justify-content:flex-start}}
     @media(prefers-reduced-motion:reduce){.skeleton-line{animation:none}}
 
   </style>
@@ -249,9 +249,9 @@
 
     <div class="trust-strip" aria-label="Platform highlights">
       <div class="wrap">
-        <div class="trust-item"><span class="trust-icon" aria-hidden="true">◈</span>Explore digital asset markets</div>
-        <div class="trust-item"><span class="trust-icon" aria-hidden="true">↗</span>Follow price movements</div>
-        <div class="trust-item"><span class="trust-icon" aria-hidden="true">⌑</span>Account and support tools in one place</div>
+        <a class="trust-item" href="#markets"><span class="trust-icon" aria-hidden="true">◈</span><span>Explore digital asset markets</span></a>
+        <a class="trust-item" href="#live-trading"><span class="trust-icon" aria-hidden="true">↗</span><span>Follow price movements</span></a>
+        <div class="trust-item"><span class="trust-icon" aria-hidden="true">⌑</span><span>Account and support tools</span><span class="trust-item-links"><a href="/discover/account">Account</a><span aria-hidden="true">·</span><a href="/discover/support">Support</a></span></div>
       </div>
     </div>
 
@@ -369,7 +369,7 @@
         </div>
         <div class="market-foot">
           <span class="market-source">Market data supplied by the CoinWave market API</span>
-          <a href="/discover/markets" style="color:#087cf0;font-weight:700">View full market <span aria-hidden="true">→</span></a>
+          <a href="/markets" style="color:#087cf0;font-weight:700">View full market <span aria-hidden="true">→</span></a>
         </div>
       </div>
     </section>
@@ -414,7 +414,7 @@
         <div class="asset-grid" id="popularAssets" aria-live="polite">
           <div class="asset-card asset-skeleton" aria-hidden="true"><span class="skeleton-line skeleton-icon"></span><span class="skeleton-line skeleton-asset"></span><span class="skeleton-line"></span></div><div class="asset-card asset-skeleton" aria-hidden="true"><span class="skeleton-line skeleton-icon"></span><span class="skeleton-line skeleton-asset"></span><span class="skeleton-line"></span></div><div class="asset-card asset-skeleton" aria-hidden="true"><span class="skeleton-line skeleton-icon"></span><span class="skeleton-line skeleton-asset"></span><span class="skeleton-line"></span></div><div class="asset-card asset-skeleton" aria-hidden="true"><span class="skeleton-line skeleton-icon"></span><span class="skeleton-line skeleton-asset"></span><span class="skeleton-line"></span></div>
         </div>
-        <div style="margin-top:24px"><a class="btn btn-blue" href="/discover/markets">Discover all markets <span aria-hidden="true">→</span></a></div>
+        <div style="margin-top:24px"><a class="btn btn-blue" href="/markets">Discover all markets <span aria-hidden="true">→</span></a></div>
       </div>
     </section>
 
@@ -448,7 +448,7 @@
       <div class="wrap">
         <div class="cta-panel">
           <div><h2>Discover what you can do with CoinWave.</h2><p>Create an account to access the platform, or explore the markets first.</p></div>
-          <div class="cta-actions"><a class="btn btn-primary" href="/signup">Create account</a><a class="btn btn-outline-light" href="/discover/markets">Explore markets</a></div>
+          <div class="cta-actions"><a class="btn btn-primary" href="/signup">Create account</a><a class="btn btn-outline-light" href="/markets">Explore markets</a></div>
         </div>
       </div>
     </section>
@@ -461,7 +461,7 @@
           <a class="logo" href="/" aria-label="CoinWave home"><span class="logo-mark" aria-hidden="true">₿</span><span>Coin<b>Wave</b></span></a>
           <p>Explore digital asset markets and access CoinWave platform services. Make informed decisions and understand the risks before trading.</p>
         </div>
-        <div><h3>Explore</h3><a href="/discover/markets">Crypto markets</a><a href="/discover/buy-sell">Buy &amp; sell</a><a href="#popular">Popular assets</a></div>
+        <div><h3>Explore</h3><a href="/markets">Crypto markets</a><a href="/discover/buy-sell">Buy &amp; sell</a><a href="#popular">Popular assets</a></div>
         <div><h3>Platform</h3><a href="/discover/security">Security</a><a href="/discover/transactions">Transactions</a><a href="/discover/account">Account</a></div>
         <div><h3>Help &amp; legal</h3><a href="/discover/support">Contact &amp; support</a><a href="/terms">Terms of service</a><a href="/privacy">Privacy policy</a></div>
       </div>

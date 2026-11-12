@@ -1,4 +1,3 @@
-
 'use strict';
 
 require('dotenv').config();
@@ -54,6 +53,8 @@ app.use(helmet({
 
 const corsOptions = {
   origin(origin, callback) {
+    // Same-origin requests and non-browser clients do not need
+    // an Access-Control-Allow-Origin response header.
     if (!origin) {
       return callback(null, false);
     }
@@ -80,6 +81,7 @@ const corsOptions = {
     'OPTIONS'
   ],
 
+  // Idempotency-Key is required by the order-creation API.
   allowedHeaders: [
     'Content-Type',
     'Authorization',
@@ -145,6 +147,8 @@ app.use((req, res, next) => {
     return next();
   }
 
+  // Server-to-server requests without Origin are allowed.
+  // If a Referer is supplied, validate it as an additional check.
   const referer = req.get('referer');
 
   if (referer && !isTrustedOrigin(referer, req)) {
@@ -226,28 +230,26 @@ app.get('/privacy', (req, res) => {
 });
 
 // --------------------------------------------------
-// ASSET DETAIL PAGE
+// ASSET AND DISCOVER DETAIL PAGES
 // --------------------------------------------------
+// The frontend opens individual asset details at /asset?symbol=BTC
+// and dedicated Discover pages at /discover/:page. These routes serve
+// separate page files; they do not turn the homepage cards into modals.
+app.get('/markets', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  return sendFirst(res, ['markets.html'], true);
+});
 
 app.get('/asset', (req, res) => {
-  const symbol = String(req.query.symbol || '')
-    .trim()
-    .toUpperCase();
+  const symbol = String(req.query.symbol || '').trim().toUpperCase();
 
   if (!/^[A-Z0-9]{1,15}$/.test(symbol)) {
-    return res.status(400).send(
-      'A valid asset symbol is required.'
-    );
+    return res.status(400).send('A valid asset symbol is required.');
   }
 
   res.set('Cache-Control', 'no-store');
-
   return sendFirst(res, ['asset.html'], true);
 });
-
-// --------------------------------------------------
-// DISCOVER PAGES
-// --------------------------------------------------
 
 const discoverPages = new Set([
   'markets',
@@ -266,7 +268,6 @@ app.get('/discover/:page', (req, res) => {
   }
 
   res.set('Cache-Control', 'no-store');
-
   return sendFirst(res, ['discover.html'], true);
 });
 
@@ -288,10 +289,8 @@ app.get('/coinwave-banner.png', (req, res) => {
   sendFirst(res, ['coinwave-banner.png']);
 });
 
-// --------------------------------------------------
-// PUBLIC ASSETS DIRECTORY
-// --------------------------------------------------
-
+// Only place public files in this dedicated folder.
+// Never place server code, .env files, or private keys here.
 const assetsDirectory = path.join(ROOT, 'assets');
 
 if (fs.existsSync(assetsDirectory)) {
@@ -308,9 +307,7 @@ if (fs.existsSync(assetsDirectory)) {
 // DATABASE STATUS
 // --------------------------------------------------
 
-let dbState = process.env.MONGO_URI
-  ? 'connecting'
-  : 'not_configured';
+let dbState = process.env.MONGO_URI ? 'connecting' : 'not_configured';
 
 mongoose.connection.on('connected', () => {
   dbState = 'connected';
@@ -354,6 +351,8 @@ app.get('/api/health', (req, res) => {
 // API ROUTES
 // --------------------------------------------------
 
+// Do not let Mongoose buffer protected API requests while the
+// database is disconnected or still connecting.
 app.use('/api/auth', requireDatabase, require('./auth'));
 app.use('/api/admin', requireDatabase, require('./admin'));
 app.use('/api/orders', requireDatabase, require('./orders'));
@@ -402,7 +401,6 @@ function marketRateLimit(req, res, next) {
   }
 
   res.set('X-RateLimit-Limit', String(MARKET_MAX_REQUESTS));
-
   res.set(
     'X-RateLimit-Remaining',
     String(Math.max(0, MARKET_MAX_REQUESTS - record.count))
@@ -413,9 +411,7 @@ function marketRateLimit(req, res, next) {
       'Retry-After',
       String(Math.max(
         1,
-        Math.ceil(
-          (record.start + MARKET_WINDOW_MS - now) / 1000
-        )
+        Math.ceil((record.start + MARKET_WINDOW_MS - now) / 1000)
       ))
     );
 
@@ -433,19 +429,12 @@ function marketRateLimit(req, res, next) {
 // --------------------------------------------------
 
 async function fetchJson(url) {
-  if (
-    typeof fetch !== 'function' ||
-    typeof AbortController !== 'function'
-  ) {
+  if (typeof fetch !== 'function' || typeof AbortController !== 'function') {
     throw new Error('This server requires Node.js 18 or newer.');
   }
 
   const controller = new AbortController();
-
-  const timer = setTimeout(
-    () => controller.abort(),
-    API_TIMEOUT_MS
-  );
+  const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
   try {
     const response = await fetch(url, {
@@ -456,9 +445,7 @@ async function fetchJson(url) {
     });
 
     if (!response.ok) {
-      throw new Error(
-        `Market provider returned status ${response.status}`
-      );
+      throw new Error(`Market provider returned status ${response.status}`);
     }
 
     return await response.json();
@@ -472,16 +459,11 @@ async function fetchJson(url) {
 // --------------------------------------------------
 
 function numberOrNull(value) {
-  if (
-    value === null ||
-    value === undefined ||
-    value === ''
-  ) {
+  if (value === null || value === undefined || value === '') {
     return null;
   }
 
   const number = Number(value);
-
   return Number.isFinite(number) ? number : null;
 }
 
@@ -568,12 +550,10 @@ async function fromCoinPaprika() {
         rank: numberOrNull(coin.rank),
         name: String(coin.name || ''),
         symbol: String(coin.symbol || '').toUpperCase(),
-
         image:
           'https://static.coinpaprika.com/coin/' +
           encodeURIComponent(String(coin.id || '')) +
           '/logo.png',
-
         price: numberOrNull(usd.price),
         change24h: numberOrNull(usd.percent_change_24h),
         volume24h: numberOrNull(usd.volume_24h),
@@ -590,14 +570,8 @@ async function fromCoinPaprika() {
 
 async function refreshMarkets() {
   const sources = [
-    {
-      name: 'CoinGecko',
-      getData: fromCoinGecko
-    },
-    {
-      name: 'CoinPaprika',
-      getData: fromCoinPaprika
-    }
+    { name: 'CoinGecko', getData: fromCoinGecko },
+    { name: 'CoinPaprika', getData: fromCoinPaprika }
   ];
 
   for (const source of sources) {
@@ -614,14 +588,11 @@ async function refreshMarkets() {
       };
 
       console.log(`${source.name} market data updated`);
-
       return data;
     } catch (error) {
       console.error(
         `${source.name} market error:`,
-        error.name === 'AbortError'
-          ? 'Request timed out'
-          : error.message
+        error.name === 'AbortError' ? 'Request timed out' : error.message
       );
     }
   }
@@ -725,15 +696,13 @@ async function startServer() {
       });
 
       dbState = 'connected';
-
       console.log('MongoDB connection established');
     } catch (error) {
       dbState = 'error';
+      console.error('MongoDB connection failed:', error.message);
 
-      console.error(
-        'MongoDB connection failed:',
-        error.message
-      );
+      // Keep public pages and market data available.
+      // Database-dependent APIs return HTTP 503 until connected.
     }
   } else {
     dbState = 'not_configured';
