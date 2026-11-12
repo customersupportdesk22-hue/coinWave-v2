@@ -1,3 +1,4 @@
+
 'use strict';
 
 const express = require('express');
@@ -183,9 +184,12 @@ function isAdmin(user) {
 function requirePermission(permission) {
   return async function (req, res, next) {
     try {
-      if (!process.env.JWT_SECRET) {
+      if (
+        !process.env.JWT_SECRET ||
+        String(process.env.JWT_SECRET).length < 32
+      ) {
         return res.status(500).json({
-          error: 'Server is not configured.'
+          error: 'Server security configuration is incomplete.'
         });
       }
 
@@ -216,7 +220,7 @@ function requirePermission(permission) {
       }
 
       req.user = user;
-      next();
+      return next();
 
     } catch (error) {
       console.error('Permission check error:', error.message);
@@ -273,8 +277,10 @@ function limit(req, res, next) {
 // --------------------------------------------------
 
 function ready(req, res, next) {
-  if (!process.env.JWT_SECRET ||
-      String(process.env.JWT_SECRET).length < 32) {
+  if (
+    !process.env.JWT_SECRET ||
+    String(process.env.JWT_SECRET).length < 32
+  ) {
     return res.status(500).json({
       error: 'Server security configuration is incomplete.'
     });
@@ -378,8 +384,11 @@ async function authUser(req) {
       { algorithms: ['HS256'] }
     );
 
-    if (!payload || !payload.id ||
-        !mongoose.Types.ObjectId.isValid(payload.id)) {
+    if (
+      !payload ||
+      !payload.id ||
+      !mongoose.Types.ObjectId.isValid(payload.id)
+    ) {
       return null;
     }
 
@@ -469,7 +478,6 @@ router.post('/signup', limit, ready, async (req, res) => {
       });
     }
 
-    // bcrypt only uses the first 72 UTF-8 bytes.
     if (
       password.length < 8 ||
       password.length > 128 ||
@@ -478,7 +486,7 @@ router.post('/signup', limit, ready, async (req, res) => {
       !/\d/.test(password)
     ) {
       return res.status(400).json({
-        error: 'Password needs 8 to 128 characters, no more than 72 UTF-8 bytes, and must contain a letter and a number.'
+        error: 'Password needs 8 to 128 characters, a letter and a number, and must not exceed 72 UTF-8 bytes.'
       });
     }
 
@@ -540,8 +548,12 @@ router.post('/login', limit, ready, async (req, res) => {
     const email = normalizeEmail(body.email);
     const password = String(body.password || '');
 
-    if (!validEmail(email) || password.length > 128) {
-      await bcrypt.compare(password.slice(0, 128), DUMMY);
+    if (
+      !validEmail(email) ||
+      password.length > 128 ||
+      Buffer.byteLength(password, 'utf8') > 72
+    ) {
+      await bcrypt.compare('invalid-password', DUMMY);
 
       return res.status(401).json({
         error: 'Incorrect email or password.'
@@ -681,8 +693,5 @@ router.hasPermission = hasPermission;
 router.requirePermission = requirePermission;
 router.publicUser = publicUser;
 router.User = User;
-
-// Shared role/permission metadata.
-router.ROLE_PERMISSIONS = ROLE_PERMISSIONS;
 
 module.exports = router;
