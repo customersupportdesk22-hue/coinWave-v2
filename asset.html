@@ -1,0 +1,546 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07152f">
+  <meta name="description" content="View live cryptocurrency prices, market statistics and trading options on CoinWave.">
+  <title>Asset Details | CoinWave</title>
+
+  <style>
+    :root {
+      --navy: #07152f;
+      --navy-2: #10264b;
+      --blue: #087cf0;
+      --blue-light: #eaf3ff;
+      --gold: #e9b949;
+      --text: #14213d;
+      --muted: #71809b;
+      --line: #e5ebf4;
+      --green: #119b68;
+      --red: #dc4656;
+      --surface: #ffffff;
+      --background: #f5f8fd;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--background);
+      color: var(--text);
+      font-family: Inter, Arial, sans-serif;
+    }
+
+    button, a { font: inherit; }
+
+    .topbar {
+      background: var(--navy);
+      color: white;
+      padding: 16px 20px;
+    }
+
+    .topbar-inner {
+      max-width: 1100px;
+      margin: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+    }
+
+    .brand {
+      color: white;
+      text-decoration: none;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -.6px;
+    }
+
+    .brand span { color: var(--gold); }
+
+    .back-button {
+      border: 1px solid rgba(255,255,255,.25);
+      background: transparent;
+      color: white;
+      padding: 9px 15px;
+      border-radius: 9px;
+      cursor: pointer;
+    }
+
+    .back-button:hover { background: rgba(255,255,255,.1); }
+
+    main {
+      width: min(100% - 32px, 1000px);
+      margin: 35px auto 60px;
+    }
+
+    .breadcrumb {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 18px;
+    }
+
+    .breadcrumb a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    .asset-card, .stats-card, .market-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      box-shadow: 0 8px 28px rgba(18, 43, 83, .045);
+    }
+
+    .asset-card { padding: 27px; }
+
+    .asset-heading {
+      display: flex;
+      align-items: center;
+      gap: 17px;
+    }
+
+    .asset-logo {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      object-fit: contain;
+      background: #f4f7fc;
+      padding: 8px;
+      border: 1px solid var(--line);
+    }
+
+    .asset-name {
+      margin: 0 0 5px;
+      font-size: 25px;
+      font-weight: 800;
+    }
+
+    .asset-symbol {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .price-area {
+      margin-top: 30px;
+    }
+
+    .eyebrow {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .price {
+      font-size: clamp(30px, 7vw, 43px);
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      overflow-wrap: anywhere;
+    }
+
+    .change {
+      display: inline-block;
+      margin-top: 9px;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 7px 11px;
+      border-radius: 8px;
+    }
+
+    .positive {
+      color: var(--green);
+      background: #e8f8f1;
+    }
+
+    .negative {
+      color: var(--red);
+      background: #fff0f1;
+    }
+
+    .neutral {
+      color: var(--muted);
+      background: #f0f3f8;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 13px;
+      margin-top: 28px;
+    }
+
+    .trade-button {
+      border: 0;
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      transition: opacity .2s, transform .2s;
+    }
+
+    .trade-button:hover {
+      opacity: .9;
+      transform: translateY(-1px);
+    }
+
+    .buy { background: var(--green); }
+    .sell { background: var(--red); }
+
+    .section-title {
+      margin: 30px 0 14px;
+      font-size: 19px;
+      font-weight: 800;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .stats-card { padding: 21px; }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 11px;
+    }
+
+    .stat-value {
+      font-size: 19px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .market-card {
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .market-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 14px;
+    }
+
+    .market-row:last-child { border-bottom: 0; }
+
+    .market-row span:first-child { color: var(--muted); }
+    .market-row strong { text-align: right; }
+
+    .status {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 16px;
+    }
+
+    .error {
+      padding: 22px;
+      color: var(--red);
+      background: #fff0f1;
+      border-radius: 12px;
+      display: none;
+      margin-top: 20px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 25px 15px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 650px) {
+      main { margin-top: 22px; }
+      .asset-card { padding: 20px; }
+      .stats-grid { grid-template-columns: 1fr; gap: 10px; }
+      .stats-card { padding: 17px; }
+      .stat-value { font-size: 17px; }
+      .asset-logo { width: 58px; height: 58px; }
+      .asset-name { font-size: 21px; }
+    }
+
+    @media (max-width: 360px) {
+      .actions { grid-template-columns: 1fr; }
+      .brand { font-size: 19px; }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">Coin<span>Wave</span></a>
+      <button class="back-button" id="backButton" type="button">
+        ← Back
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <div class="breadcrumb">
+      <a href="/">Home</a> / <span id="breadcrumbAsset">Asset details</span>
+    </div>
+
+    <section class="asset-card">
+      <div class="asset-heading">
+        <img
+          id="assetLogo"
+          class="asset-logo"
+          src=""
+          alt="Cryptocurrency logo"
+          hidden
+        >
+        <div>
+          <h1 class="asset-name" id="assetName">Loading asset...</h1>
+          <div class="asset-symbol" id="assetSymbol">---</div>
+        </div>
+      </div>
+
+      <div class="price-area">
+        <div class="eyebrow">Current market price</div>
+        <div class="price" id="assetPrice">Loading...</div>
+        <div class="change neutral" id="assetChange">Fetching 24h change...</div>
+      </div>
+
+      <div class="actions">
+        <a class="trade-button buy" id="buyButton" href="/login">
+          Buy <span id="buySymbol">Crypto</span>
+        </a>
+        <a class="trade-button sell" id="sellButton" href="/login">
+          Sell <span id="sellSymbol">Crypto</span>
+        </a>
+      </div>
+
+      <div class="status" id="updateStatus" role="status" aria-live="polite">
+        Connecting to live market data...
+      </div>
+
+      <div class="error" id="errorMessage" role="alert"></div>
+    </section>
+
+    <h2 class="section-title">Market statistics</h2>
+
+    <section class="stats-grid">
+      <div class="stats-card">
+        <div class="stat-label">24h Trading Volume</div>
+        <div class="stat-value" id="assetVolume">—</div>
+      </div>
+
+      <div class="stats-card">
+        <div class="stat-label">Market Capitalization</div>
+        <div class="stat-value" id="assetMarketCap">—</div>
+      </div>
+
+      <div class="stats-card">
+        <div class="stat-label">Market Rank</div>
+        <div class="stat-value" id="assetRank">—</div>
+      </div>
+    </section>
+
+    <section class="market-card">
+      <h2 style="margin:0 0 10px;font-size:18px;">Asset information</h2>
+
+      <div class="market-row">
+        <span>Asset name</span>
+        <strong id="infoName">—</strong>
+      </div>
+
+      <div class="market-row">
+        <span>Symbol</span>
+        <strong id="infoSymbol">—</strong>
+      </div>
+
+      <div class="market-row">
+        <span>Price currency</span>
+        <strong>USD</strong>
+      </div>
+
+      <div class="market-row">
+        <span>Data source</span>
+        <strong>CoinWave Market API</strong>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    © <span id="year"></span> CoinWave. Market prices are informational and may change.
+  </footer>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const params = new URLSearchParams(window.location.search);
+      const symbol = String(params.get('symbol') || '').trim().toUpperCase();
+
+      const elements = {
+        name: document.getElementById('assetName'),
+        symbol: document.getElementById('assetSymbol'),
+        logo: document.getElementById('assetLogo'),
+        price: document.getElementById('assetPrice'),
+        change: document.getElementById('assetChange'),
+        volume: document.getElementById('assetVolume'),
+        marketCap: document.getElementById('assetMarketCap'),
+        rank: document.getElementById('assetRank'),
+        infoName: document.getElementById('infoName'),
+        infoSymbol: document.getElementById('infoSymbol'),
+        breadcrumb: document.getElementById('breadcrumbAsset'),
+        status: document.getElementById('updateStatus'),
+        error: document.getElementById('errorMessage')
+      };
+
+      document.getElementById('year').textContent = new Date().getFullYear();
+
+      function goBack() {
+        if (window.history.length > 1 && document.referrer) {
+          window.history.back();
+        } else {
+          window.location.href = '/';
+        }
+      }
+
+      document.getElementById('backButton').addEventListener('click', goBack);
+
+      function formatMoney(value) {
+        if (value === null || value === undefined || !Number.isFinite(Number(value))) {
+          return '—';
+        }
+
+        const number = Number(value);
+
+        return '$' + number.toLocaleString('en-US', {
+          minimumFractionDigits: number >= 1 ? 2 : 4,
+          maximumFractionDigits: number >= 1 ? 2 : 8
+        });
+      }
+
+      function formatCompact(value) {
+        if (value === null || value === undefined || !Number.isFinite(Number(value))) {
+          return '—';
+        }
+
+        return '$' + Number(value).toLocaleString('en-US', {
+          notation: 'compact',
+          maximumFractionDigits: 2
+        });
+      }
+
+      function showError(message) {
+        elements.error.textContent = message;
+        elements.error.style.display = 'block';
+        elements.status.textContent = 'Market data unavailable.';
+      }
+
+      function displayAsset(asset) {
+        const coinSymbol = String(asset.symbol || '').toUpperCase();
+        const name = asset.name || coinSymbol;
+
+        elements.name.textContent = name;
+        elements.symbol.textContent = coinSymbol;
+        elements.breadcrumb.textContent = name;
+        elements.price.textContent = formatMoney(asset.price);
+        elements.volume.textContent = formatCompact(asset.volume24h);
+        elements.marketCap.textContent = formatCompact(asset.marketCap);
+        elements.rank.textContent = asset.rank ? '#' + asset.rank : '—';
+        elements.infoName.textContent = name;
+        elements.infoSymbol.textContent = coinSymbol;
+
+        const change = Number(asset.change24h);
+
+        if (Number.isFinite(change)) {
+          const positive = change > 0;
+          const zero = change === 0;
+
+          elements.change.textContent =
+            (positive ? '+' : '') + change.toFixed(2) + '% (24h)';
+
+          elements.change.className =
+            'change ' + (zero ? 'neutral' : positive ? 'positive' : 'negative');
+        } else {
+          elements.change.textContent = '24h change unavailable';
+          elements.change.className = 'change neutral';
+        }
+
+        if (asset.image) {
+          elements.logo.src = asset.image;
+          elements.logo.alt = name + ' logo';
+          elements.logo.hidden = false;
+          elements.logo.onerror = function () {
+            elements.logo.hidden = true;
+          };
+        }
+
+        document.getElementById('buySymbol').textContent = coinSymbol;
+        document.getElementById('sellSymbol').textContent = coinSymbol;
+
+        document.getElementById('buyButton').href =
+          '/login?asset=' + encodeURIComponent(coinSymbol) + '&side=buy';
+
+        document.getElementById('sellButton').href =
+          '/login?asset=' + encodeURIComponent(coinSymbol) + '&side=sell';
+
+        elements.error.style.display = 'none';
+        elements.status.textContent =
+          'Last updated: ' + new Date().toLocaleTimeString();
+      }
+
+      async function loadAsset() {
+        if (!/^[A-Z0-9]{1,15}$/.test(symbol)) {
+          showError('Invalid asset symbol. Return to the markets page and select a cryptocurrency.');
+          elements.name.textContent = 'Asset not found';
+          return;
+        }
+
+        elements.symbol.textContent = symbol;
+        elements.infoSymbol.textContent = symbol;
+
+        try {
+          const response = await fetch('/api/markets', {
+            headers: { Accept: 'application/json' },
+            cache: 'no-store'
+          });
+
+          if (!response.ok) {
+            throw new Error('The market service returned an error.');
+          }
+
+          const markets = await response.json();
+
+          if (!Array.isArray(markets)) {
+            throw new Error('The market service returned invalid data.');
+          }
+
+          const asset = markets.find(function (coin) {
+            return String(coin.symbol || '').toUpperCase() === symbol;
+          });
+
+          if (!asset) {
+            throw new Error('This asset was not found in the available market list.');
+          }
+
+          displayAsset(asset);
+        } catch (error) {
+          console.error('CoinWave asset page:', error);
+          showError(error.message || 'Unable to load this asset. Please try again.');
+        }
+      }
+
+      loadAsset();
+
+      // Refresh the selected asset's market information every minute.
+      window.setInterval(loadAsset, 60000);
+    })();
+  </script>
+</body>
+</html>
