@@ -1,0 +1,691 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07152f">
+  <meta name="description" content="Discover CoinWave cryptocurrency markets, trading, security, transactions and customer support.">
+  <title>Discover CoinWave</title>
+
+  <style>
+    :root {
+      --navy: #07152f;
+      --navy2: #10264b;
+      --blue: #087cf0;
+      --blue-dark: #0066d5;
+      --gold: #e9b949;
+      --text: #14213d;
+      --muted: #71809b;
+      --line: #e5ebf4;
+      --bg: #f5f8fd;
+      --white: #fff;
+      --green: #119b68;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    a { color: inherit; }
+
+    .topbar {
+      background: var(--navy);
+      color: white;
+      padding: 16px 20px;
+    }
+
+    .topbar-inner {
+      width: min(1100px, 100%);
+      margin: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .brand {
+      text-decoration: none;
+      color: white;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -.6px;
+    }
+
+    .brand span { color: var(--gold); }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-link {
+      color: white;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 9px 13px;
+      border-radius: 8px;
+    }
+
+    .header-link:hover { background: rgba(255,255,255,.1); }
+
+    .header-link.primary {
+      background: var(--blue);
+    }
+
+    .header-link.primary:hover {
+      background: var(--blue-dark);
+    }
+
+    main {
+      width: min(100% - 32px, 1000px);
+      margin: 32px auto 55px;
+    }
+
+    .breadcrumb {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+
+    .breadcrumb a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(125deg, var(--navy), #12396e);
+      border-radius: 18px;
+      color: white;
+      padding: 42px;
+      margin-bottom: 25px;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 240px;
+      height: 240px;
+      border: 35px solid rgba(255,255,255,.045);
+      border-radius: 50%;
+      right: -65px;
+      top: -95px;
+    }
+
+    .eyebrow {
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .hero h1 {
+      font-size: clamp(28px, 5vw, 42px);
+      line-height: 1.15;
+      margin: 0 0 15px;
+      max-width: 700px;
+    }
+
+    .hero p {
+      color: rgba(255,255,255,.82);
+      max-width: 680px;
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .content-card {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 28px rgba(18,43,83,.035);
+    }
+
+    .content-card h2 {
+      margin: 0 0 12px;
+      font-size: 21px;
+    }
+
+    .content-card p {
+      color: #596985;
+      margin: 0 0 13px;
+    }
+
+    .content-card p:last-child { margin-bottom: 0; }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .feature {
+      background: #f8faff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 19px;
+    }
+
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 11px;
+      display: grid;
+      place-items: center;
+      background: var(--blue-light, #eaf3ff);
+      color: var(--blue);
+      font-size: 20px;
+      margin-bottom: 11px;
+    }
+
+    .feature h3 {
+      font-size: 16px;
+      margin: 0 0 6px;
+    }
+
+    .feature p {
+      font-size: 13px;
+      margin: 0;
+    }
+
+    .steps {
+      display: grid;
+      gap: 15px;
+      margin-top: 18px;
+    }
+
+    .step {
+      display: flex;
+      gap: 15px;
+      align-items: flex-start;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .step:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .step-number {
+      flex: 0 0 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #eaf3ff;
+      color: var(--blue);
+      font-weight: 800;
+    }
+
+    .step h3 {
+      margin: 0 0 4px;
+      font-size: 16px;
+    }
+
+    .step p {
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .cta {
+      background: #eaf3ff;
+      border: 1px solid #d9e9ff;
+      border-radius: 15px;
+      padding: 25px;
+      margin-top: 22px;
+    }
+
+    .cta h2 {
+      margin: 0 0 7px;
+      font-size: 20px;
+    }
+
+    .cta p {
+      color: #596985;
+      margin: 0 0 17px;
+      font-size: 14px;
+    }
+
+    .button {
+      display: inline-block;
+      text-decoration: none;
+      border: 0;
+      border-radius: 9px;
+      padding: 12px 18px;
+      background: var(--blue);
+      color: white;
+      font-weight: 800;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .button:hover { background: var(--blue-dark); }
+
+    .button.secondary {
+      background: white;
+      color: var(--blue);
+      border: 1px solid #c9ddf8;
+      margin-left: 7px;
+    }
+
+    .button.secondary:hover { background: #f5f9ff; }
+
+    .related {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .related a {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      padding: 15px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      transition: border-color .2s, transform .2s;
+    }
+
+    .related a:hover {
+      border-color: var(--blue);
+      transform: translateY(-2px);
+    }
+
+    .related span {
+      display: block;
+      color: var(--blue);
+      margin-bottom: 5px;
+      font-size: 18px;
+    }
+
+    footer {
+      background: var(--navy);
+      color: rgba(255,255,255,.7);
+      text-align: center;
+      padding: 25px 15px;
+      font-size: 12px;
+    }
+
+    footer a {
+      color: white;
+      text-decoration: none;
+      margin: 0 7px;
+    }
+
+    @media (max-width: 650px) {
+      main { margin-top: 20px; }
+      .hero { padding: 29px 22px; }
+      .content-card { padding: 21px; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .related { grid-template-columns: 1fr; }
+      .header-link { padding: 8px; font-size: 12px; }
+    }
+
+    @media (max-width: 380px) {
+      .brand { font-size: 19px; }
+      .header-actions { gap: 3px; }
+      .button.secondary {
+        margin: 9px 0 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">Coin<span>Wave</span></a>
+
+      <nav class="header-actions" aria-label="Main navigation">
+        <a class="header-link" href="/">Home</a>
+        <a class="header-link" href="/#markets">Markets</a>
+        <a class="header-link primary" href="/login">Sign In</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="breadcrumb">
+      <a href="/">Home</a> / Discover CoinWave / <span id="breadcrumbTitle">Overview</span>
+    </div>
+
+    <section class="hero">
+      <div class="eyebrow">Discover CoinWave</div>
+      <h1 id="pageTitle">Explore the CoinWave platform</h1>
+      <p id="pageIntro">
+        Discover cryptocurrency markets, trading information, account features
+        and support resources.
+      </p>
+    </section>
+
+    <section id="pageContent"></section>
+
+    <section class="content-card">
+      <h2>Explore more on CoinWave</h2>
+      <p>
+        Learn more about the platform and access the sections that matter to you.
+      </p>
+
+      <div class="related">
+        <a href="/discover/explore-markets">
+          <span>↗</span>Explore Markets
+        </a>
+        <a href="/discover/buy-sell-crypto">
+          <span>⇄</span>Buy &amp; Sell Crypto
+        </a>
+        <a href="/discover/security-protection">
+          <span>♢</span>Security &amp; Protection
+        </a>
+        <a href="/discover/transaction-process">
+          <span>↔</span>Transaction Process
+        </a>
+        <a href="/discover/account-verification">
+          <span>✓</span>Account &amp; Verification
+        </a>
+        <a href="/discover/customer-support">
+          <span>✉</span>Customer Support
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div>© <span id="year"></span> CoinWave. All rights reserved.</div>
+    <div style="margin-top:9px">
+      <a href="/terms">Terms of Service</a>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/#support">Support</a>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const pages = {
+        'explore-markets': {
+          title: 'Explore Cryptocurrency Markets',
+          intro: 'Follow cryptocurrency market prices and review key market information in one convenient place.',
+          content: `
+            <article class="content-card">
+              <h2>Discover digital asset markets</h2>
+              <p>CoinWave provides a market overview designed to help you explore supported cryptocurrencies and review available market information.</p>
+              <div class="feature-grid">
+                <div class="feature">
+                  <div class="feature-icon">◈</div>
+                  <h3>Cryptocurrency listings</h3>
+                  <p>Explore supported digital assets and view their market information.</p>
+                </div>
+                <div class="feature">
+                  <div class="feature-icon">↗</div>
+                  <h3>Live market information</h3>
+                  <p>Review the latest available prices and 24-hour market movements.</p>
+                </div>
+                <div class="feature">
+                  <div class="feature-icon">▤</div>
+                  <h3>Market statistics</h3>
+                  <p>View available trading volume, market capitalization and asset rankings.</p>
+                </div>
+                <div class="feature">
+                  <div class="feature-icon">⌕</div>
+                  <h3>Find an asset</h3>
+                  <p>Use the market search to locate a cryptocurrency by name or symbol.</p>
+                </div>
+              </div>
+            </article>
+            <div class="cta">
+              <h2>Ready to explore the markets?</h2>
+              <p>Open the CoinWave market overview to browse available digital assets.</p>
+              <a class="button" href="/#markets">View Markets</a>
+            </div>
+          `
+        },
+
+        'buy-sell-crypto': {
+          title: 'Buy & Sell Cryptocurrency',
+          intro: 'Learn how CoinWave guides customers through the cryptocurrency trading process.',
+          content: `
+            <article class="content-card">
+              <h2>Trading on CoinWave</h2>
+              <p>Customers can access the available trading workflow after signing in. Trading availability depends on account eligibility, supported assets and the services enabled by CoinWave.</p>
+              <div class="steps">
+                <div class="step">
+                  <div class="step-number">1</div>
+                  <div><h3>Create or access your account</h3><p>Sign in or register to access your customer account.</p></div>
+                </div>
+                <div class="step">
+                  <div class="step-number">2</div>
+                  <div><h3>Choose a supported asset</h3><p>Review the available cryptocurrencies and their market information.</p></div>
+                </div>
+                <div class="step">
+                  <div class="step-number">3</div>
+                  <div><h3>Review your order</h3><p>Check the order details, applicable fees and transaction information before proceeding.</p></div>
+                </div>
+                <div class="step">
+                  <div class="step-number">4</div>
+                  <div><h3>Submit your order</h3><p>Follow the instructions displayed in your account. An order is not complete until the platform confirms its status.</p></div>
+                </div>
+              </div>
+            </article>
+            <div class="cta">
+              <h2>Access your CoinWave account</h2>
+              <p>Sign in to view the trading options currently available to your account.</p>
+              <a class="button" href="/login">Sign In</a>
+              <a class="button secondary" href="/signup">Create Account</a>
+            </div>
+          `
+        },
+
+        'security-protection': {
+          title: 'Security & Protection',
+          intro: 'Understand the security practices customers should follow when using a digital asset platform.',
+          content: `
+            <article class="content-card">
+              <h2>Protect your CoinWave account</h2>
+              <p>Account security is a shared responsibility. CoinWave customers should take care to protect their login details and verify requests before sharing information or approving transactions.</p>
+              <div class="feature-grid">
+                <div class="feature">
+                  <div class="feature-icon">🔐</div>
+                  <h3>Protect your password</h3>
+                  <p>Use a strong, unique password and never share it with another person.</p>
+                </div>
+                <div class="feature">
+                  <div class="feature-icon">✓</div>
+                  <h3>Verify requests</h3>
+                  <p>Check that account and transaction requests come from an official CoinWave channel.</p>
+                </div>
+                <div class="feature">
+                  <div class="feature-icon">⚠</div>
+                  <h3>Avoid suspicious links</h3>
+                  <p>Do not enter account credentials on unfamiliar websites or respond to suspicious messages.</p>
+                </div>
+                <div class="feature">
+                  <div class="feature-icon">◉</div>
+                  <h3>Review account activity</h3>
+                  <p>Monitor account activity and report transactions you do not recognize through the available support channel.</p>
+                </div>
+              </div>
+            </article>
+            <article class="content-card">
+              <h2>Important security reminder</h2>
+              <p>Never share your password, one-time verification code, private key or recovery phrase with anyone claiming to provide support.</p>
+              <p>Security features and protections depend on the controls actually enabled on the platform. Do not assume a feature is active unless it is shown in your account.</p>
+            </article>
+          `
+        },
+
+        'transaction-process': {
+          title: 'Transaction Process',
+          intro: 'Understand the general stages involved in submitting and reviewing a transaction on CoinWave.',
+          content: `
+            <article class="content-card">
+              <h2>How the transaction process works</h2>
+              <p>Transaction steps can vary depending on the asset, order type, payment method and applicable account requirements.</p>
+              <div class="steps">
+                <div class="step">
+                  <div class="step-number">1</div>
+                  <div><h3>Select an asset</h3><p>Choose the supported cryptocurrency you want to transact with.</p></div>
+                </div>
+                <div class="step">
+                  <div class="step-number">2</div>
+                  <div><h3>Enter transaction details</h3><p>Provide the requested amount and any required transaction information.</p></div>
+                </div>
+                <div class="step">
+                  <div class="step-number">3</div>
+                  <div><h3>Review before submission</h3><p>Confirm the asset, amount, fees and destination details where applicable.</p></div>
+                </div>
+                <div class="step">
+                  <div class="step-number">4</div>
+                  <div><h3>Track the transaction</h3><p>Use the status displayed in your account to check the progress of your submitted order.</p></div>
+                </div>
+              </div>
+            </article>
+            <article class="content-card">
+              <h2>Transaction status</h2>
+              <p>A submitted transaction may require processing or review. Do not treat a transaction as completed until CoinWave displays a confirmed completion status.</p>
+              <p>Processing times can vary. Network congestion, payment processing and required account checks may affect completion time.</p>
+            </article>
+          `
+        },
+
+        'account-verification': {
+          title: 'Account & Verification',
+          intro: 'Learn about account registration, identity checks and keeping your customer information up to date.',
+          content: `
+            <article class="content-card">
+              <h2>Your CoinWave account</h2>
+              <p>Account registration allows customers to access the platform's available services. Some services may require additional identity or account verification before access is granted.</p>
+              <div class="steps">
+                <div class="step">
+                  <div class="step-number">1</div>
+                  <div><h3>Register</h3><p>Provide the information requested during account registration.</p></div>
+                </div>
+                <div class="step">
+                  <div class="step-number">2</div>
+                  <div><h3>Complete your profile</h3><p>Review your account details and provide accurate information.</p></div>
+                </div>
+                <div class="step">
+                  <div class="step-number">3</div>
+                  <div><h3>Submit required documents</h3><p>If verification is requested, follow the instructions in your account and submit the required information securely.</p></div>
+                </div>
+                <div class="step">
+                  <div class="step-number">4</div>
+                  <div><h3>Check your account status</h3><p>Review the status shown in your account and follow any additional instructions.</p></div>
+                </div>
+              </div>
+            </article>
+            <article class="content-card">
+              <h2>Keep your information accurate</h2>
+              <p>Use accurate and current information. Do not submit another person's identity documents or provide false information during verification.</p>
+            </article>
+            <div class="cta">
+              <h2>Get started with CoinWave</h2>
+              <p>Create an account or sign in to review your account requirements.</p>
+              <a class="button" href="/signup">Create Account</a>
+              <a class="button secondary" href="/login">Sign In</a>
+            </div>
+          `
+        },
+
+        'customer-support': {
+          title: 'CoinWave Customer Support',
+          intro: 'Find guidance for account, market and transaction questions, and use the support contact details provided by CoinWave.',
+          content: `
+            <article class="content-card">
+              <h2>How can we help?</h2>
+              <p>For assistance, first review the information available in your account. When contacting support, provide a clear description of the issue without sharing your password, verification codes or private keys.</p>
+              <div class="feature-grid">
+                <div class="feature">
+                  <div class="feature-icon">◉</div>
+                  <h3>Account assistance</h3>
+                          <p>Get guidance about registration, sign-in and account verification.</p>
+                </div>
+                <div class="feature">
+                  <div class="feature-icon">↔</div>
+                  <h3>Transaction questions</h3>
+                  <p>Ask about a transaction status using the relevant reference where available.</p>
+                </div>
+                <div class="feature">
+                  <div class="feature-icon">◈</div>
+                  <h3>Market information</h3>
+                  <p>Get help understanding available asset listings and market information.</p>
+                </div>
+                <div class="feature">
+                  <div class="feature-icon">!</div>
+                  <h3>Report a concern</h3>
+                  <p>Report suspicious activity or an account issue through the official support contact provided by CoinWave.</p>
+                </div>
+              </div>
+            </article>
+            <article class="content-card">
+              <h2>Contact CoinWave</h2>
+              <p>Use the support contact details published by CoinWave in its official website or in your customer account.</p>
+              <p>Support contact information should be configured and maintained by the CoinWave administrator. This page does not invent an email address, telephone number or live-chat service.</p>
+              <div class="cta">
+                <h2>Need account assistance?</h2>
+                <p>Sign in to review your account and find the support options currently provided by the platform.</p>
+                <a class="button" href="/login">Go to Sign In</a>
+              </div>
+            </article>
+          `
+        }
+      };
+
+      const slug = window.location.pathname
+        .replace(/\/+$/, '')
+        .split('/')
+        .pop()
+        .toLowerCase();
+
+      const page = pages[slug];
+
+      document.getElementById('year').textContent = new Date().getFullYear();
+
+      if (page) {
+        document.title = page.title + ' | CoinWave';
+        document.getElementById('pageTitle').textContent = page.title;
+        document.getElementById('pageIntro').textContent = page.intro;
+        document.getElementById('breadcrumbTitle').textContent = page.title;
+        document.getElementById('pageContent').innerHTML = page.content;
+      } else {
+        document.title = 'Discover CoinWave | CoinWave';
+        document.getElementById('pageTitle').textContent = 'Discover CoinWave';
+        document.getElementById('pageIntro').textContent =
+          'Explore CoinWave markets, trading information, security guidance and customer resources.';
+
+        document.getElementById('pageContent').innerHTML = `
+          <article class="content-card">
+            <h2>Explore the platform</h2>
+            <p>Select one of the sections below to learn more about CoinWave.</p>
+            <div class="related">
+              <a href="/discover/explore-markets">Explore Markets</a>
+              <a href="/discover/buy-sell-crypto">Buy &amp; Sell Crypto</a>
+              <a href="/discover/security-protection">Security &amp; Protection</a>
+              <a href="/discover/transaction-process">Transaction Process</a>
+              <a href="/discover/account-verification">Account &amp; Verification</a>
+              <a href="/discover/customer-support">Customer Support</a>
+            </div>
+          </article>
+        `;
+      }
+    })();
+  </script>
+</body>
+</html>
