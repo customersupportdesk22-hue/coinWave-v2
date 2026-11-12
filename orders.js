@@ -640,9 +640,21 @@ router.post('/quote', async (req, res, next) => {
 // CUSTOMER ORDER CREATION
 // --------------------------------------------------
 
-router.post('/', auth.authUser, async (req, res, next) => {
+router.post('/', async (req, res, next) => {
   try {
-    const userId = getUserId(req);
+    const authenticatedUser = await auth.authUser(req);
+
+if (!authenticatedUser) {
+  throw httpError(401, 'AUTH_REQUIRED', 'Authentication required.');
+}
+
+if (authenticatedUser.accountStatus === 'suspended') {
+  throw httpError(403, 'ACCOUNT_SUSPENDED', 'This account is suspended.');
+}
+
+req.user = authenticatedUser;
+
+const userId = getUserId(req);
 
     if (!isObjectId(userId)) {
       throw httpError(401, 'AUTH_REQUIRED', 'Authentication required.');
