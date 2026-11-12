@@ -64,24 +64,6 @@ function pagination(req) {
   };
 }
 
-function safePick(document, allowedFields) {
-  if (!document) return null;
-
-  const object = typeof document.toObject === 'function'
-    ? document.toObject()
-    : document;
-
-  const result = {};
-
-  allowedFields.forEach(function (field) {
-    if (Object.prototype.hasOwnProperty.call(object, field)) {
-      result[field] = object[field];
-    }
-  });
-
-  return result;
-}
-
 function requireModel(model, name) {
   if (!model || typeof model.find !== 'function') {
     const error = new Error(name + ' model is unavailable.');
@@ -92,19 +74,43 @@ function requireModel(model, name) {
   return model;
 }
 
-// --------------------------------------------------
-// PERMISSIONS
-// --------------------------------------------------
-
 function permission(name) {
   if (typeof auth.requirePermission !== 'function') {
-    throw new Error(
-      'auth.js must export requirePermission().'
-    );
+    throw new Error('auth.js must export requirePermission().');
   }
 
   return auth.requirePermission(name);
 }
+
+function safeBalance(units) {
+  try {
+    return ledger.fromUnits(String(units || '0'));
+  } catch (error) {
+    return '0';
+  }
+}
+
+function safePick(document, fields) {
+  if (!document) return null;
+
+  const object = typeof document.toObject === 'function'
+    ? document.toObject()
+    : document;
+
+  const result = {};
+
+  fields.forEach(field => {
+    if (object[field] !== undefined) {
+      result[field] = object[field];
+    }
+  });
+
+  return result;
+}
+
+// --------------------------------------------------
+// PERMISSIONS
+// --------------------------------------------------
 
 const addressesPermission = permission('addresses.manage');
 const customersPermission = permission('customers.view');
@@ -114,9 +120,6 @@ const ledgerPermission = permission('ledger.view');
 // DEPOSIT ADDRESS MANAGEMENT
 // --------------------------------------------------
 
-/*
- * GET /api/admin/addresses
- */
 router.get(
   '/addresses',
   addressesPermission,
@@ -137,30 +140,21 @@ router.get(
   })
 );
 
-/*
- * PUT /api/admin/addresses/:symbol
- */
 router.put(
   '/addresses/:symbol',
   addressesPermission,
   asyncHandler(async (req, res) => {
-    const sym = String(req.params.symbol || '')
+    const symbol = String(req.params.symbol || '')
       .trim()
       .toUpperCase();
 
     const body = req.body || {};
 
     const address = String(body.address || '').trim();
+    const network = String(body.network || '').trim().slice(0, 40);
+    const memo = String(body.memo || '').trim().slice(0, 80);
 
-    const network = String(body.network || '')
-      .trim()
-      .slice(0, 40);
-
-    const memo = String(body.memo || '')
-      .trim()
-      .slice(0, 80);
-
-    if (!SYMBOL.test(sym)) {
+    if (!SYMBOL.test(symbol)) {
       return res.status(400).json({
         error: 'Invalid coin symbol.'
       });
@@ -193,7 +187,7 @@ router.put(
       { key: 'addresses' },
       {
         $set: {
-          ['value.' + sym]: entry
+          ['value.' + symbol]: entry
         }
       },
       {
@@ -208,18 +202,15 @@ router.put(
   })
 );
 
-/*
- * DELETE /api/admin/addresses/:symbol
- */
 router.delete(
   '/addresses/:symbol',
   addressesPermission,
   asyncHandler(async (req, res) => {
-    const sym = String(req.params.symbol || '')
+    const symbol = String(req.params.symbol || '')
       .trim()
       .toUpperCase();
 
-    if (!SYMBOL.test(sym)) {
+    if (!SYMBOL.test(symbol)) {
       return res.status(400).json({
         error: 'Invalid coin symbol.'
       });
@@ -229,17 +220,12 @@ router.delete(
       { key: 'addresses' },
       {
         $unset: {
-          ['value.' + sym]: ''
+          ['value.' + symbol]: ''
         }
-      },
-      {
-        runValidators: true
       }
     );
 
-    return res.json({
-      ok: true
-    });
+    return res.json({ ok: true });
   })
 );
 
@@ -247,12 +233,6 @@ router.delete(
 // CUSTOMER MANAGEMENT - READ ONLY
 // --------------------------------------------------
 
-/*
- * GET /api/admin/customers?page=1&limit=25&search=
- *
- * Returns safe customer information only.
- * Does not expose password hashes or authentication secrets.
- */
 router.get(
   '/customers',
   customersPermission,
@@ -268,30 +248,17 @@ router.get(
     const filter = {};
 
     if (search) {
-      const expression = new RegExp(
-        escapeRegex(search),
-        'i'
-      );
+      const expression = new RegExp(escapeRegex(search), 'i');
 
-      const searchable = [];
-
-      ['name', 'email', 'phone'].forEach(function (field) {
-        if (User.schema.path(field)) {
-          searchable.push({
-            [field]: expression
-          });
-        }
-      });
-
-      if (searchable.length) {
-        filter.$or = searchable;
-      }
+      filter.$or = ['name', 'email', 'phone']
+        .filter(field => Boolean(User.schema.path(field)))
+        .map(field => ({ [field]: expression }));
     }
 
     const [documents, total] = await Promise.all([
       User.find(filter)
         .select(
-          'name email phone country currency accountStatus role createdAt lastLoginAt'
+          'name email phone country currency accountStatus createdAt lastLoginAt'
         )
         .sort({ createdAt: -1, _id: -1 })
         .skip(page.skip)
@@ -301,28 +268,21 @@ router.get(
       User.countDocuments(filter)
     ]);
 
-    const customers = documents.map(function (user) {
-      const safe = {};
+    const customers = documents.map(user => ({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone || '',
+      country: user.country || '',
+      currency: user.currency || '',
+      accountStatus: user.accountStatus || 'active',
 
-      [
-        '_id',
-        'name',
-        'email',
-        'phone',
-        'country',
-        'currency',
-        'accountStatus',
-        'role',
-        'createdAt',
-        'lastLoginAt'
-      ].forEach(function (field) {
-        if (user[field] !== undefined) {
-          safe[field] = user[field];
-        }
-      });
+      // Roles are environment-configured, not stored in User.
+      role: auth.getRole(user),
 
-      return safe;
-    });
+      createdAt: user.createdAt,
+      lastLoginAt: user.lastLoginAt || null
+    }));
 
     return res.json({
       customers,
@@ -340,12 +300,6 @@ router.get(
 // WALLET MANAGEMENT - READ ONLY
 // --------------------------------------------------
 
-/*
- * GET /api/admin/wallets?page=1&limit=25&asset=BTC
- *
- * Read-only account inspection.
- * No balance modification is allowed through this endpoint.
- */
 router.get(
   '/wallets',
   ledgerPermission,
@@ -359,6 +313,10 @@ router.get(
       .trim()
       .toUpperCase();
 
+    const ownerType = String(req.query.ownerType || '')
+      .trim()
+      .toLowerCase();
+
     if (asset) {
       if (!SYMBOL.test(asset)) {
         return res.status(400).json({
@@ -366,37 +324,24 @@ router.get(
         });
       }
 
-      if (Account.schema.path('asset')) {
-        filter.asset = asset;
-      }
+      filter.asset = asset;
     }
 
-    const allowedFields = [
-      '_id',
-      'ownerType',
-      'ownerId',
-      'asset',
-      'available',
-      'locked',
-      'inventory',
-      'external_clearing',
-      'availableUnits',
-      'lockedUnits',
-      'inventoryUnits',
-      'externalClearingUnits',
-      'createdAt',
-      'updatedAt'
-    ];
+    if (ownerType) {
+      if (!['user', 'platform'].includes(ownerType)) {
+        return res.status(400).json({
+          error: 'Invalid wallet owner type.'
+        });
+      }
 
-    const projection = allowedFields
-      .filter(function (field) {
-        return !!Account.schema.path(field);
-      })
-      .join(' ');
+      filter.ownerType = ownerType;
+    }
 
     const [documents, total] = await Promise.all([
       Account.find(filter)
-        .select(projection)
+        .select(
+          'ownerType ownerId asset bucket balanceUnits createdAt updatedAt'
+        )
         .sort({ updatedAt: -1, _id: -1 })
         .skip(page.skip)
         .limit(page.limit)
@@ -405,9 +350,16 @@ router.get(
       Account.countDocuments(filter)
     ]);
 
-    const accounts = documents.map(function (account) {
-      return safePick(account, allowedFields);
-    });
+    const accounts = documents.map(account => ({
+      _id: account._id,
+      ownerType: account.ownerType,
+      ownerId: account.ownerId,
+      asset: account.asset,
+      bucket: account.bucket,
+      balance: safeBalance(account.balanceUnits),
+      createdAt: account.createdAt,
+      updatedAt: account.updatedAt
+    }));
 
     return res.json({
       accounts,
@@ -422,47 +374,64 @@ router.get(
 );
 
 // --------------------------------------------------
+// CUSTOMER WALLET BALANCES - READ ONLY
+// --------------------------------------------------
+
+router.get(
+  '/customers/:userId/balances',
+  customersPermission,
+  asyncHandler(async (req, res) => {
+    if (!mongoose.isValidObjectId(req.params.userId)) {
+      return res.status(400).json({
+        error: 'Invalid customer ID.'
+      });
+    }
+
+    requireModel(Account, 'Ledger account');
+
+    const customer = await User.findById(req.params.userId)
+      .select('_id name email')
+      .lean();
+
+    if (!customer) {
+      return res.status(404).json({
+        error: 'Customer not found.'
+      });
+    }
+
+    const accounts = await Account.find({
+      ownerType: 'user',
+      ownerId: String(customer._id)
+    })
+      .select('asset bucket balanceUnits')
+      .sort({ asset: 1, bucket: 1 })
+      .lean();
+
+    return res.json({
+      customer,
+      balances: accounts.map(account => ({
+        asset: account.asset,
+        bucket: account.bucket,
+        balance: safeBalance(account.balanceUnits)
+      }))
+    });
+  })
+);
+
+// --------------------------------------------------
 // LEDGER TRANSACTION INSPECTION - READ ONLY
 // --------------------------------------------------
 
-/*
- * GET /api/admin/ledger?page=1&limit=25
- *
- * Returns ledger transaction records.
- * Does not modify customer or platform balances.
- */
 router.get(
   '/ledger',
   ledgerPermission,
   asyncHandler(async (req, res) => {
-    requireModel(
-      LedgerTransaction,
-      'Ledger transaction'
-    );
+    requireModel(LedgerTransaction, 'Ledger transaction');
 
     const page = pagination(req);
 
-    const allowedFields = [
-      '_id',
-      'reference',
-      'status',
-      'asset',
-      'amount',
-      'amountUnits',
-      'entries',
-      'createdAt',
-      'updatedAt'
-    ];
-
-    const projection = allowedFields
-      .filter(function (field) {
-        return !!LedgerTransaction.schema.path(field);
-      })
-      .join(' ');
-
     const [documents, total] = await Promise.all([
       LedgerTransaction.find({})
-        .select(projection)
         .sort({ createdAt: -1, _id: -1 })
         .skip(page.skip)
         .limit(page.limit)
@@ -471,8 +440,20 @@ router.get(
       LedgerTransaction.countDocuments({})
     ]);
 
-    const transactions = documents.map(function (transaction) {
-      return safePick(transaction, allowedFields);
+    const transactions = documents.map(transaction => {
+      const safe = safePick(transaction, [
+        '_id',
+        'reference',
+        'description',
+        'asset',
+        'status',
+        'metadata',
+        'createdAt',
+        'updatedAt'
+      ]);
+
+      // Do not expose internal fields or customer secrets.
+      return safe;
     });
 
     return res.json({
@@ -524,7 +505,7 @@ router.use((err, req, res, next) => {
     });
   }
 
-  res.status(500).json({
+  return res.status(500).json({
     error: 'An unexpected server error occurred.'
   });
 });
