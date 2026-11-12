@@ -48,11 +48,47 @@
     tr.appendChild(cell); body.appendChild(tr);
   }
 
+  var sort = { key: 'rank', dir: 1 };
+  var cols = ['rank', 'name', 'price', 'change24h'];
+  var heads = document.querySelectorAll('thead th');
+
+  function sortList(list) {
+    var k = sort.key, d = sort.dir;
+    return list.slice().sort(function (a, b) {
+      var x = a[k], y = b[k];
+      if (x == null) return 1;
+      if (y == null) return -1;
+      if (typeof x === 'string') return x.localeCompare(y) * d;
+      return (x - y) * d;
+    });
+  }
+
+  function markHeads() {
+    heads.forEach(function (th, i) {
+      var label = th.getAttribute('data-label') || th.textContent.replace(/[▲▼\s]+$/, '');
+      th.setAttribute('data-label', label);
+      th.textContent = label + (cols[i] === sort.key ? (sort.dir === 1 ? ' ▲' : ' ▼') : '');
+      th.setAttribute('aria-sort', cols[i] === sort.key ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none');
+    });
+  }
+
+  heads.forEach(function (th, i) {
+    th.style.cursor = 'pointer';
+    th.addEventListener('click', function () {
+      var k = cols[i];
+      if (sort.key === k) sort.dir = -sort.dir;
+      else { sort.key = k; sort.dir = (k === 'rank' || k === 'name') ? 1 : -1; }
+      markHeads();
+      render();
+    });
+  });
+
   function render() {
     var q = search.value.trim().toLowerCase();
     var list = coins.filter(function (c) {
       return !q || c.name.toLowerCase().indexOf(q) > -1 || c.symbol.toLowerCase().indexOf(q) > -1;
     });
+    list = sortList(list);
     if (!list.length) return message('No results', 'Try a different name or symbol.');
     body.innerHTML = '';
     list.forEach(function (c) { body.appendChild(row(c)); });
@@ -66,6 +102,7 @@
       .catch(function () { message('Prices are unavailable', 'Refresh the page in a minute.'); });
   }
 
+  markHeads();
   search.addEventListener('input', render);
   document.getElementById('year').textContent = new Date().getFullYear();
   load();
@@ -74,4 +111,3 @@
       .then(function (d) { if (d) { coins = d; render(); } }).catch(function () {});
   }, 60000);
 })();
-  
