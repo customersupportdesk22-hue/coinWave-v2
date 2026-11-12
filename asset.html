@@ -4,426 +4,684 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#071a3d">
+  <meta name="theme-color" content="#07152f">
+  <meta name="description" content="View live cryptocurrency prices, market statistics and trading options on CoinWave.">
   <title>Asset Details | CoinWave</title>
+
   <style>
     :root {
-      --navy:#071a3d;
-      --navy2:#102b58;
-      --blue:#087cf0;
-      --blue2:#0066d5;
-      --gold:#e8b94f;
-      --bg:#f4f7fc;
-      --white:#fff;
-      --text:#14213d;
-      --muted:#71809b;
-      --line:#e4eaf3;
-      --green:#079b68;
-      --red:#df4257;
-      --shadow:0 12px 35px rgba(13,35,76,.08);
+      --navy: #07152f;
+      --navy-2: #10264b;
+      --blue: #087cf0;
+      --blue-light: #eaf3ff;
+      --gold: #e9b949;
+      --text: #14213d;
+      --muted: #71809b;
+      --line: #e5ebf4;
+      --green: #119b68;
+      --red: #dc4656;
+      --surface: #ffffff;
+      --background: #f5f8fd;
     }
-    * { box-sizing:border-box; }
+
+    * { box-sizing: border-box; }
+
     body {
-      margin:0;
-      background:var(--bg);
-      color:var(--text);
-      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      margin: 0;
+      background: var(--background);
+      color: var(--text);
+      font-family: Inter, Arial, sans-serif;
     }
-    button,a { font:inherit; }
-    a { text-decoration:none; }
+
+    button, a { font: inherit; }
+
     .topbar {
-      background:var(--navy);
-      color:white;
-      padding:15px 20px;
+      background: var(--navy);
+      color: white;
+      padding: 16px 20px;
     }
+
     .topbar-inner {
-      max-width:1100px;
-      margin:auto;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:15px;
+      max-width: 1100px;
+      margin: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
     }
+
     .brand {
-      color:white;
-      font-size:21px;
-      font-weight:850;
-      letter-spacing:-.6px;
+      color: white;
+      text-decoration: none;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -.6px;
     }
-    .brand span { color:var(--gold); }
-    .top-link {
-      color:#dce8ff;
-      font-size:13px;
-      font-weight:650;
+
+    .brand span { color: var(--gold); }
+
+    .back-button {
+      border: 1px solid rgba(255,255,255,.25);
+      background: transparent;
+      color: white;
+      padding: 9px 15px;
+      border-radius: 9px;
+      cursor: pointer;
     }
+
+    .back-button:hover { background: rgba(255,255,255,.1); }
+
     main {
-      max-width:1000px;
-      margin:25px auto 60px;
-      padding:0 18px;
+      width: min(100% - 32px, 1000px);
+      margin: 35px auto 60px;
     }
-    .back-row { margin-bottom:20px; }
-    .back-btn {
-      display:inline-flex;
-      align-items:center;
-      gap:9px;
-      border:1px solid #dce5f2;
-      border-radius:12px;
-      background:white;
-      color:var(--navy);
-      padding:10px 15px;
-      font-size:14px;
-      font-weight:750;
-      cursor:pointer;
-      box-shadow:0 3px 10px rgba(13,35,76,.04);
-      transition:background .18s,border-color .18s,transform .18s;
+
+    .breadcrumb {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 18px;
     }
-    .back-btn:hover {
-      background:#edf5ff;
-      border-color:#b9d6fb;
+
+    .breadcrumb a {
+      color: var(--blue);
+      text-decoration: none;
     }
-    .back-btn:active { transform:scale(.97); }
-    .back-arrow { font-size:20px; line-height:12px; }
-    .heading {
-      display:flex;
-      align-items:center;
-      gap:14px;
-      margin-bottom:20px;
+
+    .asset-card, .stats-card, .market-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      box-shadow: 0 8px 28px rgba(18, 43, 83, .045);
     }
-    .coin-logo {
-      width:55px;
-      height:55px;
-      border-radius:50%;
-      object-fit:contain;
-      background:white;
-      border:1px solid var(--line);
-      padding:7px;
+
+    .asset-card { padding: 27px; }
+
+    .asset-heading {
+      display: flex;
+      align-items: center;
+      gap: 17px;
     }
-    h1 {
-      margin:0;
-      color:var(--navy);
-      font-size:25px;
-      letter-spacing:-.7px;
+
+    .asset-logo {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      object-fit: contain;
+      background: #f4f7fc;
+      padding: 8px;
+      border: 1px solid var(--line);
     }
-    .symbol {
-      margin-top:4px;
-      color:var(--muted);
-      font-size:13px;
-      font-weight:750;
-      text-transform:uppercase;
+
+    .asset-name {
+      margin: 0 0 5px;
+      font-size: 25px;
+      font-weight: 800;
     }
-    .card {
-      background:white;
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:23px;
-      box-shadow:var(--shadow);
-      margin-bottom:18px;
+
+    .asset-symbol {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
     }
-    .price-label {
-      color:var(--muted);
-      font-size:13px;
-      font-weight:650;
+
+    .price-area {
+      margin-top: 30px;
     }
+
+    .eyebrow {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
     .price {
-      margin:8px 0;
-      color:var(--navy);
-      font-size:clamp(29px,6vw,42px);
-      font-weight:850;
-      letter-spacing:-1.2px;
-      overflow-wrap:anywhere;
+      font-size: clamp(30px, 7vw, 43px);
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      overflow-wrap: anywhere;
     }
+
     .change {
-      display:inline-flex;
-      border-radius:8px;
-      padding:6px 10px;
-      font-size:13px;
-      font-weight:800;
+      display: inline-block;
+      margin-top: 9px;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 7px 11px;
+      border-radius: 8px;
     }
-    .positive { color:var(--green); background:#e8f8f1; }
-    .negative { color:var(--red); background:#fff0f1; }
-    .neutral { color:var(--muted); background:#f0f3f8; }
-    .stats {
-      display:grid;
-      grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:12px;
+
+    .positive {
+      color: var(--green);
+      background: #e8f8f1;
     }
-    .stat {
-      background:#f8faff;
-      border:1px solid var(--line);
-      border-radius:13px;
-      padding:16px;
-      min-width:0;
+
+    .negative {
+      color: var(--red);
+      background: #fff0f1;
     }
-    .stat-label {
-      color:var(--muted);
-      font-size:12px;
-      font-weight:650;
-      margin-bottom:8px;
+
+    .neutral {
+      color: var(--muted);
+      background: #f0f3f8;
     }
-    .stat-value {
-      color:var(--navy);
-      font-size:17px;
-      font-weight:800;
-      overflow-wrap:anywhere;
-    }
+
     .actions {
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-      margin-top:20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 13px;
+      margin-top: 28px;
     }
-    .action {
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      border-radius:12px;
-      padding:14px;
-      font-size:15px;
-      font-weight:800;
-      transition:transform .18s,background .18s;
+
+    .trade-button {
+      border: 0;
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      transition: opacity .2s, transform .2s;
     }
-    .action:active { transform:scale(.98); }
-    .buy { background:var(--blue); color:white; }
-    .buy:hover { background:var(--blue2); }
-    .sell { background:var(--navy); color:white; }
-    .sell:hover { background:var(--navy2); }
-    .notice {
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.6;
-      margin:15px 0 0;
+
+    .trade-button:hover {
+      opacity: .9;
+      transform: translateY(-1px);
     }
+
+    .buy { background: var(--green); }
+    .sell { background: var(--red); }
+
+    .section-title {
+      margin: 30px 0 14px;
+      font-size: 19px;
+      font-weight: 800;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .stats-card { padding: 21px; }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 11px;
+    }
+
+    .stat-value {
+      font-size: 19px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .market-card {
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .market-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 14px;
+    }
+
+    .market-row:last-child { border-bottom: 0; }
+
+    .market-row span:first-child { color: var(--muted); }
+    .market-row strong { text-align: right; }
+
     .status {
-      color:var(--muted);
-      text-align:center;
-      padding:35px 15px;
-      font-size:14px;
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 16px;
     }
-    .error { color:var(--red); }
-    .footer {
-      text-align:center;
-      color:var(--muted);
-      font-size:12px;
-      padding:20px 0;
+
+    .error {
+      padding: 22px;
+      color: var(--red);
+      background: #fff0f1;
+      border-radius: 12px;
+      display: none;
+      margin-top: 20px;
     }
-    .footer a { color:var(--blue); margin:0 7px; }
-    @media(max-width:650px) {
-      main { margin-top:19px; padding:0 13px; }
-      .card { padding:18px; }
-      .stats { grid-template-columns:1fr 1fr; }
-      .stat:last-child { grid-column:1/-1; }
-      h1 { font-size:22px; }
+
+    /* Added Trade View section */
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      padding: 20px;
+      margin-top: 30px;
+      box-shadow: 0 8px 28px rgba(18, 43, 83, .045);
     }
-    @media(max-width:380px) {
-      .stats { grid-template-columns:1fr; }
-      .stat:last-child { grid-column:auto; }
-      .actions { gap:8px; }
-      .action { padding:13px 8px; font-size:14px; }
+
+    .chart-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+
+    .chart-heading h2 {
+      margin: 0;
+      font-size: 19px;
+      font-weight: 800;
+    }
+
+    .chart-provider {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .chart-frame {
+      width: 100%;
+      height: 420px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .chart-frame iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+    }
+
+    .chart-message {
+      padding: 35px 18px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    footer {
+      text-align: center;
+      padding: 25px 15px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 650px) {
+      main { margin-top: 22px; }
+      .asset-card { padding: 20px; }
+      .stats-grid { grid-template-columns: 1fr; gap: 10px; }
+      .stats-card { padding: 17px; }
+      .stat-value { font-size: 17px; }
+      .asset-logo { width: 58px; height: 58px; }
+      .asset-name { font-size: 21px; }
+      .chart-card { padding: 14px; }
+      .chart-frame { height: 350px; }
+    }
+
+    @media (max-width: 360px) {
+      .actions { grid-template-columns: 1fr; }
+      .brand { font-size: 19px; }
+      .chart-frame { height: 300px; }
     }
   </style>
 </head>
+
 <body>
   <header class="topbar">
     <div class="topbar-inner">
       <a class="brand" href="/">Coin<span>Wave</span></a>
-      <a class="top-link" href="/">Markets</a>
+      <button class="back-button" id="backButton" type="button">
+        ← Back
+      </button>
     </div>
   </header>
 
   <main>
-    <div class="back-row">
-      <button class="back-btn" id="backButton" type="button">
-        <span class="back-arrow" aria-hidden="true">‹</span>
-        <span>Back</span>
-      </button>
+    <div class="breadcrumb">
+      <a href="/">Home</a> / <span id="breadcrumbAsset">Asset details</span>
     </div>
 
-    <div id="assetContent">
-      <div class="status">Loading asset information...</div>
-    </div>
+    <section class="asset-card">
+      <div class="asset-heading">
+        <img
+          id="assetLogo"
+          class="asset-logo"
+          src=""
+          alt="Cryptocurrency logo"
+          hidden
+        >
+        <div>
+          <h1 class="asset-name" id="assetName">Loading asset...</h1>
+          <div class="asset-symbol" id="assetSymbol">---</div>
+        </div>
+      </div>
 
-    <footer class="footer">
-      <a href="/terms">Terms of Service</a>
-      <a href="/privacy">Privacy Policy</a>
-      <div style="margin-top:9px">© <span id="year"></span> CoinWave</div>
-    </footer>
+      <div class="price-area">
+        <div class="eyebrow">Current market price</div>
+        <div class="price" id="assetPrice">Loading...</div>
+        <div class="change neutral" id="assetChange">Fetching 24h change...</div>
+      </div>
+
+      <div class="actions">
+        <a class="trade-button buy" id="buyButton" href="/login">
+          Buy <span id="buySymbol">Crypto</span>
+        </a>
+        <a class="trade-button sell" id="sellButton" href="/login">
+          Sell <span id="sellSymbol">Crypto</span>
+        </a>
+      </div>
+
+      <div class="status" id="updateStatus" role="status" aria-live="polite">
+        Connecting to live market data...
+      </div>
+
+      <div class="error" id="errorMessage" role="alert"></div>
+    </section>
+
+    <!-- Added Trade View chart -->
+    <h2 class="section-title">Trade View</h2>
+    <section class="chart-card">
+      <div class="chart-heading">
+        <h2 id="chartTitle">Live Market Chart</h2>
+        <span class="chart-provider">TradingView</span>
+      </div>
+
+      <div class="chart-frame" id="chartFrame">
+        <div class="chart-message" id="chartMessage">
+          Loading market chart...
+        </div>
+      </div>
+    </section>
+
+    <h2 class="section-title">Market statistics</h2>
+
+    <section class="stats-grid">
+      <div class="stats-card">
+        <div class="stat-label">24h Trading Volume</div>
+        <div class="stat-value" id="assetVolume">—</div>
+      </div>
+
+      <div class="stats-card">
+        <div class="stat-label">Market Capitalization</div>
+        <div class="stat-value" id="assetMarketCap">—</div>
+      </div>
+
+      <div class="stats-card">
+        <div class="stat-label">Market Rank</div>
+        <div class="stat-value" id="assetRank">—</div>
+      </div>
+    </section>
+
+    <section class="market-card">
+      <h2 style="margin:0 0 10px;font-size:18px;">Asset information</h2>
+
+      <div class="market-row">
+        <span>Asset name</span>
+        <strong id="infoName">—</strong>
+      </div>
+
+      <div class="market-row">
+        <span>Symbol</span>
+        <strong id="infoSymbol">—</strong>
+      </div>
+
+      <div class="market-row">
+        <span>Price currency</span>
+        <strong>USD</strong>
+      </div>
+
+      <div class="market-row">
+        <span>Data source</span>
+        <strong>CoinWave Market API</strong>
+      </div>
+    </section>
   </main>
 
+  <footer>
+    © <span id="year"></span> CoinWave. Market prices are informational and may change.
+  </footer>
+
   <script>
-    'use strict';
+    (function () {
+      'use strict';
 
-    document.getElementById('year').textContent =
-      new Date().getFullYear();
+      const params = new URLSearchParams(window.location.search);
+      const symbol = String(params.get('symbol') || '').trim().toUpperCase();
 
-    // Return to the actual previous page, preserving its browser history
-    // and scroll position. Only use Home when no previous entry exists.
-    document.getElementById('backButton').addEventListener('click', function () {
-      if (window.history.length > 1) {
-        window.history.back();
-      } else {
-        window.location.assign('/');
-      }
-    });
+      const elements = {
+        name: document.getElementById('assetName'),
+        symbol: document.getElementById('assetSymbol'),
+        logo: document.getElementById('assetLogo'),
+        price: document.getElementById('assetPrice'),
+        change: document.getElementById('assetChange'),
+        volume: document.getElementById('assetVolume'),
+        marketCap: document.getElementById('assetMarketCap'),
+        rank: document.getElementById('assetRank'),
+        infoName: document.getElementById('infoName'),
+        infoSymbol: document.getElementById('infoSymbol'),
+        breadcrumb: document.getElementById('breadcrumbAsset'),
+        status: document.getElementById('updateStatus'),
+        error: document.getElementById('errorMessage')
+      };
 
-    const content = document.getElementById('assetContent');
-    const params = new URLSearchParams(window.location.search);
-    const requestedSymbol = (params.get('symbol') || '').trim().toUpperCase();
+      document.getElementById('year').textContent = new Date().getFullYear();
 
-    function escapeHTML(value) {
-      return String(value ?? '').replace(/[&<>"']/g, function (char) {
-        return ({
-          '&':'&amp;',
-          '<':'&lt;',
-          '>':'&gt;',
-          '"':'&quot;',
-          "'":'&#39;'
-        })[char];
-      });
-    }
-
-    function money(value) {
-      const number = Number(value);
-      if (!Number.isFinite(number)) return '—';
-
-      return new Intl.NumberFormat('en-US', {
-        style:'currency',
-        currency:'USD',
-        maximumFractionDigits:number < 1 ? 8 : 2
-      }).format(number);
-    }
-
-    function compactMoney(value) {
-      const number = Number(value);
-      if (!Number.isFinite(number)) return '—';
-
-      return new Intl.NumberFormat('en-US', {
-        style:'currency',
-        currency:'USD',
-        notation:'compact',
-        maximumFractionDigits:2
-      }).format(number);
-    }
-
-    function renderAsset(asset) {
-      const symbol = String(asset.symbol || '').toUpperCase();
-      const name = escapeHTML(asset.name || symbol);
-      const safeSymbol = encodeURIComponent(symbol);
-      const change = Number(asset.change24h);
-      const hasChange = Number.isFinite(change);
-      const changeClass = !hasChange
-        ? 'neutral'
-        : change >= 0 ? 'positive' : 'negative';
-
-      const changeText = hasChange
-        ? (change > 0 ? '+' : '') + change.toFixed(2) + '%'
-        : 'Unavailable';
-
-      const image = asset.image
-        ? `<img class="coin-logo" src="${escapeHTML(asset.image)}"
-             alt="${name} logo"
-             onerror="this.style.display='none'">`
-        : `<div class="coin-logo" aria-hidden="true"
-             style="display:grid;place-items:center;font-weight:850;color:#087cf0">
-             ${escapeHTML(symbol.slice(0,3))}
-           </div>`;
-
-      content.innerHTML = `
-        <section class="heading">
-          ${image}
-          <div>
-            <h1>${name}</h1>
-            <div class="symbol">${escapeHTML(symbol)} · Digital Asset</div>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="price-label">Current market price</div>
-          <div class="price">${money(asset.price)}</div>
-          <span class="change ${changeClass}">${changeText} <span style="margin-left:4px">24h</span></span>
-
-          <div class="stats" style="margin-top:22px">
-            <div class="stat">
-              <div class="stat-label">Market Capitalization</div>
-              <div class="stat-value">${compactMoney(asset.marketCap)}</div>
-            </div>
-            <div class="stat">
-              <div class="stat-label">24h Trading Volume</div>
-              <div class="stat-value">${compactMoney(asset.volume24h)}</div>
-            </div>
-            <div class="stat">
-              <div class="stat-label">Market Rank</div>
-              <div class="stat-value">${asset.rank ? '#' + escapeHTML(asset.rank) : '—'}</div>
-            </div>
-          </div>
-
-          <div class="actions">
-            <a class="action buy"
-               href="/login?asset=${safeSymbol}&side=buy">Buy ${escapeHTML(symbol)}</a>
-            <a class="action sell"
-               href="/login?asset=${safeSymbol}&side=sell">Sell ${escapeHTML(symbol)}</a>
-          </div>
-
-          <p class="notice">
-            Market prices and statistics are provided for information and may
-            change. Buy and Sell actions require you to sign in. An order is
-            not submitted until the platform's order process is completed.
-          </p>
-        </section>
-      `;
-    }
-
-    async function loadAsset() {
-      if (!/^[A-Z0-9]{1,15}$/.test(requestedSymbol)) {
-        content.innerHTML =
-          '<div class="status error">A valid asset symbol is required.</div>';
-        return;
+      // Return to the actual previous page where browser history exists.
+      function goBack() {
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          window.location.assign('/');
+        }
       }
 
-      try {
-        const response = await fetch('/api/markets', {
-          headers:{ accept:'application/json' },
-          cache:'no-store'
-        });
+      document.getElementById('backButton').addEventListener('click', goBack);
 
-        if (!response.ok) {
-          throw new Error('Market data is temporarily unavailable.');
+      function formatMoney(value) {
+        if (value === null || value === undefined || !Number.isFinite(Number(value))) {
+          return '—';
         }
 
-        const result = await response.json();
-        const markets = Array.isArray(result)
-          ? result
-          : Array.isArray(result.markets)
-            ? result.markets
-            : Array.isArray(result.data)
-              ? result.data
-              : [];
+        const number = Number(value);
 
-        const asset = markets.find(function (item) {
-          return String(item.symbol || '').toUpperCase() === requestedSymbol;
+        return '$' + number.toLocaleString('en-US', {
+          minimumFractionDigits: number >= 1 ? 2 : 4,
+          maximumFractionDigits: number >= 1 ? 2 : 8
         });
+      }
 
-        if (!asset) {
-          content.innerHTML =
-            '<div class="status error">Asset not found in the available market data.</div>';
+      function formatCompact(value) {
+        if (value === null || value === undefined || !Number.isFinite(Number(value))) {
+          return '—';
+        }
+
+        return '$' + Number(value).toLocaleString('en-US', {
+          notation: 'compact',
+          maximumFractionDigits: 2
+        });
+      }
+
+      function showError(message) {
+        elements.error.textContent = message;
+        elements.error.style.display = 'block';
+        elements.status.textContent = 'Market data unavailable.';
+      }
+
+      // Only known TradingView market pairs are enabled.
+      function loadTradeView(coinSymbol) {
+        const pairs = {
+          BTC: 'BINANCE:BTCUSDT',
+          ETH: 'BINANCE:ETHUSDT',
+          BNB: 'BINANCE:BNBUSDT',
+          SOL: 'BINANCE:SOLUSDT',
+          XRP: 'BINANCE:XRPUSDT',
+          ADA: 'BINANCE:ADAUSDT',
+          DOGE: 'BINANCE:DOGEUSDT',
+          TRX: 'BINANCE:TRXUSDT',
+          LTC: 'BINANCE:LTCUSDT',
+          DOT: 'BINANCE:DOTUSDT',
+          LINK: 'BINANCE:LINKUSDT',
+          AVAX: 'BINANCE:AVAXUSDT',
+          BCH: 'BINANCE:BCHUSDT',
+          ETC: 'BINANCE:ETCUSDT',
+          XLM: 'BINANCE:XLMUSDT',
+          TON: 'BINANCE:TONUSDT',
+          SHIB: 'BINANCE:SHIBUSDT',
+          UNI: 'BINANCE:UNIUSDT',
+          NEAR: 'BINANCE:NEARUSDT',
+          APT: 'BINANCE:APTUSDT'
+        };
+
+        const pair = pairs[coinSymbol];
+        const frame = document.getElementById('chartFrame');
+        const message = document.getElementById('chartMessage');
+
+        document.getElementById('chartTitle').textContent =
+          coinSymbol + ' Market Chart';
+
+        if (!pair) {
+          message.textContent =
+            'A TradingView chart is not currently configured for this asset. Market information remains available above.';
           return;
         }
 
-        renderAsset(asset);
-      } catch (error) {
-        content.innerHTML = `
-          <div class="status error">
-            ${escapeHTML(error.message || 'Unable to load asset information.')}
-            <div style="margin-top:12px">
-              <button class="back-btn" type="button" onclick="location.reload()">
-                Try again
-              </button>
-            </div>
-          </div>
-        `;
-      }
-    }
+        const chartUrl = new URL(
+          'https://s.tradingview.com/widgetembed/'
+        );
 
-    loadAsset();
+        chartUrl.search = new URLSearchParams({
+          symbol: pair,
+          interval: '60',
+          hidesidetoolbar: '0',
+          symboledit: '0',
+          saveimage: '0',
+          toolbarbg: '#f1f3f6',
+          theme: 'light',
+          style: '1',
+          timezone: 'Etc/UTC',
+          withdateranges: '1',
+          hideideas: '1',
+          locale: 'en'
+        }).toString();
+
+        const iframe = document.createElement('iframe');
+        iframe.title = coinSymbol + ' TradingView market chart';
+        iframe.loading = 'lazy';
+        iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+        iframe.allowFullscreen = true;
+        iframe.src = chartUrl.toString();
+
+        frame.replaceChildren(iframe);
+      }
+
+      function displayAsset(asset) {
+        const coinSymbol = String(asset.symbol || '').toUpperCase();
+        const name = asset.name || coinSymbol;
+
+        elements.name.textContent = name;
+        elements.symbol.textContent = coinSymbol;
+        elements.breadcrumb.textContent = name;
+        elements.price.textContent = formatMoney(asset.price);
+        elements.volume.textContent = formatCompact(asset.volume24h);
+        elements.marketCap.textContent = formatCompact(asset.marketCap);
+        elements.rank.textContent = asset.rank ? '#' + asset.rank : '—';
+        elements.infoName.textContent = name;
+        elements.infoSymbol.textContent = coinSymbol;
+
+        const change = Number(asset.change24h);
+
+        if (Number.isFinite(change)) {
+          const positive = change > 0;
+          const zero = change === 0;
+
+          elements.change.textContent =
+            (positive ? '+' : '') + change.toFixed(2) + '% (24h)';
+
+          elements.change.className =
+            'change ' + (zero ? 'neutral' : positive ? 'positive' : 'negative');
+        } else {
+          elements.change.textContent = '24h change unavailable';
+          elements.change.className = 'change neutral';
+        }
+
+        if (asset.image) {
+          elements.logo.src = asset.image;
+          elements.logo.alt = name + ' logo';
+          elements.logo.hidden = false;
+          elements.logo.onerror = function () {
+            elements.logo.hidden = true;
+          };
+        }
+
+        document.getElementById('buySymbol').textContent = coinSymbol;
+        document.getElementById('sellSymbol').textContent = coinSymbol;
+
+        document.getElementById('buyButton').href =
+          '/login?asset=' + encodeURIComponent(coinSymbol) + '&side=buy';
+
+        document.getElementById('sellButton').href =
+          '/login?asset=' + encodeURIComponent(coinSymbol) + '&side=sell';
+
+        loadTradeView(coinSymbol);
+
+        elements.error.style.display = 'none';
+        elements.status.textContent =
+          'Last updated: ' + new Date().toLocaleTimeString();
+      }
+
+      async function loadAsset() {
+        if (!/^[A-Z0-9]{1,15}$/.test(symbol)) {
+          showError('Invalid asset symbol. Return to the markets page and select a cryptocurrency.');
+          elements.name.textContent = 'Asset not found';
+          return;
+        }
+
+        elements.symbol.textContent = symbol;
+        elements.infoSymbol.textContent = symbol;
+
+        try {
+          const response = await fetch('/api/markets', {
+            headers: { Accept: 'application/json' },
+            cache: 'no-store'
+          });
+
+          if (!response.ok) {
+            throw new Error('The market service returned an error.');
+          }
+
+          const markets = await response.json();
+
+          if (!Array.isArray(markets)) {
+            throw new Error('The market service returned invalid data.');
+          }
+
+          const asset = markets.find(function (coin) {
+            return String(coin.symbol || '').toUpperCase() === symbol;
+          });
+
+          if (!asset) {
+            throw new Error('This asset was not found in the available market list.');
+          }
+
+          displayAsset(asset);
+        } catch (error) {
+          console.error('CoinWave asset page:', error);
+          showError(error.message || 'Unable to load this asset. Please try again.');
+        }
+      }
+
+      loadAsset();
+
+      // Refresh the selected asset's market information every minute.
+      window.setInterval(loadAsset, 60000);
+    })();
   </script>
 </body>
 </html>
