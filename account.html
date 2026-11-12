@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CoinWave | Account</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .auth { max-width: 420px; margin: 40px auto; }
+    .auth h1 { font-size: 28px; letter-spacing: -.02em; }
+    .auth .sub { color: var(--muted); margin: 8px 0 24px; }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+    .field input { width: 100%; height: 46px; padding: 0 14px; border-radius: 8px; background: var(--surface);
+      border: 1px solid var(--line); color: var(--text); font: 16px var(--font); }
+    .field input:focus { border-color: var(--accent); outline: none; }
+    .err { color: var(--down); font-size: 14px; min-height: 20px; margin-bottom: 12px; }
+    .auth .btn { width: 100%; height: 48px; }
+    .alt { margin-top: 20px; color: var(--muted); font-size: 15px; text-align: center; }
+    .alt a { color: var(--accent); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <header class="header"><div class="wrap"><a class="logo" href="/">Coin<b>Wave</b></a></div></header>
+  <main class="wrap">
+    <form class="auth" id="form" novalidate>
+      <h1 id="title"></h1>
+      <p class="sub" id="sub"></p>
+      <div class="field" id="nameField"><label for="name">Full name</label><input id="name" autocomplete="name"></div>
+      <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="email" inputmode="email"></div>
+      <div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password"></div>
+      <div class="err" id="err" role="alert"></div>
+      <button class="btn btn-primary" id="go" type="submit"></button>
+      <p class="alt" id="alt"></p>
+    </form>
+  </main>
+  <script>
+    var signup = location.pathname === '/signup';
+    document.title = 'CoinWave | ' + (signup ? 'Create account' : 'Log in');
+    document.getElementById('title').textContent = signup ? 'Create your account' : 'Log in';
+    document.getElementById('sub').textContent = signup ? 'Use at least 8 characters for your password.' : 'Welcome back.';
+    document.getElementById('go').textContent = signup ? 'Create account' : 'Log in';
+    document.getElementById('nameField').style.display = signup ? 'block' : 'none';
+    document.getElementById('password').autocomplete = signup ? 'new-password' : 'current-password';
+    document.getElementById('alt').innerHTML = signup
+      ? 'Already have an account? <a href="/login">Log in</a>'
+      : 'New to CoinWave? <a href="/signup">Create an account</a>';
+
+    document.getElementById('form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var err = document.getElementById('err'), btn = document.getElementById('go');
+      err.textContent = ''; btn.disabled = true;
+      fetch('/api/auth/' + (signup ? 'signup' : 'login'), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: document.getElementById('name').value, email: document.getElementById('email').value, password: document.getElementById('password').value })
+      }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (x) { if (x.ok) location.href = '/dashboard'; else { err.textContent = x.d.error || 'Something went wrong.'; btn.disabled = false; } })
+        .catch(function () { err.textContent = 'Network error. Check your connection and try again.'; btn.disabled = false; });
+    });
+  </script>
+</body>
+</html>
