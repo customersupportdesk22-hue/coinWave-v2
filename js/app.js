@@ -519,13 +519,19 @@
       })
       .then(setCoins)
       .catch(function () {
-        message('Prices are unavailable', 'Check your connection or try refreshing the page.');
+        if (!coins.length) {
+          message('Prices are temporarily unavailable', 'Check your connection. CoinWave will keep trying to refresh market data.');
+        } else if (updatedTarget) {
+          updatedTarget.textContent = 'Showing saved market data · latest refresh unavailable';
+        }
       });
   }
 
   markHeads();
   search.addEventListener('input', render);
   if (year) year.textContent = new Date().getFullYear();
+  // Render a recent session snapshot immediately while the live API refreshes.
+  restoreSnapshot();
   load();
 
   // Refresh the market list every minute; live ticker updates prices between refreshes.
