@@ -17,10 +17,8 @@ const app = express();
 // --------------------------------------------------
 
 const PORT = Number(process.env.PORT) || 3000;
-
 const CACHE_MS = 60 * 1000;
 const API_TIMEOUT_MS = 12000;
-
 const ROOT = __dirname;
 
 const allowedOrigins = new Set(
@@ -43,7 +41,6 @@ const allowedOrigins = new Set(
 // --------------------------------------------------
 
 app.disable('x-powered-by');
-
 app.set('trust proxy', 1);
 
 app.use(helmet({
@@ -53,10 +50,6 @@ app.use(helmet({
 
 // --------------------------------------------------
 // CORS
-//
-// Same-origin website requests work without CORS.
-// Configure CORS_ORIGINS only if another trusted
-// frontend needs to access this API.
 // --------------------------------------------------
 
 const corsOptions = {
@@ -73,10 +66,7 @@ const corsOptions = {
       return callback(null, false);
     }
 
-    callback(
-      null,
-      allowedOrigins.has(normalized)
-    );
+    return callback(null, allowedOrigins.has(normalized));
   },
 
   credentials: true,
@@ -93,7 +83,15 @@ const corsOptions = {
   allowedHeaders: [
     'Content-Type',
     'Authorization',
-    'X-Requested-With'
+    'X-Requested-With',
+    'Idempotency-Key',
+    'X-Request-ID'
+  ],
+
+  exposedHeaders: [
+    'X-RateLimit-Limit',
+    'X-RateLimit-Remaining',
+    'X-Market-Data-Stale'
   ],
 
   optionsSuccessStatus: 204
@@ -103,10 +101,6 @@ app.use(cors(corsOptions));
 
 // --------------------------------------------------
 // BROWSER ORIGIN PROTECTION
-//
-// Reject unsafe browser requests from untrusted
-// origins. Requests without Origin are permitted
-// for server-to-server clients.
 // --------------------------------------------------
 
 const unsafeMethods = new Set([
@@ -129,8 +123,7 @@ function isTrustedOrigin(origin, req) {
     return false;
   }
 
-  const ownOrigin =
-    req.protocol + '://' + req.get('host');
+  const ownOrigin = `${req.protocol}://${req.get('host')}`;
 
   return (
     normalized === ownOrigin ||
@@ -157,15 +150,13 @@ app.use((req, res, next) => {
 
   const referer = req.get('referer');
 
-  if (referer) {
-    if (!isTrustedOrigin(referer, req)) {
-      return res.status(403).json({
-        error: 'Request origin is not allowed.'
-      });
-    }
+  if (referer && !isTrustedOrigin(referer, req)) {
+    return res.status(403).json({
+      error: 'Request origin is not allowed.'
+    });
   }
 
-  next();
+  return next();
 });
 
 // --------------------------------------------------
@@ -177,32 +168,39 @@ app.use(express.json({
   strict: true
 }));
 
+app.use(express.urlencoded({
+  extended: false,
+  limit: '100kb'
+}));
+
 // --------------------------------------------------
 // PUBLIC WEBSITE PAGES
-//
-// Only explicitly named HTML pages are served.
-// Backend JavaScript, configuration and database
-// files are not exposed through express.static().
 // --------------------------------------------------
 
 function sendFirst(res, candidates, noStore = false) {
   for (const candidate of candidates) {
     const filePath = path.resolve(ROOT, candidate);
 
-    // Prevent paths outside the project directory.
-    if (path.dirname(filePath) !== ROOT &&
-        !filePath.startsWith(ROOT + path.sep)) {
+    if (
+      path.dirname(filePath) !== ROOT &&
+      !filePath.startsWith(ROOT + path.sep)
+    ) {
       continue;
     }
 
-    if (fs.existsSync(filePath) &&
-        fs.statSync(filePath).isFile()) {
+    try {
+      if (
+        fs.existsSync(filePath) &&
+        fs.statSync(filePath).isFile()
+      ) {
+        if (noStore) {
+          res.set('Cache-Control', 'no-store');
+        }
 
-      if (noStore) {
-        res.set('Cache-Control', 'no-store');
+        return res.sendFile(filePath);
       }
-
-      return res.sendFile(filePath);
+    } catch (error) {
+      console.error('Static page check failed:', error.message);
     }
   }
 
@@ -255,13 +253,13 @@ app.get(['/app.js', '/js/app.js'], (req, res) => {
   ]);
 });
 
-// Explicitly serve the known CoinWave banner.
+// CoinWave banner
 app.get('/coinwave-banner.png', (req, res) => {
   sendFirst(res, ['coinwave-banner.png']);
 });
 
-// Serve files placed in a dedicated public assets folder.
-// Do not put backend code, secrets or configuration here.
+// Public assets folder only.
+// Never place .env, backend files or private keys here.
 const assetsDirectory = path.join(ROOT, 'assets');
 
 if (fs.existsSync(assetsDirectory)) {
@@ -292,21 +290,32 @@ mongoose.connection.on('disconnected', () => {
   console.warn('MongoDB disconnected');
 });
 
-mongoose.connection.on('error', err => {
+mongoose.connection.on('error', error => {
   dbState = 'error';
-
-  console.error(
-    'MongoDB error:',
-    err.message
-  );
+  console.error('MongoDB error:', error.message);
 });
+
+function requireDatabase(req, res, next) {
+  if (mongoose.connection.readyState === 1) {
+    return next();
+  }
+
+  return res.status(503).json({
+    error: 'Database is temporarily unavailable.',
+    database: dbState
+  });
+}
+
+// --------------------------------------------------
+// HEALTH CHECK
+// --------------------------------------------------
 
 app.get('/api/health', (req, res) => {
   res.set('Cache-Control', 'no-store');
 
-  const healthy = dbState === 'connected';
+  const healthy = mongoose.connection.readyState === 1;
 
-  res.status(healthy ? 200 : 503).json({
+  return res.status(healthy ? 200 : 503).json({
     status: healthy ? 'ok' : 'degraded',
     database: dbState,
     timestamp: new Date().toISOString()
@@ -317,11 +326,11 @@ app.get('/api/health', (req, res) => {
 // API ROUTES
 // --------------------------------------------------
 
-app.use('/api/auth', require('./auth'));
+app.use('/api/auth', requireDatabase, require('./auth'));
 
-app.use('/api/admin', require('./admin'));
+app.use('/api/admin', requireDatabase, require('./admin'));
 
-app.use('/api/orders', require('./orders'));
+app.use('/api/orders', requireDatabase, require('./orders'));
 
 // --------------------------------------------------
 // MARKET DATA CACHE
@@ -345,11 +354,18 @@ const MARKET_MAX_REQUESTS = 60;
 
 function marketRateLimit(req, res, next) {
   const now = Date.now();
-  const ip = req.ip || req.socket.remoteAddress || 'unknown';
+
+  const ip =
+    req.ip ||
+    req.socket.remoteAddress ||
+    'unknown';
 
   let record = marketLimits.get(ip);
 
-  if (!record || now - record.start >= MARKET_WINDOW_MS) {
+  if (
+    !record ||
+    now - record.start >= MARKET_WINDOW_MS
+  ) {
     record = {
       start: now,
       count: 0
@@ -357,10 +373,8 @@ function marketRateLimit(req, res, next) {
   }
 
   record.count += 1;
-
   marketLimits.set(ip, record);
 
-  // Keep the in-memory map from growing indefinitely.
   if (marketLimits.size > 10000) {
     for (const [key, value] of marketLimits) {
       if (now - value.start >= MARKET_WINDOW_MS) {
@@ -369,19 +383,29 @@ function marketRateLimit(req, res, next) {
     }
   }
 
-  res.set('X-RateLimit-Limit', String(MARKET_MAX_REQUESTS));
+  res.set(
+    'X-RateLimit-Limit',
+    String(MARKET_MAX_REQUESTS)
+  );
 
   res.set(
     'X-RateLimit-Remaining',
-    String(Math.max(0, MARKET_MAX_REQUESTS - record.count))
+    String(
+      Math.max(0, MARKET_MAX_REQUESTS - record.count)
+    )
   );
 
   if (record.count > MARKET_MAX_REQUESTS) {
     res.set(
       'Retry-After',
-      String(Math.ceil(
-        (record.start + MARKET_WINDOW_MS - now) / 1000
-      ))
+      String(
+        Math.max(
+          1,
+          Math.ceil(
+            (record.start + MARKET_WINDOW_MS - now) / 1000
+          )
+        )
+      )
     );
 
     return res.status(429).json({
@@ -389,7 +413,7 @@ function marketRateLimit(req, res, next) {
     });
   }
 
-  next();
+  return next();
 }
 
 // --------------------------------------------------
@@ -398,6 +422,15 @@ function marketRateLimit(req, res, next) {
 // --------------------------------------------------
 
 async function fetchJson(url) {
+  if (
+    typeof fetch !== 'function' ||
+    typeof AbortController !== 'function'
+  ) {
+    throw new Error(
+      'This server requires Node.js 18 or newer.'
+    );
+  }
+
   const controller = new AbortController();
 
   const timer = setTimeout(() => {
@@ -414,7 +447,7 @@ async function fetchJson(url) {
 
     if (!response.ok) {
       throw new Error(
-        'Market provider returned status ' + response.status
+        `Market provider returned status ${response.status}`
       );
     }
 
@@ -430,7 +463,11 @@ async function fetchJson(url) {
 // --------------------------------------------------
 
 function numberOrNull(value) {
-  if (value === null || value === undefined || value === '') {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ''
+  ) {
     return null;
   }
 
@@ -447,13 +484,19 @@ function sortByMarketCap(data) {
   }
 
   return data
-    .filter(coin =>
-      coin &&
-      typeof coin === 'object' &&
-      /^[A-Z0-9]{1,15}$/.test(String(coin.symbol || '')) &&
-      numberOrNull(coin.marketCap) !== null &&
-      numberOrNull(coin.marketCap) >= 0
-    )
+    .filter(coin => {
+      const symbol = String(coin?.symbol || '');
+
+      const marketCap = numberOrNull(
+        coin?.marketCap
+      );
+
+      return (
+        /^[A-Z0-9]{1,15}$/.test(symbol) &&
+        marketCap !== null &&
+        marketCap >= 0
+      );
+    })
     .sort((a, b) =>
       numberOrNull(b.marketCap) -
       numberOrNull(a.marketCap)
@@ -504,10 +547,9 @@ async function fromCoinGecko() {
 // --------------------------------------------------
 
 async function fromCoinPaprika() {
-  const url =
-    'https://api.coinpaprika.com/v1/tickers?quotes=USD';
-
-  const raw = await fetchJson(url);
+  const raw = await fetchJson(
+    'https://api.coinpaprika.com/v1/tickers?quotes=USD'
+  );
 
   if (!Array.isArray(raw)) {
     throw new Error('Invalid CoinPaprika response');
@@ -519,10 +561,7 @@ async function fromCoinPaprika() {
       Number(coin.rank) <= 100
     )
     .map(coin => {
-      const usd =
-        coin.quotes && coin.quotes.USD
-          ? coin.quotes.USD
-          : {};
+      const usd = coin.quotes?.USD || {};
 
       return {
         rank: numberOrNull(coin.rank),
@@ -564,7 +603,10 @@ async function refreshMarkets() {
     try {
       const data = await source.getData();
 
-      if (!Array.isArray(data) || data.length === 0) {
+      if (
+        !Array.isArray(data) ||
+        data.length === 0
+      ) {
         throw new Error('No valid market data returned');
       }
 
@@ -574,29 +616,29 @@ async function refreshMarkets() {
       };
 
       console.log(
-        source.name + ' market data updated'
+        `${source.name} market data updated`
       );
 
       return data;
 
-    } catch (err) {
+    } catch (error) {
       console.error(
-        source.name + ' market error:',
-        err.name === 'AbortError'
+        `${source.name} market error:`,
+        error.name === 'AbortError'
           ? 'Request timed out'
-          : err.message
+          : error.message
       );
     }
   }
 
-  // Keep the last successful result if providers fail.
   if (cache.data && cache.data.length > 0) {
     console.warn('Using previously cached market data');
-
     return cache.data;
   }
 
-  throw new Error('Market data is temporarily unavailable');
+  throw new Error(
+    'Market data is temporarily unavailable'
+  );
 }
 
 // --------------------------------------------------
@@ -609,7 +651,6 @@ app.get(
   async (req, res) => {
     res.set('Cache-Control', 'no-store');
 
-    // Fresh cached response.
     if (
       cache.data &&
       Date.now() - cache.time < CACHE_MS
@@ -618,7 +659,6 @@ app.get(
     }
 
     try {
-      // Prevent multiple simultaneous provider requests.
       if (!marketRequest) {
         marketRequest = refreshMarkets().finally(() => {
           marketRequest = null;
@@ -627,14 +667,20 @@ app.get(
 
       const data = await marketRequest;
 
-      if (cache.time && Date.now() - cache.time >= CACHE_MS) {
+      if (
+        cache.time &&
+        Date.now() - cache.time >= CACHE_MS
+      ) {
         res.set('X-Market-Data-Stale', 'true');
       }
 
       return res.json(data);
 
-    } catch (err) {
-      console.error('Market API error:', err.message);
+    } catch (error) {
+      console.error(
+        'Market API error:',
+        error.message
+      );
 
       return res.status(503).json({
         error: 'Market data is temporarily unavailable.',
@@ -658,35 +704,35 @@ app.use('/api', (req, res) => {
 // GLOBAL ERROR HANDLER
 // --------------------------------------------------
 
-app.use((err, req, res, next) => {
+app.use((error, req, res, next) => {
   console.error(
     'CoinWave server error:',
-    err.message
+    error.message
   );
 
   if (res.headersSent) {
-    return next(err);
+    return next(error);
   }
 
-  if (err && err.type === 'entity.too.large') {
+  if (error?.type === 'entity.too.large') {
     return res.status(413).json({
       error: 'Request body is too large.'
     });
   }
 
-  if (err && err.type === 'entity.parse.failed') {
+  if (error?.type === 'entity.parse.failed') {
     return res.status(400).json({
       error: 'Invalid JSON request.'
     });
   }
 
-  if (err && err.name === 'ValidationError') {
+  if (error?.name === 'ValidationError') {
     return res.status(400).json({
       error: 'Submitted information is invalid.'
     });
   }
 
-  res.status(500).json({
+  return res.status(500).json({
     error: 'A server error occurred. Please try again.'
   });
 });
@@ -698,34 +744,42 @@ app.use((err, req, res, next) => {
 async function startServer() {
   if (process.env.MONGO_URI) {
     try {
-      await mongoose.connect(process.env.MONGO_URI, {
-        serverSelectionTimeoutMS: 10000
-      });
+      await mongoose.connect(
+        process.env.MONGO_URI,
+        {
+          serverSelectionTimeoutMS: 10000
+        }
+      );
 
       dbState = 'connected';
 
-      console.log('MongoDB connection established');
+      console.log(
+        'MongoDB connection established'
+      );
 
-    } catch (err) {
+    } catch (error) {
       dbState = 'error';
 
       console.error(
         'MongoDB connection failed:',
-        err.message
+        error.message
       );
 
-      // Keep the website running, but database-dependent
-      // features will return service-unavailable responses.
+      // Public pages and market data can remain available.
+      // Database APIs return 503 until MongoDB reconnects.
     }
+
   } else {
     dbState = 'not_configured';
 
-    console.error('MONGO_URI is not configured');
+    console.error(
+      'MONGO_URI is not configured'
+    );
   }
 
   const server = app.listen(PORT, () => {
     console.log(
-      'CoinWave v2 running on port ' + PORT
+      `CoinWave v2 running on port ${PORT}`
     );
   });
 
@@ -736,11 +790,13 @@ async function startServer() {
   return server;
 }
 
-startServer().catch(err => {
+startServer().catch(error => {
   console.error(
     'CoinWave startup error:',
-    err.message
+    error.message
   );
 
   process.exit(1);
 });
+
+module.exports = app;
