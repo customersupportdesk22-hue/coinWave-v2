@@ -208,6 +208,26 @@
     @media(max-width:680px){.movers-heading{align-items:flex-start;flex-direction:column}.movers-grid{grid-template-columns:1fr}.mover-panel{padding:17px}.mover-link{grid-template-columns:minmax(0,1fr) max-content minmax(66px,auto);gap:8px}.mover-price{font-size:11px}.mover-change{min-width:66px;font-size:11px}.trust-strip .wrap{grid-template-columns:1fr;gap:12px;padding:17px 0}.trust-item{justify-content:flex-start;text-align:left}.trust-item-links{justify-content:flex-start}}
     @media(prefers-reduced-motion:reduce){.skeleton-line{animation:none}}
 
+    /* Refined, compact typography and reliable market-row layout */
+    body{font-size:14px}
+    .hero h1{font-size:clamp(32px,4.5vw,48px);line-height:1.12;letter-spacing:-1.25px}
+    .hero-copy p{font-size:15px;line-height:1.7}
+    .section-title{font-size:clamp(25px,3vw,32px);letter-spacing:-.7px}
+    .section-subtitle{font-size:14px;line-height:1.65}
+    .section-head h2{font-size:27px}
+    .feature-card h3,.step-card h3{font-size:15px}
+    .feature-card p,.step-card p{font-size:13px;line-height:1.65}
+    .btn{font-size:13px}.nav .link{font-size:13px}
+    .asset-name{font-size:14px}.asset-price{font-size:17px}
+    .mover-link{grid-template-columns:minmax(0,1fr) minmax(82px,max-content) minmax(64px,72px);gap:8px}
+    .mover-identity{min-width:0;width:100%}
+    .mover-identity>span:last-child{flex:1 1 auto;width:0}
+    .mover-name{max-width:100%;font-size:11.5px}
+    .mover-price{font-size:11.5px;text-align:right}
+    .mover-change{min-width:0;width:100%;font-size:11px}
+    .market-row{cursor:pointer}.market-row:hover{background:#f5f9ff}
+    .market-row:focus-visible{outline:2px solid #8aa5c9;outline-offset:-2px}
+    @media(max-width:680px){.mover-link{grid-template-columns:minmax(0,1fr) minmax(76px,max-content) minmax(62px,68px);gap:6px}.mover-identity img,.mover-icon{width:28px;height:28px;flex-basis:28px}.mover-price,.mover-change{font-size:10.5px}}
   </style>
 </head>
 <body>
