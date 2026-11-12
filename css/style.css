@@ -1,5 +1,13 @@
 
-/* CoinWave Trade — responsive blue, navy and gold theme */
+/* =========================================================
+   COINWAVE TRADE — COMPLETE RESPONSIVE HOMEPAGE STYLESHEET
+   Compatible with index.html and app.js
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   1. THEME VARIABLES
+--------------------------------------------------------- */
+
 :root {
   --bg: #f5f8ff;
   --surface: #ffffff;
@@ -7,23 +15,36 @@
   --line: #e1e8f4;
   --text: #101a35;
   --muted: #68758f;
+
   --accent: #087cf0;
   --accent-hover: #0066d5;
+
   --gold: #ffc400;
   --navy: #06133f;
+
   --up: #16a765;
   --down: #e04454;
   --flat: #8792a8;
+
   --radius: 16px;
   --max: 1160px;
-  --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --font: "IBM Plex Sans", system-ui, -apple-system,
+          "Segoe UI", sans-serif;
 }
 
-* { box-sizing: border-box; }
+/* ---------------------------------------------------------
+   2. GLOBAL STYLES
+--------------------------------------------------------- */
+
+* {
+  box-sizing: border-box;
+}
 
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  scroll-padding-top: 90px;
 }
 
 body {
@@ -38,8 +59,23 @@ a {
   text-decoration: none;
 }
 
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img {
+  max-width: 100%;
+}
+
 :focus-visible {
-  outline: 3px solid rgba(18,200,244,.8);
+  outline: 3px solid rgba(18, 200, 244, .8);
   outline-offset: 3px;
 }
 
@@ -48,23 +84,31 @@ a {
   margin: 0 auto;
 }
 
-/* HEADER */
+/* ---------------------------------------------------------
+   3. HEADER AND NAVIGATION
+--------------------------------------------------------- */
 
 .header {
   position: sticky;
   top: 0;
-  z-index: 10;
-  background: rgba(6,19,63,.97);
+  z-index: 20;
+
   color: #fff;
+  background: rgba(6, 19, 63, .97);
+
   border-bottom: 1px solid rgba(255,255,255,.12);
+
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .header .wrap {
   min-height: 76px;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   gap: 16px;
 }
 
@@ -72,6 +116,7 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+
   color: #fff;
   font-size: 25px;
   font-weight: 800;
@@ -81,12 +126,22 @@ a {
 .logo-mark {
   width: 39px;
   height: 39px;
+
   display: grid;
   place-items: center;
+
   border-radius: 13px;
+
   color: #fff;
   font-size: 22px;
-  background: linear-gradient(145deg, #12c8f4, #087cf0 60%, #06133f);
+
+  background: linear-gradient(
+    145deg,
+    #12c8f4,
+    #087cf0 60%,
+    #06133f
+  );
+
   box-shadow: 0 5px 18px rgba(8,124,240,.3);
 }
 
@@ -105,27 +160,39 @@ a {
   padding: 9px 12px;
   color: #dceaff;
   font-weight: 600;
+  transition: color .2s ease;
 }
 
 .nav .link:hover {
   color: #12c8f4;
 }
 
-/* BUTTONS */
+/* ---------------------------------------------------------
+   4. BUTTONS
+--------------------------------------------------------- */
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
   min-height: 44px;
   padding: 0 20px;
+
   border: 1px solid var(--line);
   border-radius: 11px;
+
   color: var(--navy);
   background: #fff;
+
   font: 700 15px var(--font);
+
   cursor: pointer;
-  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    background .18s ease;
 }
 
 .btn:hover {
@@ -133,8 +200,17 @@ a {
   box-shadow: 0 8px 22px rgba(4,24,73,.12);
 }
 
+.btn:active {
+  transform: translateY(0);
+}
+
 .btn-primary {
-  background: linear-gradient(110deg, #ffda55, var(--gold));
+  background: linear-gradient(
+    110deg,
+    #ffda55,
+    var(--gold)
+  );
+
   border-color: var(--gold);
   color: #08163e;
 }
@@ -160,21 +236,34 @@ a {
   background: rgba(255,255,255,.1);
 }
 
-/* HERO */
+/* ---------------------------------------------------------
+   5. HERO SECTION
+--------------------------------------------------------- */
 
 .hero {
   overflow: hidden;
   padding: 0 0 42px;
+
   color: #fff;
-  background: radial-gradient(ellipse at 82% 8%, #075bb4 0, transparent 42%), var(--navy);
+
+  background:
+    radial-gradient(
+      ellipse at 82% 8%,
+      #075bb4 0,
+      transparent 42%
+    ),
+    var(--navy);
 }
 
 .hero-art {
   display: block;
+
   width: 100%;
   max-height: 410px;
+
   object-fit: cover;
   object-position: center top;
+
   border-bottom: 1px solid rgba(255,255,255,.12);
 }
 
@@ -185,15 +274,19 @@ a {
 
 .eyebrow {
   color: #ffda45;
+
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 2px;
+
   text-transform: uppercase;
 }
 
 .hero h1 {
   max-width: 14em;
+
   margin: 12px auto;
+
   font-size: clamp(32px, 5vw, 49px);
   line-height: 1.1;
   letter-spacing: -.035em;
@@ -201,21 +294,26 @@ a {
 
 .hero p {
   max-width: 38em;
+
   margin: 0 auto;
+
   color: #d8e6ff;
   font-size: 17px;
+  line-height: 1.7;
 }
 
 .hero .actions {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
+
   gap: 12px;
   margin-top: 24px;
 }
 
 .hero .actions .btn:not(.btn-primary) {
   color: #fff;
+
   border-color: rgba(255,255,255,.3);
   background: rgba(255,255,255,.08);
 }
@@ -224,7 +322,60 @@ a {
   background: rgba(255,255,255,.15);
 }
 
-/* MARKETS */
+.trust-strip {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  gap: 24px;
+  margin-top: 30px;
+
+  color: #dce9ff;
+  font-size: 13px;
+}
+
+.trust-strip span::before {
+  content: "✓";
+  margin-right: 7px;
+
+  color: #12c8f4;
+  font-weight: 800;
+}
+
+/* ---------------------------------------------------------
+   6. GENERAL SECTIONS
+--------------------------------------------------------- */
+
+.section {
+  padding: 64px 0;
+}
+
+.section-heading {
+  max-width: 700px;
+
+  margin: 0 auto 30px;
+
+  text-align: center;
+}
+
+.section-heading h2 {
+  margin: 0 0 10px;
+
+  color: var(--navy);
+  font-size: clamp(25px, 4vw, 34px);
+  letter-spacing: -.7px;
+}
+
+.section-heading p {
+  margin: 0;
+
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+/* ---------------------------------------------------------
+   7. CRYPTOCURRENCY MARKETS
+--------------------------------------------------------- */
 
 #markets {
   padding: 58px 0 72px;
@@ -234,27 +385,40 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   gap: 16px;
   flex-wrap: wrap;
+
   margin-bottom: 20px;
 }
 
 .section-head h2 {
   margin: 0;
+
   color: var(--navy);
   font-size: 29px;
   letter-spacing: -.025em;
 }
 
+/* Market search */
+
 .search {
   width: min(100%, 300px);
   height: 44px;
+
   padding: 0 15px;
+
   border-radius: 11px;
-  background: var(--surface);
   border: 1px solid var(--line);
+
   color: var(--text);
+  background: var(--surface);
+
   font: 15px var(--font);
+
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease;
 }
 
 .search::placeholder {
@@ -263,51 +427,61 @@ a {
 
 .search:focus {
   outline: none;
+
   border-color: var(--accent);
+
   box-shadow: 0 0 0 3px rgba(8,124,240,.12);
 }
 
-/* SIX-COLUMN MARKET TABLE */
+/* Market table container */
 
 .table-card {
-  width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
+  overflow: auto;
+
   border: 1px solid var(--line);
   border-radius: var(--radius);
+
   background: var(--surface);
+
   box-shadow: 0 12px 35px rgba(16,42,92,.06);
+
+  -webkit-overflow-scrolling: touch;
 }
 
 table {
   width: 100%;
-  min-width: 850px;
   border-collapse: collapse;
+
   font-variant-numeric: tabular-nums;
 }
 
 th {
   padding: 15px 18px;
+
   color: var(--muted);
   background: #f8faff;
+
   border-bottom: 1px solid var(--line);
+
   text-align: left;
+
   font-size: 12px;
   font-weight: 700;
   letter-spacing: .7px;
+
   text-transform: uppercase;
   white-space: nowrap;
 }
 
 td {
   padding: 15px 18px;
+
   color: #263451;
+
   border-bottom: 1px solid #edf0f6;
-  white-space: nowrap;
 }
 
-tr:last-child td {
+tbody tr:last-child td {
   border-bottom: 0;
 }
 
@@ -317,6 +491,7 @@ tbody tr:hover {
 
 .num {
   text-align: right;
+  white-space: nowrap;
 }
 
 .rank {
@@ -324,21 +499,59 @@ tbody tr:hover {
   color: var(--muted);
 }
 
+/* Sortable table headings added by app.js */
+
+thead th[role="button"] {
+  cursor: pointer;
+  user-select: none;
+  transition: background .15s ease;
+}
+
+thead th[role="button"]:hover {
+  color: var(--accent);
+  background: #edf4ff;
+}
+
+thead th[aria-sort="ascending"],
+thead th[aria-sort="descending"] {
+  color: #0754a8;
+}
+
+thead th[role="button"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -3px;
+}
+
+/* ---------------------------------------------------------
+   8. COIN ROWS GENERATED BY app.js
+--------------------------------------------------------- */
+
 .coin {
   display: flex;
   align-items: center;
   gap: 12px;
+
+  min-width: 130px;
 }
 
 .coin img {
+  display: block;
+
+  flex: 0 0 28px;
+
   width: 28px;
   height: 28px;
+
   border-radius: 50%;
+
   background: var(--surface-2);
-  flex-shrink: 0;
+
+  object-fit: contain;
 }
 
 .coin .n {
+  color: var(--text);
+
   font-weight: 700;
   line-height: 1.2;
 }
@@ -350,33 +563,315 @@ tbody tr:hover {
 
 .up {
   color: var(--up);
+  font-weight: 700;
 }
 
 .down {
   color: var(--down);
+  font-weight: 700;
 }
 
 .flat {
   color: var(--flat);
+  font-weight: 600;
 }
+
+/* Loading, error and empty market messages */
 
 .state {
   padding: 40px 20px;
-  text-align: center;
+
   color: var(--muted);
+  text-align: center;
 }
 
 .state strong {
   display: block;
+
   margin-bottom: 4px;
+
   color: var(--text);
 }
 
-/* FOOTER */
+/* ---------------------------------------------------------
+   9. LIVE MARKET INDICATOR ADDED BY app.js
+--------------------------------------------------------- */
+
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+
+  margin-left: 12px;
+
+  color: #159b64;
+
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+
+  text-transform: none;
+  vertical-align: middle;
+}
+
+.live-indicator[hidden] {
+  display: none;
+}
+
+/* ---------------------------------------------------------
+   10. MARKET UPDATE ANIMATION
+--------------------------------------------------------- */
+
+@keyframes coinwave-price-update {
+  0% {
+    background-color: rgba(8,124,240,.12);
+  }
+
+  100% {
+    background-color: transparent;
+  }
+}
+
+.price-updated {
+  animation: coinwave-price-update .8s ease;
+}
+
+/* ---------------------------------------------------------
+   11. MARKET INFORMATION
+--------------------------------------------------------- */
+
+.market-note {
+  margin-top: 16px;
+
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+/* ---------------------------------------------------------
+   12. TRADINGVIEW CHART
+--------------------------------------------------------- */
+
+.chart-card {
+  overflow: hidden;
+
+  border: 1px solid var(--line);
+  border-radius: 18px;
+
+  background: var(--surface);
+
+  box-shadow: 0 12px 35px rgba(16,42,92,.06);
+}
+
+.chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  gap: 12px;
+
+  padding: 18px 20px;
+
+  border-bottom: 1px solid var(--line);
+}
+
+.chart-head h3 {
+  margin: 0;
+
+  color: var(--navy);
+  font-size: 17px;
+}
+
+.chart-tag {
+  padding: 6px 11px;
+
+  border-radius: 20px;
+
+  color: #0754a8;
+  background: #eaf4ff;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.chart-frame {
+  display: block;
+
+  width: 100%;
+  height: 440px;
+
+  border: 0;
+
+  background: #fff;
+}
+
+/* ---------------------------------------------------------
+   13. POPULAR DIGITAL ASSETS
+--------------------------------------------------------- */
+
+.asset-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+
+  gap: 14px;
+}
+
+.asset-card {
+  padding: 19px 12px;
+
+  border: 1px solid var(--line);
+  border-radius: 15px;
+
+  background: #fff;
+
+  text-align: center;
+
+  box-shadow: 0 7px 22px rgba(16,42,92,.04);
+
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease;
+}
+
+.asset-card:hover {
+  transform: translateY(-3px);
+
+  box-shadow: 0 12px 25px rgba(16,42,92,.09);
+}
+
+.asset-card strong {
+  display: block;
+
+  color: var(--navy);
+  font-size: 17px;
+}
+
+.asset-card span {
+  display: block;
+
+  margin-top: 5px;
+
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* ---------------------------------------------------------
+   14. COINWAVE FEATURE CARDS
+--------------------------------------------------------- */
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 18px;
+}
+
+.feature-card {
+  padding: 25px;
+
+  border: 1px solid var(--line);
+  border-radius: 17px;
+
+  background: #fff;
+
+  box-shadow: 0 8px 25px rgba(16,42,92,.04);
+
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-3px);
+
+  box-shadow: 0 12px 28px rgba(16,42,92,.08);
+}
+
+.feature-icon {
+  width: 44px;
+  height: 44px;
+
+  display: grid;
+  place-items: center;
+
+  margin-bottom: 17px;
+
+  border-radius: 13px;
+
+  color: #0754a8;
+  background: #eaf4ff;
+
+  font-size: 21px;
+}
+
+.feature-card h3 {
+  margin: 0 0 9px;
+
+  color: var(--navy);
+  font-size: 18px;
+}
+
+.feature-card p {
+  margin: 0;
+
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* ---------------------------------------------------------
+   15. ACCOUNT CALL TO ACTION
+--------------------------------------------------------- */
+
+.cta {
+  padding: 48px 25px;
+
+  border-radius: 22px;
+
+  color: #fff;
+
+  background:
+    radial-gradient(
+      circle at 90% 10%,
+      rgba(18,200,244,.28),
+      transparent 35%
+    ),
+    linear-gradient(
+      120deg,
+      #06133f,
+      #0754a8
+    );
+
+  text-align: center;
+}
+
+.cta h2 {
+  margin: 0 0 12px;
+
+  font-size: clamp(25px, 4vw, 34px);
+}
+
+.cta p {
+  max-width: 600px;
+
+  margin: 0 auto;
+
+  color: #d8e6ff;
+  line-height: 1.7;
+}
+
+.cta .btn {
+  margin-top: 22px;
+}
+
+/* ---------------------------------------------------------
+   16. FOOTER
+--------------------------------------------------------- */
 
 .footer {
   margin-top: 20px;
+
   padding: 46px 0 26px;
+
   color: #d6e1f7;
   background: var(--navy);
 }
@@ -384,22 +879,30 @@ tbody tr:hover {
 .footer .cols {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+
   gap: 28px;
+
   margin-bottom: 28px;
 }
 
 .footer h3 {
   margin: 0 0 12px;
+
   color: #fff;
   font-size: 15px;
 }
 
 .footer a {
   display: block;
+
   width: fit-content;
+
   padding: 4px 0;
+
   color: #b9c9e7;
   font-size: 14px;
+
+  transition: color .2s ease;
 }
 
 .footer a:hover {
@@ -408,23 +911,51 @@ tbody tr:hover {
 
 .footer .risk {
   max-width: 65em;
+
   margin: 0 0 16px;
   padding-top: 20px;
+
   border-top: 1px solid rgba(255,255,255,.13);
+
   color: #aebddd;
+
   font-size: 12px;
   line-height: 1.7;
 }
 
 .footer .copy {
   margin: 0;
+
   color: #8799bd;
   font-size: 12px;
 }
 
-/* MOBILE */
+/* ---------------------------------------------------------
+   17. RESPONSIVE TABLET LAYOUT
+--------------------------------------------------------- */
+
+@media (max-width: 800px) {
+
+  .asset-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .feature-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .chart-frame {
+    height: 380px;
+  }
+
+}
+
+/* ---------------------------------------------------------
+   18. RESPONSIVE MOBILE LAYOUT
+--------------------------------------------------------- */
 
 @media (max-width: 640px) {
+
   .wrap {
     width: min(100% - 28px, var(--max));
   }
@@ -473,6 +1004,15 @@ tbody tr:hover {
     font-size: 15px;
   }
 
+  .trust-strip {
+    gap: 12px;
+    font-size: 11px;
+  }
+
+  .section {
+    padding: 46px 0;
+  }
+
   #markets {
     padding: 42px 0 54px;
   }
@@ -482,20 +1022,17 @@ tbody tr:hover {
     flex-direction: column;
   }
 
+  .section-head h2 {
+    font-size: 26px;
+  }
+
   .search {
     width: 100%;
     max-width: none;
   }
 
-  .table-card {
-    border-radius: 13px;
-  }
-
-  table {
-    min-width: 850px;
-  }
-
-  th, td {
+  th,
+  td {
     padding: 13px 11px;
   }
 
@@ -510,11 +1047,24 @@ tbody tr:hover {
   .coin img {
     width: 24px;
     height: 24px;
+    flex-basis: 24px;
   }
 
   .coin .n,
   td.num {
     font-size: 14px;
+  }
+
+  .asset-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-frame {
+    height: 340px;
   }
 
   .footer .cols {
@@ -524,55 +1074,48 @@ tbody tr:hover {
   .footer .cols > div:last-child {
     grid-column: 1 / -1;
   }
+
 }
+
+/* ---------------------------------------------------------
+   19. SMALL PHONE LAYOUT
+--------------------------------------------------------- */
+
+@media (max-width: 360px) {
+
+  .nav .btn-sm {
+    padding: 0 8px;
+    font-size: 12px;
+  }
+
+  .logo {
+    font-size: 20px;
+  }
+
+  .trust-strip {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .chart-frame {
+    height: 300px;
+  }
+
+}
+
+/* ---------------------------------------------------------
+   20. ACCESSIBILITY
+--------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+
+  *,
+  *::before,
+  *::after {
     scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
     transition: none !important;
   }
-}/* Remove blue tap highlight across CoinWave */
-* {
-  -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
-}
-/* CoinWave compact mobile market rows */
-@media (max-width: 600px) {
 
-  .table-card table {
-    line-height: 1.2;
-  }
-
-  .table-card table th {
-    padding: 10px 11px !important;
-  }
-
-  .table-card table td {
-    padding: 7px 11px !important;
-    line-height: 1.2 !important;
-  }
-
-  .table-card .coin {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .table-card .coin img {
-    width: 24px !important;
-    height: 24px !important;
-    flex-shrink: 0;
-  }
-
-  .table-card .coin .n {
-    display: block;
-    font-size: 14px;
-    line-height: 17px !important;
-  }
-
-  .table-card .coin .s {
-    display: block;
-    font-size: 12px;
-    line-height: 15px !important;
-  }
 }
