@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CoinWave | Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .dash { padding: 32px 0 0; }
+    .dash h1 { font-size: 26px; letter-spacing: -.02em; }
+    .dash .email { color: var(--muted); margin-top: 4px; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; margin-top: 20px; }
+    .card h2 { font-size: 15px; font-weight: 500; color: var(--muted); }
+    .total { font-size: 38px; font-weight: 700; letter-spacing: -.02em; margin-top: 6px; font-variant-numeric: tabular-nums; }
+    .empty { text-align: center; padding: 16px 0 4px; }
+    .empty strong { display: block; font-size: 17px; margin-bottom: 6px; }
+    .empty p { color: var(--muted); margin-bottom: 18px; }
+  </style>
+</head>
+<body>
+  <header class="header"><div class="wrap">
+    <a class="logo" href="/">Coin<b>Wave</b></a>
+    <nav class="nav"><a class="link" href="/#markets">Markets</a><button class="btn btn-sm" id="logout">Log out</button></nav>
+  </div></header>
+  <main class="wrap dash">
+    <h1 id="hello">&nbsp;</h1>
+    <p class="email" id="email"></p>
+    <section class="card"><h2>Estimated balance</h2><div class="total">$0.00</div></section>
+    <section class="card"><h2>Your assets</h2>
+      <div class="empty"><strong>No assets yet</strong><p>Deposits and trading arrive in the next phase. For now, browse live prices.</p>
+      <a class="btn btn-primary" href="/#markets">View markets</a></div>
+    </section>
+  </main>
+  <script>
+    fetch('/api/auth/me').then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+      .then(function (u) { document.getElementById('hello').textContent = 'Welcome, ' + u.name; document.getElementById('email').textContent = u.email; })
+      .catch(function () { location.href = '/login'; });
+    document.getElementById('logout').addEventListener('click', function () {
+      fetch('/api/auth/logout', { method: 'POST' }).then(function () { location.href = '/'; });
+    });
+  </script>
+</body>
+</html>
