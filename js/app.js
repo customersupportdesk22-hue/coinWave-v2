@@ -12,9 +12,14 @@
   }
 
   var coins = [];
-  var sort = { key: 'rank', dir: 1 };
 
-  // Must match the six columns in index.html.
+  // Default: highest market capitalization first.
+  var sort = {
+    key: 'marketCap',
+    dir: -1
+  };
+
+  // Six columns in index.html.
   var cols = [
     'rank',
     'name',
@@ -69,7 +74,10 @@
     var c = number(value);
 
     if (c === null || Math.abs(c) < 0.005) {
-      return { text: '0.00%', cls: 'flat' };
+      return {
+        text: '0.00%',
+        cls: 'flat'
+      };
     }
 
     var up = c > 0;
@@ -97,15 +105,17 @@
   function row(c) {
     var tr = document.createElement('tr');
 
-    // Rank
-    tr.appendChild(td('rank hide-sm', String(c.rank || '—')));
+    tr.appendChild(
+      td('rank hide-sm', String(c.rank || '—'))
+    );
 
-    // Coin name, logo and symbol
+    // Coin logo, name and symbol.
     var box = document.createElement('div');
     box.className = 'coin';
 
     if (c.image) {
       var img = document.createElement('img');
+
       img.src = c.image;
       img.alt = '';
       img.loading = 'lazy';
@@ -133,19 +143,19 @@
 
     tr.appendChild(td('', box));
 
-    // Price
+    // Price.
     c._p = td('num', fmtPrice(c.price));
     tr.appendChild(c._p);
 
-    // 24-hour trading volume
+    // 24-hour volume.
     c._v = td('num', fmtCompactUSD(c.volume24h));
     tr.appendChild(c._v);
 
-    // Market capitalization
+    // Market capitalization.
     c._m = td('num', fmtCompactUSD(c.marketCap));
     tr.appendChild(c._m);
 
-    // 24-hour percentage change
+    // 24-hour change.
     var ch = change(c.change24h);
 
     c._c = td('num ' + ch.cls, ch.text);
@@ -154,6 +164,7 @@
     return tr;
   }
 
+  // Loading and error messages.
   function message(title, text) {
     body.replaceChildren();
 
@@ -173,6 +184,7 @@
     body.appendChild(tr);
   }
 
+  // Sort the displayed coins.
   function sortList(list) {
     var k = sort.key;
     var d = sort.dir;
@@ -181,9 +193,8 @@
       var x = a[k];
       var y = b[k];
 
-      if (x == null && y == null) return 0;
-      if (x == null) return 1;
-      if (y == null) return -1;
+      if (x === null || x === undefined) return 1;
+      if (y === null || y === undefined) return -1;
 
       if (typeof x === 'string') {
         return x.localeCompare(String(y)) * d;
@@ -193,6 +204,7 @@
     });
   }
 
+  // Update heading arrows and accessibility.
   function markHeads() {
     heads.forEach(function (th, i) {
       var label = th.getAttribute('data-label') ||
@@ -211,11 +223,17 @@
           ? (sort.dir === 1 ? 'ascending' : 'descending')
           : 'none'
       );
+
+      th.tabIndex = 0;
+      th.setAttribute('role', 'button');
     });
   }
 
+  // Render the market table.
   function render() {
-    var q = search ? search.value.trim().toLowerCase() : '';
+    var q = search
+      ? search.value.trim().toLowerCase()
+      : '';
 
     var list = coins.filter(function (c) {
       return !q ||
@@ -226,7 +244,18 @@
     list = sortList(list);
 
     if (!list.length) {
-      message('No results', 'Try a different name or symbol.');
+      if (coins.length) {
+        message(
+          'No results',
+          'Try a different name or symbol.'
+        );
+      } else {
+        message(
+          'Data unavailable',
+          'Market prices are temporarily unavailable. Please try again shortly.'
+        );
+      }
+
       return;
     }
 
@@ -237,11 +266,9 @@
     });
   }
 
-  // Enable sorting on all six table headings.
+  // Enable sorting on all six headings.
   heads.forEach(function (th, i) {
-    th.style.cursor = 'pointer';
-
-    th.addEventListener('click', function () {
+    function changeSort() {
       var k = cols[i];
 
       if (!k) return;
@@ -255,10 +282,21 @@
 
       markHeads();
       render();
+    }
+
+    th.style.cursor = 'pointer';
+
+    th.addEventListener('click', changeSort);
+
+    th.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter' || ev.key === ' ') {
+        ev.preventDefault();
+        changeSort();
+      }
     });
   });
 
-  // Live price connection.
+  // Live Binance price connection.
   var live = {
     ws: null,
     map: {},
@@ -302,8 +340,12 @@
             ? 'rgba(34,197,94,.28)'
             : 'rgba(239,68,68,.28)'
         },
-        { backgroundColor: 'transparent' }
-      ], { duration: 800 });
+        {
+          backgroundColor: 'transparent'
+        }
+      ], {
+        duration: 800
+      });
     } catch (e) {}
   }
 
@@ -338,6 +380,18 @@
       c._c.textContent = ch.text;
       c._c.className = 'num ' + ch.cls;
     }
+  }
+
+  function scheduleReconnect() {
+    if (live.timer) return;
+
+    live.i++;
+    live.tries++;
+
+    live.timer = setTimeout(function () {
+      live.timer = null;
+      connect();
+    }, Math.min(30000, 2000 * live.tries));
   }
 
   function connect() {
@@ -398,19 +452,7 @@
     };
   }
 
-  function scheduleReconnect() {
-    if (live.timer) clearTimeout(live.timer);
-
-    live.i++;
-    live.tries++;
-
-    live.timer = setTimeout(
-      connect,
-      Math.min(30000, 2000 * live.tries)
-    );
-  }
-
-  // Read all market fields returned by server.js.
+  // Normalize the server market response.
   function normalizeCoins(data) {
     if (!Array.isArray(data)) {
       if (data && Array.isArray(data.data)) {
@@ -466,18 +508,21 @@
     connect();
   }
 
+  // Load market data and show a friendly fallback.
   function load() {
-    message(
-      'Loading markets',
-      'Fetching the latest prices...'
-    );
+    if (!coins.length) {
+      message(
+        'Loading markets',
+        'Fetching the latest cryptocurrency prices...'
+      );
+    }
 
-    fetch('/api/markets', { cache: 'no-store' })
+    fetch('/api/markets', {
+      cache: 'no-store'
+    })
       .then(function (r) {
         if (!r.ok) {
-          throw new Error(
-            'Market request failed: ' + r.status
-          );
+          throw new Error('Market request failed: ' + r.status);
         }
 
         return r.json();
@@ -488,8 +533,8 @@
 
         if (!coins.length) {
           message(
-            'Prices are unavailable',
-            'Please refresh the page in a minute.'
+            'Data unavailable',
+            'Market prices are temporarily unavailable. Please try again shortly.'
           );
         }
       });
@@ -499,26 +544,39 @@
     search.addEventListener('input', render);
   }
 
+  // Automatic copyright year.
   if (year) {
     year.textContent = new Date().getFullYear();
   }
 
+  // Set market-cap sorting before the first render.
   markHeads();
   load();
 
-  // Refresh backend market data every 60 seconds.
+  // Refresh server market data every 60 seconds.
   setInterval(function () {
-    fetch('/api/markets', { cache: 'no-store' })
+    fetch('/api/markets', {
+      cache: 'no-store'
+    })
       .then(function (r) {
         if (!r.ok) {
-          throw new Error('Refresh failed');
+          throw new Error('Market refresh failed: ' + r.status);
         }
 
         return r.json();
       })
       .then(setCoins)
       .catch(function (e) {
-        console.warn('CoinWave refresh error:', e);
+        console.warn('CoinWave market refresh:', e);
+
+        // Keep existing successful data visible.
+        // Show the error only when no data has ever loaded.
+        if (!coins.length) {
+          message(
+            'Data unavailable',
+            'Market prices are temporarily unavailable. Please try again shortly.'
+          );
+        }
       });
   }, 60000);
 
