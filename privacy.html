@@ -1,0 +1,928 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#071b3b">
+  <meta name="description" content="Read the CoinWave Privacy Policy to understand how personal information is collected, used, protected and managed.">
+  <title>Privacy Policy | CoinWave</title>
+
+  <style>
+    :root {
+      --navy: #071b3b;
+      --navy-light: #123d70;
+      --blue: #087cf0;
+      --blue-dark: #0066d5;
+      --gold: #e7b94f;
+      --bg: #f4f7fc;
+      --white: #ffffff;
+      --text: #17243b;
+      --muted: #65738b;
+      --line: #e3eaf4;
+      --shadow: 0 12px 35px rgba(10, 35, 75, .07);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 95px;
+    }
+
+    body {
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.75;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      color: var(--blue-dark);
+      text-decoration: underline;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: var(--navy);
+      border-bottom: 1px solid rgba(255,255,255,.09);
+      box-shadow: 0 4px 18px rgba(0,0,0,.12);
+    }
+
+    .topbar-inner {
+      max-width: 1160px;
+      min-height: 76px;
+      margin: auto;
+      padding: 12px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -.7px;
+    }
+
+    .brand:hover {
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 11px;
+      display: grid;
+      place-items: center;
+      color: var(--navy);
+      background: linear-gradient(135deg, #f4d77c, var(--gold));
+      font-size: 21px;
+      font-weight: 900;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 42px;
+      padding: 9px 16px;
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 11px;
+      color: #fff;
+      background: rgba(255,255,255,.08);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .2s, transform .2s, border-color .2s;
+    }
+
+    .back-button:hover {
+      background: rgba(255,255,255,.17);
+      border-color: rgba(255,255,255,.4);
+      color: #fff;
+    }
+
+    .back-button:active {
+      transform: scale(.97);
+    }
+
+    .back-arrow {
+      font-size: 19px;
+      line-height: 1;
+    }
+
+    .home-link {
+      color: #e8effb;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .home-link:hover {
+      color: #fff;
+    }
+
+    .page-wrap {
+      max-width: 1160px;
+      margin: 38px auto 65px;
+      padding: 0 22px;
+    }
+
+    .hero {
+      padding: 39px 38px;
+      border-radius: 20px;
+      background: linear-gradient(120deg, #071b3b, #123d70);
+      color: #fff;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 50%;
+      right: -70px;
+      top: -115px;
+      box-shadow: 0 0 0 35px rgba(255,255,255,.025),
+                  0 0 0 70px rgba(255,255,255,.02);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      margin-bottom: 10px;
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.7px;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      font-size: clamp(29px, 5vw, 43px);
+      line-height: 1.2;
+      letter-spacing: -1.2px;
+      margin-bottom: 12px;
+    }
+
+    .hero p {
+      max-width: 720px;
+      color: #d3deee;
+      font-size: 15px;
+    }
+
+    .updated {
+      display: inline-flex;
+      margin-top: 20px;
+      padding: 7px 12px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 8px;
+      color: #e8effb;
+      background: rgba(255,255,255,.07);
+      font-size: 12px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 265px minmax(0, 1fr);
+      gap: 25px;
+      align-items: start;
+      margin-top: 26px;
+    }
+
+    .toc {
+      position: sticky;
+      top: 100px;
+      padding: 23px 19px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: var(--white);
+      box-shadow: var(--shadow);
+    }
+
+    .toc h2 {
+      margin-bottom: 14px;
+      color: var(--navy);
+      font-size: 15px;
+    }
+
+    .toc ol {
+      padding-left: 19px;
+    }
+
+    .toc li {
+      padding: 5px 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .toc a {
+      color: #465773;
+    }
+
+    .toc a:hover {
+      color: var(--blue);
+    }
+
+    .content {
+      min-width: 0;
+      padding: 34px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--white);
+      box-shadow: var(--shadow);
+    }
+
+    .notice {
+      margin-bottom: 27px;
+      padding: 17px 19px;
+      border: 1px solid #f0dca9;
+      border-left: 4px solid var(--gold);
+      border-radius: 10px;
+      background: #fffaf0;
+      color: #59451b;
+      font-size: 13px;
+    }
+
+    .content section {
+      padding: 0 0 25px;
+      margin-bottom: 25px;
+      border-bottom: 1px solid var(--line);
+      scroll-margin-top: 100px;
+    }
+
+    .content section:last-of-type {
+      margin-bottom: 0;
+      border-bottom: 0;
+    }
+
+    .content h2 {
+      margin-bottom: 11px;
+      color: var(--navy);
+      font-size: 20px;
+      line-height: 1.4;
+      letter-spacing: -.3px;
+    }
+
+    .content h3 {
+      margin: 17px 0 7px;
+      color: #263a59;
+      font-size: 15px;
+    }
+
+    .content p {
+      margin: 9px 0;
+      color: #53627a;
+      font-size: 14px;
+    }
+
+    .content ul {
+      margin: 9px 0 10px 22px;
+      color: #53627a;
+      font-size: 14px;
+    }
+
+    .content li {
+      margin: 6px 0;
+      padding-left: 3px;
+    }
+
+    .legal-placeholder {
+      color: #9a5b12;
+      font-weight: 700;
+    }
+
+    .bottom-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 13px;
+      margin-top: 25px;
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .footer {
+      padding: 27px 20px;
+      background: var(--navy);
+      color: #c5d1e3;
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .footer a {
+      margin: 0 8px;
+      color: #fff;
+    }
+
+    .footer p {
+      margin-top: 8px;
+      color: #aab9ce;
+    }
+
+    @media (max-width: 800px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .toc {
+        position: static;
+      }
+
+      .toc ol {
+        columns: 2;
+        column-gap: 25px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .topbar-inner {
+        min-height: 65px;
+        padding: 10px 14px;
+      }
+
+      .brand {
+        font-size: 19px;
+      }
+
+      .brand-mark {
+        width: 32px;
+        height: 32px;
+      }
+
+      .home-link {
+        display: none;
+      }
+
+      .back-button {
+        min-height: 39px;
+        padding: 8px 11px;
+        font-size: 12px;
+      }
+
+      .page-wrap {
+        margin: 22px auto 40px;
+        padding: 0 13px;
+      }
+
+      .hero {
+        padding: 28px 22px;
+        border-radius: 15px;
+      }
+
+      .hero p {
+        font-size: 13px;
+      }
+
+      .content {
+        padding: 23px 19px;
+      }
+
+      .content h2 {
+        font-size: 18px;
+      }
+
+      .content p,
+      .content ul {
+        font-size: 13px;
+      }
+
+      .toc ol {
+        columns: 1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark">C</span>
+        <span>CoinWave</span>
+      </a>
+
+      <div class="top-actions">
+        <a class="home-link" href="/">Home</a>
+        <button class="back-button" id="backButton" type="button">
+          <span class="back-arrow" aria-hidden="true">←</span>
+          <span>Go Back</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-wrap">
+    <section class="hero">
+      <span class="eyebrow">Your information matters</span>
+      <h1>Privacy Policy</h1>
+      <p>
+        This Privacy Policy explains how CoinWave may collect, use,
+        store, disclose and protect personal information when you visit
+        our website, create an account or use our services.
+      </p>
+      <span class="updated">Last updated: 12 November 2026</span>
+    </section>
+
+    <div class="layout">
+      <aside class="toc">
+        <h2>On this page</h2>
+        <ol>
+          <li><a href="#introduction">Introduction</a></li>
+          <li><a href="#controller">Who Is Responsible</a></li>
+          <li><a href="#collect">Information We Collect</a></li>
+          <li><a href="#sources">How We Collect Information</a></li>
+          <li><a href="#use">How We Use Information</a></li>
+          <li><a href="#legal-basis">Legal Grounds</a></li>
+          <li><a href="#verification">Identity Verification</a></li>
+          <li><a href="#cookies">Cookies and Technologies</a></li>
+          <li><a href="#sharing">Information Sharing</a></li>
+          <li><a href="#transfers">International Transfers</a></li>
+          <li><a href="#retention">Data Retention</a></li>
+          <li><a href="#security">Data Security</a></li>
+          <li><a href="#rights">Your Privacy Rights</a></li>
+          <li><a href="#children">Children's Privacy</a></li>
+          <li><a href="#third-party">Third-Party Websites</a></li>
+          <li><a href="#breaches">Data Incidents</a></li>
+          <li><a href="#changes">Policy Changes</a></li>
+          <li><a href="#contact">Contact and Complaints</a></li>
+        </ol>
+      </aside>
+
+      <article class="content">
+        <div class="notice">
+          <strong>Important publication notice:</strong>
+          This policy is a comprehensive draft. Before publication,
+          CoinWave's operator must confirm its legal identity, actual
+          data practices, service providers, cookie technologies,
+          retention periods and contact details. The policy must reflect
+          what the website and backend really do. Obtain appropriate
+          privacy and legal review before launch.
+        </div>
+
+        <section id="introduction">
+          <h2>1. Introduction</h2>
+          <p>
+            CoinWave ("CoinWave", "we", "us" or "our") respects the
+            privacy of individuals who visit or use our website and
+            services.
+          </p>
+          <p>
+            This Privacy Policy describes how personal information may
+            be handled when you browse our website, register an account,
+            communicate with support or use available digital-asset
+            features.
+          </p>
+          <p>
+            By using the Platform, you acknowledge that you have had
+            the opportunity to read this Policy. Where consent is
+            legally required for a particular processing activity,
+            we will seek that consent separately.
+          </p>
+        </section>
+
+        <section id="controller">
+          <h2>2. Who Is Responsible for Your Information?</h2>
+          <p>
+            The organisation responsible for deciding how and why
+            personal information is processed is generally called the
+            data controller or equivalent legal term under applicable
+            law.
+          </p>
+          <p>
+            <span class="legal-placeholder">
+              [Insert CoinWave operator's verified legal name,
+              registered or business address, and privacy contact
+              details before publication.]
+            </span>
+          </p>
+          <p>
+            Do not assume that the CoinWave brand name alone identifies
+            the legal entity responsible for processing your information.
+          </p>
+        </section>
+
+        <section id="collect">
+          <h2>3. Information We May Collect</h2>
+
+          <h3>3.1 Account and contact information</h3>
+          <p>
+            When you register or communicate with us, information may
+            include your name, email address, telephone number, username
+            and account-related details.
+          </p>
+
+          <h3>3.2 Identity and verification information</h3>
+          <p>
+            If identity verification is required for a service, we may
+            collect identification details and documents, such as
+            identity document information, address details, photographs
+            or other verification information requested through the
+            relevant process.
+          </p>
+
+          <h3>3.3 Transaction and account information</h3>
+          <p>
+            Where transaction services are available, information may
+            include transaction references, selected assets, order
+            details, transaction history, payment-related references
+            and account balances.
+          </p>
+
+          <h3>3.4 Technical and device information</h3>
+          <p>
+            When you access the Platform, technical information may
+            include IP address, browser type, device information,
+            operating system, access times, error logs and pages visited.
+          </p>
+
+          <h3>3.5 Communications and support information</h3>
+          <p>
+            If you contact us, we may retain the messages, documents
+            and information you provide so that we can respond and
+            maintain appropriate records.
+          </p>
+        </section>
+
+        <section id="sources">
+          <h2>4. How We Collect Information</h2>
+          <p>Information may be obtained:</p>
+          <ul>
+            <li>Directly from you when you register or use the Platform.</li>
+            <li>When you submit identity or verification documents.</li>
+            <li>When you contact CoinWave support.</li>
+            <li>Automatically through normal website and server operations.</li>
+            <li>From service providers or verification partners where legally permitted.</li>
+            <li>From public or legally accessible sources where necessary and lawful.</li>
+          </ul>
+          <p>
+            We should identify the actual sources used by the live
+            Platform and update this Policy if those sources change.
+          </p>
+        </section>
+
+        <section id="use">
+          <h2>5. How We Use Personal Information</h2>
+          <p>
+            Depending on the services you use and the applicable legal
+            requirements, information may be used to:
+          </p>
+          <ul>
+            <li>Create, maintain and manage customer accounts.</li>
+            <li>Authenticate users and protect account access.</li>
+            <li>Provide requested Platform features and services.</li>
+            <li>Process and maintain records of transactions where enabled.</li>
+            <li>Perform identity checks and compliance reviews where required.</li>
+            <li>Respond to questions, complaints and support requests.</li>
+            <li>Detect suspicious activity, fraud and security threats.</li>
+            <li>Maintain, troubleshoot and improve Platform performance.</li>
+            <li>Meet applicable legal, regulatory and record-keeping duties.</li>
+            <li>Communicate important service, security or policy updates.</li>
+          </ul>
+          <p>
+            We should not use personal information for unrelated purposes
+            without an appropriate legal basis or any additional notice
+            or consent required by law.
+          </p>
+        </section>
+
+        <section id="legal-basis">
+          <h2>6. Legal Grounds for Processing</h2>
+          <p>
+            Where applicable law requires a legal basis for processing
+            personal information, the relevant basis may include:
+          </p>
+          <ul>
+            <li><strong>Contract:</strong> Processing necessary to provide a service you request or perform an agreement with you.</li>
+            <li><strong>Legal obligation:</strong> Processing required to comply with applicable law.</li>
+            <li><strong>Legitimate interests:</strong> Processing necessary for legitimate operational, security or fraud-prevention interests, where permitted and balanced against your rights.</li>
+            <li><strong>Consent:</strong> Processing based on your freely given consent where consent is required or relied upon.</li>
+            <li><strong>Vital or public interests:</strong> Where a specific applicable law recognises such a basis.</li>
+          </ul>
+          <p>
+            The appropriate legal basis depends on the specific activity
+            and the laws that apply to the responsible operator.
+          </p>
+        </section>
+
+        <section id="verification">
+          <h2>7. Identity Verification and Compliance Checks</h2>
+          <p>
+            Certain services may require identity verification or
+            additional checks. Information may be reviewed to establish
+            identity, assess eligibility, prevent fraud or meet legal
+            obligations.
+          </p>
+          <p>
+            Where external verification providers are used, they may
+            process relevant information under their own contractual
+            responsibilities and privacy obligations.
+          </p>
+          <p>
+            You should only submit documents through the official
+            CoinWave website or another verified submission channel.
+          </p>
+        </section>
+
+        <section id="cookies">
+          <h2>8. Cookies and Similar Technologies</h2>
+          <p>
+            A website may use cookies, local storage or similar
+            technologies to support essential functionality and
+            remember certain preferences.
+          </p>
+          <p>Depending on the technologies actually enabled, these may be used to:</p>
+          <ul>
+            <li>Maintain essential website or session functionality.</li>
+            <li>Remember user preferences.</li>
+            <li>Help protect accounts and detect suspicious activity.</li>
+            <li>Understand website performance and usage where analytics are enabled.</li>
+          </ul>
+          <p>
+            Non-essential cookies or tracking technologies should only
+            be used in accordance with applicable consent requirements.
+            You may be able to manage cookies through your browser
+            settings.
+          </p>
+          <p>
+            <strong>Operator configuration:</strong> Before publication,
+            list the actual cookies, local-storage keys, analytics tools,
+            advertising technologies and consent controls used by the
+            live CoinWave website.
+          </p>
+        </section>
+
+        <section id="sharing">
+          <h2>9. How We May Share Information</h2>
+          <p>
+            Personal information may be shared only where appropriate
+            and lawful, including with:
+          </p>
+          <ul>
+            <li><strong>Service providers:</strong> Companies supporting hosting, technical operations, security or customer support.</li>
+            
+<li><strong>Verification providers:</strong> Providers assisting with identity or compliance checks where used.</li>
+<li><strong>Payment or transaction providers:</strong> Providers involved in a service or transaction you request, where applicable.</li>
+<li><strong>Professional advisers:</strong> Legal, accounting, audit or other professional advisers where necessary.</li>
+<li><strong>Authorities:</strong> Government, law-enforcement or regulatory bodies where disclosure is legally required or permitted.</li>
+<li><strong>Business successors:</strong> A relevant party involved in a lawful merger, restructuring or transfer, subject to applicable privacy protections.</li>
+</ul>
+<p>
+  We do not state that every category of provider is currently
+  engaged by CoinWave. The operator must identify the actual
+  recipients and relevant purposes before publication.
+</p>
+<p>
+  Personal information should not be sold or disclosed for
+  unrelated purposes contrary to applicable law.
+</p>
+</section>
+
+<section id="transfers">
+<h2>10. International Data Transfers</h2>
+<p>
+  Some service providers or technical systems may be located
+  outside your country. If personal information is transferred
+  internationally, the operator must apply the safeguards
+  required by applicable data-protection law.
+</p>
+<p>
+  Where required, information about transfer destinations and
+  safeguards should be made available to affected individuals.
+</p>
+</section>
+
+<section id="retention">
+<h2>11. How Long We Keep Information</h2>
+<p>
+  Personal information should be retained only for as long as
+  reasonably necessary for the purpose for which it was
+  collected, unless a longer period is required or permitted
+  by law.
+</p>
+<p>Retention periods may depend on:</p>
+<ul>
+<li>Whether your account remains active.</li>
+<li>The nature of the information and service.</li>
+<li>Legal, regulatory and record-keeping requirements.</li>
+<li>Security investigations and dispute resolution.</li>
+<li>Applicable limitation periods for legal claims.</li>
+</ul>
+<p>
+  When information is no longer required, it should be securely
+  deleted, anonymised or otherwise handled in accordance with
+  applicable law and the operator's retention procedures.
+</p>
+<p>
+  <strong>Operator configuration:</strong> Specific retention
+  periods for account records, verification documents,
+  transaction records, support communications and technical
+  logs should be established and documented before launch.
+</p>
+</section>
+
+<section id="security">
+<h2>12. How We Protect Personal Information</h2>
+<p>
+  The operator should maintain appropriate technical and
+  organisational safeguards designed to protect personal
+  information against unauthorised access, disclosure,
+  alteration, loss or destruction.
+</p>
+<p>
+  Depending on the actual system, safeguards may include
+  access controls, authentication procedures, secure
+  communications, monitoring, backups and staff access
+  restrictions.
+</p>
+<p>
+  No website, internet connection or electronic storage
+  method can be guaranteed to be completely secure. You
+  should protect your password and never share verification
+  codes or private wallet recovery phrases.
+</p>
+</section>
+
+<section id="rights">
+<h2>13. Your Privacy Rights</h2>
+<p>
+  Depending on the laws applicable to you, you may have rights
+  concerning your personal information, including:
+</p>
+<ul>
+<li>The right to request access to personal information held about you.</li>
+<li>The right to request correction of inaccurate or incomplete information.</li>
+<li>The right to request deletion where legally available.</li>
+<li>The right to object to certain processing activities.</li>
+<li>The right to request restriction of certain processing.</li>
+<li>The right to withdraw consent where processing relies on consent.</li>
+<li>The right to request a copy or transfer of information where applicable.</li>
+<li>The right to raise a complaint with a competent privacy regulator where available.</li>
+</ul>
+<p>
+  These rights are not absolute and may be subject to legal
+  exceptions, including record-keeping and compliance duties.
+</p>
+<p>
+  To exercise an applicable right, contact CoinWave through
+  its verified privacy contact channel. We may need to verify
+  your identity before responding.
+</p>
+<p>
+  If Kenya's Data Protection Act, 2019 applies to the relevant
+  processing, applicable rights and obligations under that
+  legislation must also be observed.
+</p>
+</section>
+
+<section id="children">
+<h2>14. Children's Privacy</h2>
+<p>
+  CoinWave is not intended for individuals who are not legally
+  eligible to use the relevant services.
+</p>
+<p>
+  We do not knowingly seek to collect personal information
+  from children in circumstances where such collection is
+  prohibited by applicable law. If you believe a child has
+  submitted personal information improperly, contact us
+  through the verified support channel.
+</p>
+</section>
+
+<section id="third-party">
+<h2>15. Third-Party Websites and Services</h2>
+<p>
+  CoinWave may contain links to external websites or services.
+  Those websites are operated independently and may have
+  different privacy practices.
+</p>
+<p>
+  We encourage you to review the privacy policy of each
+  third-party service before submitting personal information
+  to it.
+</p>
+</section>
+
+<section id="breaches">
+<h2>16. Personal Data Incidents</h2>
+<p>
+  If the operator becomes aware of a personal data breach
+  affecting information processed through CoinWave, it should
+  assess the incident and take appropriate steps to contain,
+  investigate and address it.
+</p>
+<p>
+  Notifications to affected individuals and relevant
+  authorities will be made where and when required by
+  applicable law.
+</p>
+</section>
+
+<section id="changes">
+<h2>17. Changes to This Privacy Policy</h2>
+<p>
+  This Policy may be updated when our services, data practices
+  or legal obligations change.
+</p>
+<p>
+  The current version will be published on this page with
+  its updated date. Where required, we will provide additional
+  notice or seek consent before implementing changes that
+  require it.
+</p>
+<p>
+  Please review this page periodically to stay informed
+  about how personal information is handled.
+</p>
+</section>
+
+<section id="contact">
+<h2>18. Contact and Privacy Complaints</h2>
+<p>
+  For questions about this Privacy Policy or requests
+  concerning your personal information, contact CoinWave
+  through its official, verified support channel.
+</p>
+<p>
+  <strong>[Insert the verified privacy contact email, responsible
+  legal entity, business address and any designated data
+  protection contact before publication.]</strong>
+</p>
+<p>
+  If you are dissatisfied with the handling of your request,
+  you may have the right to complain to the competent data
+  protection authority under applicable law.
+</p>
+</section>
+
+<div class="bottom-links">
+<a href="/">← Return to CoinWave Home</a>
+<a href="/terms">Read Terms of Service →</a>
+</div>
+</article>
+</div>
+</main>
+
+<footer class="footer">
+<div>
+<a href="/">Home</a>
+<a href="/terms">Terms of Service</a>
+<a href="/privacy">Privacy Policy</a>
+</div>
+<p>© <span id="currentYear">2026</span> CoinWave. All rights reserved.</p>
+</footer>
+
+<script>
+(function () {
+  const backButton = document.getElementById("backButton");
+
+  if (backButton) {
+    backButton.addEventListener("click", function () {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.assign("/");
+      }
+    });
+  }
+
+  const year = document.getElementById("currentYear");
+  if (year) {
+    year.textContent = new Date().getFullYear();
+  }
+})();
+</script>
+</body>
+</html>
