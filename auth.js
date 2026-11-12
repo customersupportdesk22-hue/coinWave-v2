@@ -1,4 +1,3 @@
-
 'use strict';
 
 const express = require('express');
@@ -115,7 +114,6 @@ function getRole(user) {
 
   const email = String(user.email).trim().toLowerCase();
 
-  // Keep existing ADMIN_EMAIL configuration working.
   const superAdmins = [
     ...emailList('ADMIN_EMAIL'),
     ...emailList('SUPER_ADMIN_EMAIL')
@@ -253,7 +251,6 @@ function limit(req, res, next) {
   recent.push(now);
   hits.set(key, recent);
 
-  // Keep the in-memory limiter from growing indefinitely.
   if (hits.size > 10000) {
     for (const [storedKey, timestamps] of hits) {
       const active = timestamps.filter(
@@ -472,14 +469,16 @@ router.post('/signup', limit, ready, async (req, res) => {
       });
     }
 
+    // bcrypt only uses the first 72 UTF-8 bytes.
     if (
       password.length < 8 ||
       password.length > 128 ||
+      Buffer.byteLength(password, 'utf8') > 72 ||
       !/[A-Za-z]/.test(password) ||
       !/\d/.test(password)
     ) {
       return res.status(400).json({
-        error: 'Password needs 8 to 128 characters with a letter and a number.'
+        error: 'Password needs 8 to 128 characters, no more than 72 UTF-8 bytes, and must contain a letter and a number.'
       });
     }
 
@@ -682,5 +681,8 @@ router.hasPermission = hasPermission;
 router.requirePermission = requirePermission;
 router.publicUser = publicUser;
 router.User = User;
+
+// Shared role/permission metadata.
+router.ROLE_PERMISSIONS = ROLE_PERMISSIONS;
 
 module.exports = router;
