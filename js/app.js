@@ -13,16 +13,31 @@
 
   var coins = [];
   var sort = { key: 'rank', dir: 1 };
-  var cols = ['rank', 'name', 'price', 'change24h'];
+
+  // Must match the six columns in index.html.
+  var cols = [
+    'rank',
+    'name',
+    'price',
+    'volume24h',
+    'marketCap',
+    'change24h'
+  ];
+
   var heads = document.querySelectorAll('thead th');
 
   function number(value) {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+
     var n = Number(value);
     return Number.isFinite(n) ? n : null;
   }
 
   function fmtPrice(value) {
     var p = number(value);
+
     if (p === null) return '—';
 
     if (p >= 1) {
@@ -35,6 +50,19 @@
     if (p >= 0.01) return '$' + p.toFixed(4);
 
     return '$' + p.toFixed(8).replace(/0+$/, '');
+  }
+
+  function fmtCompactUSD(value) {
+    var n = number(value);
+
+    if (n === null) return '—';
+
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      notation: 'compact',
+      maximumFractionDigits: 2
+    }).format(n);
   }
 
   function change(value) {
@@ -69,8 +97,10 @@
   function row(c) {
     var tr = document.createElement('tr');
 
+    // Rank
     tr.appendChild(td('rank hide-sm', String(c.rank || '—')));
 
+    // Coin name, logo and symbol
     var box = document.createElement('div');
     box.className = 'coin';
 
@@ -79,9 +109,11 @@
       img.src = c.image;
       img.alt = '';
       img.loading = 'lazy';
+
       img.onerror = function () {
         this.style.display = 'none';
       };
+
       box.appendChild(img);
     }
 
@@ -101,9 +133,19 @@
 
     tr.appendChild(td('', box));
 
+    // Price
     c._p = td('num', fmtPrice(c.price));
     tr.appendChild(c._p);
 
+    // 24-hour trading volume
+    c._v = td('num', fmtCompactUSD(c.volume24h));
+    tr.appendChild(c._v);
+
+    // Market capitalization
+    c._m = td('num', fmtCompactUSD(c.marketCap));
+    tr.appendChild(c._m);
+
+    // 24-hour percentage change
     var ch = change(c.change24h);
 
     c._c = td('num ' + ch.cls, ch.text);
@@ -118,7 +160,7 @@
     var tr = document.createElement('tr');
     var cell = document.createElement('td');
 
-    cell.colSpan = 4;
+    cell.colSpan = 6;
     cell.className = 'state';
 
     var strong = document.createElement('strong');
@@ -139,6 +181,7 @@
       var x = a[k];
       var y = b[k];
 
+      if (x == null && y == null) return 0;
       if (x == null) return 1;
       if (y == null) return -1;
 
@@ -194,6 +237,7 @@
     });
   }
 
+  // Enable sorting on all six table headings.
   heads.forEach(function (th, i) {
     th.style.cursor = 'pointer';
 
@@ -214,6 +258,7 @@
     });
   });
 
+  // Live price connection.
   var live = {
     ws: null,
     map: {},
@@ -296,13 +341,20 @@
   }
 
   function connect() {
-    if (live.ws || !coins.length ||
-        typeof WebSocket === 'undefined') return;
+    if (
+      live.ws ||
+      !coins.length ||
+      typeof WebSocket === 'undefined'
+    ) {
+      return;
+    }
 
     var ws;
 
     try {
-      ws = new WebSocket(live.urls[live.i % live.urls.length]);
+      ws = new WebSocket(
+        live.urls[live.i % live.urls.length]
+      );
     } catch (e) {
       scheduleReconnect();
       return;
@@ -335,6 +387,7 @@
 
       live.ws = null;
       dot.style.display = 'none';
+
       scheduleReconnect();
     };
 
@@ -357,6 +410,7 @@
     );
   }
 
+  // Read all market fields returned by server.js.
   function normalizeCoins(data) {
     if (!Array.isArray(data)) {
       if (data && Array.isArray(data.data)) {
@@ -375,6 +429,8 @@
         symbol: String(c.symbol || '').toUpperCase(),
         image: c.image || '',
         price: number(c.price),
+        volume24h: number(c.volume24h),
+        marketCap: number(c.marketCap),
         change24h: number(c.change24h)
       };
     }).filter(function (c) {
@@ -386,7 +442,9 @@
     var old = {};
 
     coins.forEach(function (c) {
-      if (c.live) old[c.symbol] = c;
+      if (c.live) {
+        old[c.symbol] = c;
+      }
     });
 
     var updated = normalizeCoins(data);
@@ -409,12 +467,17 @@
   }
 
   function load() {
-    message('Loading markets', 'Fetching the latest prices...');
+    message(
+      'Loading markets',
+      'Fetching the latest prices...'
+    );
 
     fetch('/api/markets', { cache: 'no-store' })
       .then(function (r) {
         if (!r.ok) {
-          throw new Error('Market request failed: ' + r.status);
+          throw new Error(
+            'Market request failed: ' + r.status
+          );
         }
 
         return r.json();
@@ -443,10 +506,14 @@
   markHeads();
   load();
 
+  // Refresh backend market data every 60 seconds.
   setInterval(function () {
     fetch('/api/markets', { cache: 'no-store' })
       .then(function (r) {
-        if (!r.ok) throw new Error('Refresh failed');
+        if (!r.ok) {
+          throw new Error('Refresh failed');
+        }
+
         return r.json();
       })
       .then(setCoins)
