@@ -1,4 +1,3 @@
-
 'use strict';
 
 const express = require('express');
@@ -8,184 +7,375 @@ const auth = require('./auth');
 const ledger = require('./ledger');
 
 const router = express.Router();
-const SCALE = 10n ** 18n;
+
+const SCALE = 18;
+const FACTOR = 10n ** BigInt(SCALE);
+
+const ASSET_PATTERN = /^[A-Z0-9]{2,15}$/;
+const CURRENCY_PATTERN = /^(USD|KES)$/;
+
+const ORDER_STATUSES = [
+  'pending_payment',
+  'payment_verified',
+  'approved',
+  'processing',
+  'completed',
+  'rejected'
+];
+
+const EXECUTION_MODES = ['manual', 'automatic'];
+
+const DEFAULT_CONFIG = {
+  executionMode: 'manual',
+  tradingEnabled: true,
+  defaultCurrency: 'USD',
+  kesPerUsd: null,
+  minimumOrderUsd: '1',
+  maximumOrderUsd: '100000',
+  updatedBy: null
+};
+
+function httpError(status, code, message) {
+  const error = new Error(message);
+  error.status = status;
+  error.code = code;
+  return error;
+}
+
+function isObjectId(value) {
+  return mongoose.Types.ObjectId.isValid(String(value || ''));
+}
+
+function toDecimalString(value) {
+  if (typeof value === 'bigint') {
+    return value.toString();
+  }
+
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) {
+      throw httpError(400, 'INVALID_AMOUNT', 'Invalid amount.');
+    }
+
+    return String(value);
+  }
+
+  return String(value);
+}
+
+function decimalToUnits(value, options = {}) {
+  const allowZero = options.allowZero === true;
+  const text = toDecimalString(value).trim();
+
+  if (!/^\d+(\.\d{1,18})?$/.test(text)) {
+    throw httpError(400, 'INVALID_AMOUNT', 'Invalid decimal amount.');
+  }
+
+  const [whole, fraction = ''] = text.split('.');
+  const units =
+    BigInt(whole) * FACTOR +
+    BigInt((fraction + '0'.repeat(SCALE)).slice(0, SCALE));
+
+  if (units < 0n || (!allowZero && units <= 0n)) {
+    throw httpError(400, 'INVALID_AMOUNT', 'Amount must be greater than zero.');
+  }
+
+  return units;
+}
+
+function unitsToDecimal(units) {
+  const value = BigInt(units);
+  const whole = value / FACTOR;
+  const fraction = (value % FACTOR)
+    .toString()
+    .padStart(SCALE, '0')
+    .replace(/0+$/, '');
+
+  return fraction ? `${whole}.${fraction}` : whole.toString();
+}
+
+function roundMoney(value) {
+  return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+}
+
+function safeNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function normalizeAsset(value) {
+  const asset = String(value || '').trim().toUpperCase();
+
+  if (!ASSET_PATTERN.test(asset)) {
+    throw httpError(400, 'INVALID_ASSET', 'Invalid asset symbol.');
+  }
+
+  return asset;
+}
+
+function normalizeCurrency(value) {
+  const currency = String(value || 'USD').trim().toUpperCase();
+
+  if (!CURRENCY_PATTERN.test(currency)) {
+    throw httpError(400, 'INVALID_CURRENCY', 'Currency must be USD or KES.');
+  }
+
+  return currency;
+}
+
+function normalizeReference(value) {
+  const reference = String(value || '').trim();
+
+  if (!reference || reference.length > 120) {
+    throw httpError(400, 'INVALID_REFERENCE', 'Invalid reference.');
+  }
+
+  return reference;
+}
+
+function requirePermission(permission) {
+  if (typeof auth.requirePermission === 'function') {
+    return auth.requirePermission(permission);
+  }
+
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        error: 'Authentication required.'
+      });
+    }
+
+    const allowed =
+      typeof auth.hasPermission === 'function'
+        ? auth.hasPermission(req.user, permission)
+        : req.user.role === 'super_admin';
+
+    if (!allowed) {
+      return res.status(403).json({
+        error: 'Permission denied.'
+      });
+    }
+
+    next();
+  };
+}
+
+function getUserId(req) {
+  return req.user?._id || req.user?.id || req.user?.userId;
+}
+
+function createHash(value) {
+  return crypto
+    .createHash('sha256')
+    .update(JSON.stringify(value))
+    .digest('hex');
+}
+
+function sameOrderRequest(order, requestHash, legacyRequest) {
+  if (order.requestHash) {
+    return order.requestHash === requestHash;
+  }
+
+  return (
+    String(order.userId) === String(legacyRequest.userId) &&
+    order.side === legacyRequest.side &&
+    order.asset === legacyRequest.asset &&
+    String(order.quantity) === String(legacyRequest.quantity) &&
+    order.currency === legacyRequest.currency
+  );
+}
+
+function randomReference(prefix) {
+  return `${prefix}-${Date.now()}-${crypto.randomBytes(5).toString('hex').toUpperCase()}`;
+}
 
 // --------------------------------------------------
 // MODELS
 // --------------------------------------------------
 
-const priceSchema = new mongoose.Schema({
-  symbol: {
-    type: String,
-    required: true,
-    uppercase: true,
-    trim: true,
-    unique: true,
-    match: /^[A-Z0-9]{2,15}$/
+const priceSchema = new mongoose.Schema(
+  {
+    asset: {
+      type: String,
+      required: true,
+      uppercase: true,
+      trim: true,
+      unique: true,
+      index: true
+    },
+    priceUsd: {
+      type: String,
+      required: true
+    },
+    enabled: {
+      type: Boolean,
+      default: true
+    },
+    source: {
+      type: String,
+      default: 'admin'
+    },
+    updatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    }
   },
-  usdPrice: {
-    type: String,
-    required: true
-  },
-  buySpreadPct: {
-    type: String,
-    default: '0'
-  },
-  sellSpreadPct: {
-    type: String,
-    default: '0'
-  },
-  feePct: {
-    type: String,
-    default: '0'
-  },
-  fixedFeeUsd: {
-    type: String,
-    default: '0'
-  },
-  enabled: {
-    type: Boolean,
-    default: true
-  },
-  updatedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    default: null
-  }
-}, { timestamps: true });
+  { timestamps: true }
+);
 
-const AssetPrice = mongoose.models.CWAssetPrice ||
-  mongoose.model('CWAssetPrice', priceSchema);
+const configSchema = new mongoose.Schema(
+  {
+    key: {
+      type: String,
+      unique: true,
+      required: true
+    },
+    value: {
+      type: mongoose.Schema.Types.Mixed,
+      required: true
+    },
+    updatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    }
+  },
+  { timestamps: true }
+);
 
-const configSchema = new mongoose.Schema({
-  key: {
-    type: String,
-    required: true,
-    unique: true
+const orderSchema = new mongoose.Schema(
+  {
+    reference: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true
+    },
+    idempotencyKey: {
+      type: String,
+      default: null,
+      index: true
+    },
+    requestHash: {
+      type: String,
+      default: null
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true
+    },
+    side: {
+      type: String,
+      enum: ['buy', 'sell'],
+      required: true
+    },
+    asset: {
+      type: String,
+      required: true,
+      uppercase: true,
+      index: true
+    },
+    quantity: {
+      type: String,
+      required: true
+    },
+    priceUsd: {
+      type: String,
+      required: true
+    },
+    subtotalUsd: {
+      type: String,
+      required: true
+    },
+    feeUsd: {
+      type: String,
+      required: true
+    },
+    totalUsd: {
+      type: String,
+      required: true
+    },
+    currency: {
+      type: String,
+      enum: ['USD', 'KES'],
+      required: true
+    },
+    exchangeRate: {
+      type: String,
+      required: true
+    },
+    totalFiat: {
+      type: String,
+      required: true
+    },
+    status: {
+      type: String,
+      enum: ORDER_STATUSES,
+      default: 'pending_payment',
+      index: true
+    },
+    executionMode: {
+      type: String,
+      enum: EXECUTION_MODES,
+      default: 'manual'
+    },
+    paymentReference: {
+      type: String,
+      default: null
+    },
+    paymentVerifiedAt: {
+      type: Date,
+      default: null
+    },
+    paymentVerifiedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    approvedAt: {
+      type: Date,
+      default: null
+    },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    completedAt: {
+      type: Date,
+      default: null
+    },
+    completedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    rejectedAt: {
+      type: Date,
+      default: null
+    },
+    rejectedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    rejectionReason: {
+      type: String,
+      default: null
+    },
+    ledgerReference: {
+      type: String,
+      default: null
+    },
+    metadata: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {}
+    }
   },
-  usdKesRate: {
-    type: String,
-    default: '130'
-  },
-  updatedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    default: null
-  }
-}, { timestamps: true });
-
-const TradingConfig = mongoose.models.CWTradingConfig ||
-  mongoose.model('CWTradingConfig', configSchema);
-
-const orderSchema = new mongoose.Schema({
-  reference: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  idempotencyKey: {
-    type: String,
-    default: ''
-  },
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    index: true
-  },
-  side: {
-    type: String,
-    enum: ['buy', 'sell'],
-    required: true
-  },
-  asset: {
-    type: String,
-    required: true
-  },
-  quantity: {
-    type: String,
-    required: true
-  },
-  quoteCurrency: {
-    type: String,
-    enum: ['USD', 'KES'],
-    required: true
-  },
-  quoteAmount: {
-    type: String,
-    required: true
-  },
-  priceSnapshot: {
-    usdPrice: String,
-    usdKesRate: String,
-    baseAmountUsd: String,
-    spreadPct: String,
-    spreadAmountUsd: String,
-    feePct: String,
-    feeAmountUsd: String,
-    totalUsd: String,
-    totalQuote: String,
-    capturedAt: Date
-  },
-  executionMode: {
-    type: String,
-    enum: ['manual', 'automatic'],
-    default: 'manual'
-  },
-  paymentReference: {
-    type: String,
-    default: ''
-  },
-  paymentVerified: {
-    type: Boolean,
-    default: false
-  },
-  paymentVerificationReference: {
-    type: String,
-    default: ''
-  },
-  payoutDestination: {
-    type: String,
-    default: ''
-  },
-  payoutReference: {
-    type: String,
-    default: ''
-  },
-  payoutStatus: {
-    type: String,
-    enum: ['not_required', 'pending', 'paid'],
-    default: 'not_required'
-  },
-  status: {
-    type: String,
-    enum: [
-      'pending',
-      'processing',
-      'awaiting_payout',
-      'completed',
-      'rejected'
-    ],
-    default: 'pending',
-    index: true
-  },
-  rejectionReason: {
-    type: String,
-    default: ''
-  },
-  adminId: {
-    type: mongoose.Schema.Types.ObjectId,
-    default: null
-  },
-  audit: [{
-    action: String,
-    actorId: mongoose.Schema.Types.ObjectId,
-    reference: String,
-    note: String,
-    at: Date
-  }],
-  processedAt: {
-    type: Date,
-    default: null
-  }
-}, { timestamps: true });
+  { timestamps: true }
+);
 
 orderSchema.index({ userId: 1, createdAt: -1 });
 orderSchema.index({ status: 1, createdAt: -1 });
@@ -194,585 +384,484 @@ orderSchema.index(
   {
     unique: true,
     partialFilterExpression: {
-      idempotencyKey: { $type: 'string', $gt: '' }
+      idempotencyKey: { $type: 'string' }
     }
   }
 );
 
-const Order = mongoose.models.CWOrder ||
+const AssetPrice =
+  mongoose.models.CWAssetPrice ||
+  mongoose.model('CWAssetPrice', priceSchema);
+
+const TradingConfig =
+  mongoose.models.CWTradingConfig ||
+  mongoose.model('CWTradingConfig', configSchema);
+
+const Order =
+  mongoose.models.CWOrder ||
   mongoose.model('CWOrder', orderSchema);
 
 // --------------------------------------------------
-// HELPERS
+// CONFIGURATION
 // --------------------------------------------------
 
-function asyncHandler(fn) {
-  return (req, res, next) =>
-    Promise.resolve(fn(req, res, next)).catch(next);
-}
+async function getConfig() {
+  const document = await TradingConfig.findOneAndUpdate(
+    { key: 'trading' },
+    {
+      $setOnInsert: {
+        value: DEFAULT_CONFIG
+      }
+    },
+    {
+      upsert: true,
+      new: true,
+      setDefaultsOnInsert: true
+    }
+  );
 
-function requireDatabase(req, res, next) {
-  if (mongoose.connection.readyState !== 1) {
-    return res.status(503).json({
-      error: 'Database is unavailable.'
-    });
-  }
-  next();
-}
-
-const requireLogin = asyncHandler(async (req, res, next) => {
-  const user = await auth.authUser(req, res);
-  if (!user) return;
-  req.user = user;
-  next();
-});
-
-function permission(name) {
-  return auth.requirePermission(name);
-}
-
-function cleanText(value, max = 120) {
-  return String(value || '').trim().slice(0, max);
-}
-
-function validId(value) {
-  return mongoose.isValidObjectId(value);
-}
-
-function amountUnits(value) {
-  return ledger.toUnits(String(value));
-}
-
-function positiveAmount(value) {
-  try {
-    return amountUnits(value) > 0n;
-  } catch {
-    return false;
-  }
-}
-
-function decimal(units) {
-  return ledger.fromUnits(units.toString());
-}
-
-function multiply(a, b) {
-  return (a * b) / SCALE;
-}
-
-function percentage(amount, percent) {
-  return (amount * percent) / (100n * SCALE);
-}
-
-function platformAccount(bucket) {
-  return {
-    ownerType: 'platform',
-    ownerId: 'coinwave',
-    bucket
+  const config = {
+    ...DEFAULT_CONFIG,
+    ...(document.value || {})
   };
-}
 
-function customerAccount(id, bucket) {
-  return {
-    ownerType: 'user',
-    ownerId: String(id),
-    bucket
-  };
-}
-
-function orderEscrow(id) {
-  return {
-    ownerType: 'platform',
-    ownerId: 'order:' + String(id),
-    bucket: 'locked'
-  };
-}
-
-function ledgerReference(action, id) {
-  return `order:${action}:${id}`;
-}
-
-function conflict(res, message) {
-  return res.status(409).json({ error: message });
-}
-
-function addAudit(order, action, actorId, reference, note) {
-  order.audit.push({
-    action,
-    actorId,
-    reference: cleanText(reference, 180),
-    note: cleanText(note, 300),
-    at: new Date()
-  });
-}
-
-// --------------------------------------------------
-// PRICING ENGINE
-// --------------------------------------------------
-
-async function getTradingConfig() {
-  let config = await TradingConfig.findOne({ key: 'default' });
-
-  if (!config) {
-    config = await TradingConfig.create({
-      key: 'default',
-      usdKesRate: '130'
-    });
+  // Do not silently trust an old hard-coded KES rate.
+  if (
+    config.kesPerUsd !== null &&
+    config.kesPerUsd !== undefined &&
+    !document.updatedBy &&
+    !config.updatedBy
+  ) {
+    config.kesPerUsd = null;
   }
 
   return config;
 }
 
-async function calculateQuote({
-  side,
-  asset,
-  quantity,
-  quoteCurrency
-}) {
+async function saveConfig(value, userId) {
+  const document = await TradingConfig.findOneAndUpdate(
+    { key: 'trading' },
+    {
+      $set: {
+        value,
+        updatedBy: userId
+      },
+      $setOnInsert: {
+        key: 'trading'
+      }
+    },
+    {
+      upsert: true,
+      new: true,
+      runValidators: true
+    }
+  );
+
+  return document.value;
+}
+
+async function getAssetPrice(asset) {
   const price = await AssetPrice.findOne({
-    symbol: asset,
+    asset,
     enabled: true
   }).lean();
 
   if (!price) {
-    const error = new Error('ASSET_PRICE_UNAVAILABLE');
-    throw error;
+    throw httpError(
+      404,
+      'ASSET_PRICE_UNAVAILABLE',
+      `No active price is configured for ${asset}.`
+    );
   }
 
-  const config = await getTradingConfig();
+  const units = decimalToUnits(price.priceUsd);
 
-  const quantityUnits = amountUnits(quantity);
-  const priceUnits = amountUnits(price.usdPrice);
-  const fxUnits = amountUnits(config.usdKesRate);
-
-  if (
-    quantityUnits <= 0n ||
-    priceUnits <= 0n ||
-    fxUnits <= 0n
-  ) {
-    throw new Error('INVALID_PRICING_CONFIGURATION');
+  if (units <= 0n) {
+    throw httpError(400, 'INVALID_ASSET_PRICE', 'Asset price is invalid.');
   }
-
-  const spreadPct = amountUnits(
-    side === 'buy'
-      ? price.buySpreadPct
-      : price.sellSpreadPct
-  );
-
-  const feePct = amountUnits(price.feePct);
-  const fixedFee = amountUnits(price.fixedFeeUsd || '0');
-
-  if (
-    spreadPct < 0n ||
-    spreadPct > 50n * SCALE ||
-    feePct < 0n ||
-    feePct > 50n * SCALE ||
-    fixedFee < 0n
-  ) {
-    throw new Error('INVALID_PRICING_CONFIGURATION');
-  }
-
-  const base = multiply(quantityUnits, priceUnits);
-  const spreadAmount = percentage(base, spreadPct);
-
-  let adjusted;
-
-  if (side === 'buy') {
-    adjusted = base + spreadAmount;
-  } else {
-    adjusted = base - spreadAmount;
-  }
-
-  if (adjusted <= 0n) {
-    throw new Error('INVALID_PRICING_CONFIGURATION');
-  }
-
-  const percentageFee = percentage(adjusted, feePct);
-  const fee = percentageFee + fixedFee;
-
-  const totalUsd = side === 'buy'
-    ? adjusted + fee
-    : adjusted - fee;
-
-  if (totalUsd <= 0n) {
-    throw new Error('QUOTE_TOO_SMALL');
-  }
-
-  const totalQuote = quoteCurrency === 'KES'
-    ? multiply(totalUsd, fxUnits)
-    : totalUsd;
 
   return {
-    usdPrice: decimal(priceUnits),
-    usdKesRate: decimal(fxUnits),
-    baseAmountUsd: decimal(base),
-    spreadPct: decimal(spreadPct),
-    spreadAmountUsd: decimal(spreadAmount),
-    feePct: decimal(feePct),
-    feeAmountUsd: decimal(fee),
-    totalUsd: decimal(totalUsd),
-    totalQuote: decimal(totalQuote),
-    capturedAt: new Date()
+    asset,
+    priceUsd: unitsToDecimal(units),
+    priceUnits: units,
+    source: price.source
+  };
+}
+
+function calculateQuote({ side, quantity, priceUnits, feePercent, currency, rate }) {
+  const quantityUnits = decimalToUnits(quantity);
+  const subtotalUnits = (quantityUnits * priceUnits) / FACTOR;
+
+  const feeBasisPoints = BigInt(
+    Math.round(Number(feePercent || 0) * 100)
+  );
+
+  const feeUnits = (subtotalUnits * feeBasisPoints) / 10000n;
+
+  const totalUnits =
+    side === 'buy'
+      ? subtotalUnits + feeUnits
+      : subtotalUnits - feeUnits;
+
+  if (totalUnits <= 0n) {
+    throw httpError(400, 'INVALID_TOTAL', 'Order total is invalid.');
+  }
+
+  const rateUnits = decimalToUnits(rate);
+
+  const fiatUnits = (totalUnits * rateUnits) / FACTOR;
+
+  return {
+    quantity: unitsToDecimal(quantityUnits),
+    priceUsd: unitsToDecimal(priceUnits),
+    subtotalUsd: unitsToDecimal(subtotalUnits),
+    feeUsd: unitsToDecimal(feeUnits),
+    totalUsd: unitsToDecimal(totalUnits),
+    currency,
+    exchangeRate: unitsToDecimal(rateUnits),
+    totalFiat: unitsToDecimal(fiatUnits)
+  };
+}
+
+async function buildQuote(input) {
+  const side = String(input.side || '').toLowerCase();
+
+  if (!['buy', 'sell'].includes(side)) {
+    throw httpError(400, 'INVALID_SIDE', 'Side must be buy or sell.');
+  }
+
+  const asset = normalizeAsset(input.asset);
+  const quantity = String(input.quantity || '').trim();
+  const currency = normalizeCurrency(input.currency);
+
+  const config = await getConfig();
+
+  if (!config.tradingEnabled) {
+    throw httpError(503, 'TRADING_DISABLED', 'Trading is currently disabled.');
+  }
+
+  const price = await getAssetPrice(asset);
+
+  const rate =
+    currency === 'USD'
+      ? '1'
+      : config.kesPerUsd;
+
+  if (!rate || safeNumber(rate) <= 0) {
+    throw httpError(
+      503,
+      'KES_RATE_UNCONFIGURED',
+      'KES exchange rate has not been configured by an administrator.'
+    );
+  }
+
+  const feePercent = safeNumber(
+    side === 'buy'
+      ? config.buyFeePercent
+      : config.sellFeePercent
+  );
+
+  const quote = calculateQuote({
+    side,
+    quantity,
+    priceUnits: price.priceUnits,
+    feePercent,
+    currency,
+    rate
+  });
+
+  const totalUsd = Number(quote.totalUsd);
+
+  if (
+    totalUsd < safeNumber(config.minimumOrderUsd) ||
+    totalUsd > safeNumber(config.maximumOrderUsd)
+  ) {
+    throw httpError(
+      400,
+      'ORDER_LIMIT',
+      'Order is outside the configured minimum or maximum.'
+    );
+  }
+
+  return {
+    ...quote,
+    side,
+    asset,
+    priceSource: price.source
   };
 }
 
 // --------------------------------------------------
-// CUSTOMER: GET SERVER-CALCULATED QUOTE
-// GET /api/orders/quote
+// AUDIT
 // --------------------------------------------------
 
-router.get(
-  '/quote',
-  requireDatabase,
-  requireLogin,
-  asyncHandler(async (req, res) => {
-    const side = cleanText(req.query.side, 10).toLowerCase();
-    const asset = cleanText(req.query.asset, 15).toUpperCase();
-    const quantity = cleanText(req.query.quantity, 50);
-    const quoteCurrency = cleanText(
-      req.query.quoteCurrency || 'USD',
-      3
-    ).toUpperCase();
+async function writeAudit(action, req, details = {}) {
+  try {
+    const AuditLog =
+      mongoose.models.CWAuditLog ||
+      mongoose.model(
+        'CWAuditLog',
+        new mongoose.Schema(
+          {
+            action: String,
+            userId: mongoose.Schema.Types.ObjectId,
+            ip: String,
+            details: mongoose.Schema.Types.Mixed
+          },
+          { timestamps: true }
+        )
+      );
 
-    if (!['buy', 'sell'].includes(side)) {
-      return res.status(400).json({ error: 'Invalid order side.' });
-    }
-
-    if (!/^[A-Z0-9]{2,15}$/.test(asset)) {
-      return res.status(400).json({ error: 'Invalid asset.' });
-    }
-
-    if (!positiveAmount(quantity)) {
-      return res.status(400).json({ error: 'Invalid quantity.' });
-    }
-
-    if (!['USD', 'KES'].includes(quoteCurrency)) {
-      return res.status(400).json({ error: 'Invalid currency.' });
-    }
-
-    const quote = await calculateQuote({
-      side,
-      asset,
-      quantity,
-      quoteCurrency
+    await AuditLog.create({
+      action,
+      userId: getUserId(req) || null,
+      ip: req.ip || req.headers['x-forwarded-for'] || null,
+      details
     });
-
-    res.json({
-      side,
-      asset,
-      quantity,
-      quoteCurrency,
-      quote
-    });
-  })
-);
+  } catch (error) {
+    console.error('CoinWave audit logging error:', error.message);
+  }
+}
 
 // --------------------------------------------------
-// ADMIN: VIEW AND MANAGE ASSET PRICES
-// Requires fees.manage
+// CUSTOMER QUOTES
 // --------------------------------------------------
 
-router.get(
-  '/admin/pricing',
-  requireDatabase,
-  permission('fees.manage'),
-  asyncHandler(async (req, res) => {
-    const [prices, config] = await Promise.all([
-      AssetPrice.find().sort({ symbol: 1 }).lean(),
-      getTradingConfig()
-    ]);
-
-    res.json({
-      prices,
-      usdKesRate: config.usdKesRate,
-      updatedAt: config.updatedAt
-    });
-  })
-);
-
-router.put(
-  '/admin/pricing/config',
-  requireDatabase,
-  permission('fees.manage'),
-  asyncHandler(async (req, res) => {
-    const rate = cleanText(req.body.usdKesRate, 50);
-
-    if (!positiveAmount(rate)) {
-      return res.status(400).json({
-        error: 'Enter a valid USD/KES exchange rate.'
-      });
-    }
-
-    const config = await TradingConfig.findOneAndUpdate(
-      { key: 'default' },
-      {
-        $set: {
-          usdKesRate: rate,
-          updatedBy: req.user._id
-        },
-        $setOnInsert: { key: 'default' }
-      },
-      {
-        new: true,
-        upsert: true,
-        runValidators: true,
-        setDefaultsOnInsert: true
-      }
-    );
-
-    res.json({
-      message: 'USD/KES rate updated.',
-      usdKesRate: config.usdKesRate
-    });
-  })
-);
-
-router.put(
-  '/admin/pricing/:asset',
-  requireDatabase,
-  permission('fees.manage'),
-  asyncHandler(async (req, res) => {
-    const symbol = cleanText(req.params.asset, 15).toUpperCase();
-
-    const usdPrice = cleanText(req.body.usdPrice, 50);
-    const buySpreadPct = cleanText(req.body.buySpreadPct ?? '0', 30);
-    const sellSpreadPct = cleanText(req.body.sellSpreadPct ?? '0', 30);
-    const feePct = cleanText(req.body.feePct ?? '0', 30);
-    const fixedFeeUsd = cleanText(req.body.fixedFeeUsd ?? '0', 50);
-    const enabled = req.body.enabled !== false;
-
-    if (!/^[A-Z0-9]{2,15}$/.test(symbol)) {
-      return res.status(400).json({ error: 'Invalid asset symbol.' });
-    }
-
-    const values = [
-      usdPrice,
-      buySpreadPct,
-      sellSpreadPct,
-      feePct,
-      fixedFeeUsd
-    ];
-
-    if (!values.every(value => {
-      try {
-        return amountUnits(value) >= 0n;
-      } catch {
-        return false;
-      }
-    }) || !positiveAmount(usdPrice)) {
-      return res.status(400).json({
-        error: 'Invalid price, spread or fee.'
-      });
-    }
-
-    if (
-      amountUnits(buySpreadPct) > 50n * SCALE ||
-      amountUnits(sellSpreadPct) > 50n * SCALE ||
-      amountUnits(feePct) > 50n * SCALE
-    ) {
-      return res.status(400).json({
-        error: 'Spreads and percentage fees cannot exceed 50%.'
-      });
-    }
-
-    const price = await AssetPrice.findOneAndUpdate(
-      { symbol },
-      {
-        $set: {
-          usdPrice,
-          buySpreadPct,
-          sellSpreadPct,
-          feePct,
-          fixedFeeUsd,
-          enabled,
-          updatedBy: req.user._id
-        },
-        $setOnInsert: { symbol }
-      },
-      {
-        new: true,
-        upsert: true,
-        runValidators: true,
-        setDefaultsOnInsert: true
-      }
-    );
-
-    res.json({
-      message: 'Asset pricing saved.',
-      price
-    });
-  })
-);
+router.post('/quote', async (req, res, next) => {
+  try {
+    const quote = await buildQuote(req.body || {});
+    res.json({ quote });
+  } catch (error) {
+    next(error);
+  }
+});
 
 // --------------------------------------------------
-// CUSTOMER: CREATE BUY OR SELL ORDER
-// quoteAmount supplied by the browser is ignored.
-// The server calculates the actual quote.
+// CUSTOMER ORDER CREATION
 // --------------------------------------------------
 
-router.post(
-  '/',
-  requireDatabase,
-  requireLogin,
-  asyncHandler(async (req, res) => {
-    const side = cleanText(req.body.side, 10).toLowerCase();
-    const asset = cleanText(req.body.asset, 15).toUpperCase();
-    const quantity = cleanText(req.body.quantity, 50);
-    const quoteCurrency = cleanText(
-      req.body.quoteCurrency || 'USD',
-      3
-    ).toUpperCase();
-    const executionMode = cleanText(
-      req.body.executionMode || 'manual',
-      12
-    ).toLowerCase();
+router.post('/', auth.authUser, async (req, res, next) => {
+  try {
+    const userId = getUserId(req);
 
-    if (!['buy', 'sell'].includes(side)) {
-      return res.status(400).json({ error: 'Select buy or sell.' });
+    if (!isObjectId(userId)) {
+      throw httpError(401, 'AUTH_REQUIRED', 'Authentication required.');
     }
 
-    if (!/^[A-Z0-9]{2,15}$/.test(asset)) {
-      return res.status(400).json({ error: 'Invalid cryptocurrency.' });
-    }
+    const input = req.body || {};
+    const quote = await buildQuote(input);
 
-    if (!positiveAmount(quantity)) {
-      return res.status(400).json({ error: 'Enter a valid quantity.' });
-    }
+    const config = await getConfig();
 
-    if (!['USD', 'KES'].includes(quoteCurrency)) {
-      return res.status(400).json({ error: 'Unsupported currency.' });
-    }
-
-    if (!['manual', 'automatic'].includes(executionMode)) {
-      return res.status(400).json({ error: 'Invalid execution mode.' });
-    }
+    const executionMode =
+      config.executionMode === 'automatic' ? 'automatic' : 'manual';
 
     if (executionMode === 'automatic') {
-      return res.status(409).json({
-        error: 'Automatic execution is not configured yet.',
-        code: 'EXCHANGE_PROVIDER_REQUIRED'
-      });
+      throw httpError(
+        503,
+        'EXECUTION_PROVIDER_UNAVAILABLE',
+        'Automatic execution is not enabled until a verified exchange provider is configured.'
+      );
     }
 
-    const paymentReference = cleanText(req.body.paymentReference, 120);
-    const payoutDestination = cleanText(req.body.payoutDestination, 180);
+    const idempotencyKey = String(
+      req.headers['idempotency-key'] || input.idempotencyKey || ''
+    ).trim();
 
-    if (side === 'buy' && !paymentReference) {
-      return res.status(400).json({
-        error: 'A payment reference is required.'
-      });
+    if (idempotencyKey.length > 120) {
+      throw httpError(
+        400,
+        'INVALID_IDEMPOTENCY_KEY',
+        'Idempotency key is too long.'
+      );
     }
 
-    if (side === 'sell' && payoutDestination.length < 5) {
-      return res.status(400).json({
-        error: 'A valid payout destination is required.'
-      });
-    }
+    const requestData = {
+      userId: String(userId),
+      side: quote.side,
+      asset: quote.asset,
+      quantity: quote.quantity,
+      currency: quote.currency,
+      totalFiat: quote.totalFiat
+    };
 
-    const quote = await calculateQuote({
-      side,
-      asset,
-      quantity,
-      quoteCurrency
-    });
-
-    const idempotencyKey = cleanText(
-      req.get('Idempotency-Key') || req.body.idempotencyKey,
-      100
-    );
+    const requestHash = createHash(requestData);
 
     if (idempotencyKey) {
       const existing = await Order.findOne({
-        userId: req.user._id,
+        userId,
         idempotencyKey
       });
 
       if (existing) {
+        if (!sameOrderRequest(existing, requestHash, requestData)) {
+          throw httpError(
+            409,
+            'IDEMPOTENCY_CONFLICT',
+            'This idempotency key was already used for a different order.'
+          );
+        }
+
         return res.status(200).json({
           message: 'Existing order returned.',
-          order: existing
+          order: existing,
+          duplicate: true
         });
       }
     }
 
-    const session = await mongoose.startSession();
-    let createdOrder;
+    const reference = randomReference('CW');
+
+    const order = new Order({
+      reference,
+      idempotencyKey: idempotencyKey || null,
+      requestHash,
+      userId,
+      side: quote.side,
+      asset: quote.asset,
+      quantity: quote.quantity,
+      priceUsd: quote.priceUsd,
+      subtotalUsd: quote.subtotalUsd,
+      feeUsd: quote.feeUsd,
+      totalUsd: quote.totalUsd,
+      currency: quote.currency,
+      exchangeRate: quote.exchangeRate,
+      totalFiat: quote.totalFiat,
+      status: 'pending_payment',
+      executionMode,
+      metadata: {
+        priceSource: quote.priceSource
+      }
+    });
+
+    await order.save();
 
     try {
-      await session.withTransaction(async () => {
-        if (idempotencyKey) {
-          const existing = await Order.findOne({
-            userId: req.user._id,
-            idempotencyKey
-          }).session(session);
+      const accountBucket =
+        quote.side === 'sell' ? 'available' : 'available';
 
-          if (existing) {
-            createdOrder = existing;
-            return;
-          }
-        }
+      const reserveAmount =
+        quote.side === 'sell'
+          ? quote.quantity
+          : null;
 
-        const reference = 'CW-' +
-          crypto.randomUUID().replace(/-/g, '').toUpperCase();
-
-        const [order] = await Order.create([{
-          reference,
-          idempotencyKey,
-          userId: req.user._id,
-          side,
-          asset,
-          quantity,
-          quoteCurrency,
-          quoteAmount: quote.totalQuote,
-          priceSnapshot: quote,
-          executionMode,
-          paymentReference,
-          payoutDestination,
-          payoutStatus: side === 'sell' ? 'pending' : 'not_required'
-        }], { session });
+      if (reserveAmount) {
+        const reserveReference = `ORDER-RESERVE-${reference}`;
 
         await ledger.transfer({
-          session,
-          reference: ledgerReference('reserve', order._id),
-          description: side === 'sell'
-            ? 'Reserve customer crypto for sell order'
-            : 'Reserve platform inventory for buy order',
-          asset,
-          amount: quantity,
-          from: side === 'sell'
-            ? customerAccount(req.user._id, 'available')
-            : platformAccount('inventory'),
-          to: orderEscrow(order._id),
+          reference: reserveReference,
+          description: `Reserve ${quote.asset} for sell order ${reference}`,
+          asset: quote.asset,
+          amount: reserveAmount,
+          from: {
+            ownerType: 'user',
+            ownerId: userId,
+            bucket: accountBucket
+          },
+          to: {
+            ownerType: 'user',
+            ownerId: userId,
+            bucket: 'locked'
+          },
           metadata: {
-            orderId: String(order._id),
             orderReference: reference
           }
         });
 
-        createdOrder = order;
-      });
-
-      return res.status(201).json({
-        message: 'Order submitted successfully.',
-        order: createdOrder
-      });
-    } finally {
-      await session.endSession();
+        order.ledgerReference = reserveReference;
+        await order.save();
+      }
+    } catch (error) {
+      await Order.deleteOne({ _id: order._id });
+      throw error;
     }
-  })
-);
+
+    await writeAudit('order.created', req, {
+      reference,
+      side: quote.side,
+      asset: quote.asset,
+      quantity: quote.quantity,
+      totalFiat: quote.totalFiat
+    });
+
+    return res.status(201).json({
+      message: 'Order created successfully.',
+      order
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      const userId = getUserId(req);
+      const key = String(
+        req.headers['idempotency-key'] ||
+        req.body?.idempotencyKey ||
+        ''
+      ).trim();
+
+      if (key && userId) {
+        const existing = await Order.findOne({
+          userId,
+          idempotencyKey: key
+        });
+
+        if (existing) {
+          const quote = await buildQuote(req.body || {});
+          const requestData = {
+            userId: String(userId),
+            side: quote.side,
+            asset: quote.asset,
+            quantity: quote.quantity,
+            currency: quote.currency,
+            totalFiat: quote.totalFiat
+          };
+
+          if (
+            sameOrderRequest(
+              existing,
+              createHash(requestData),
+              requestData
+            )
+          ) {
+            return res.status(200).json({
+              message: 'Existing order returned.',
+              order: existing,
+              duplicate: true
+            });
+          }
+
+          return res.status(409).json({
+            error: 'This idempotency key was used for a different order.'
+          });
+        }
+      }
+    }
+
+    next(error);
+  }
+});
 
 // --------------------------------------------------
-// CUSTOMER: VIEW OWN ORDERS
+// CUSTOMER ORDER HISTORY
 // --------------------------------------------------
 
-router.get(
-  '/my',
-  requireDatabase,
-  requireLogin,
-  asyncHandler(async (req, res) => {
-    const page = Math.max(1, Number(req.query.page) || 1);
-    const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 20));
-    const filter = { userId: req.user._id };
+router.get('/my', auth.authUser, async (req, res, next) => {
+  try {
+    const userId = getUserId(req);
+
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(
+      100,
+      Math.max(1, parseInt(req.query.limit, 10) || 20)
+    );
+
+    const filter = { userId };
+
+    if (req.query.status) {
+      if (!ORDER_STATUSES.includes(req.query.status)) {
+        throw httpError(400, 'INVALID_STATUS', 'Invalid order status.');
+      }
+
+      filter.status = req.query.status;
+    }
 
     const [orders, total] = await Promise.all([
       Order.find(filter)
@@ -785,495 +874,706 @@ router.get(
 
     res.json({
       orders,
-      total,
-      page,
-      pages: Math.ceil(total / limit)
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
     });
-  })
+  } catch (error) {
+    next(error);
+  }
+});
+
+// --------------------------------------------------
+// CUSTOMER ORDER DETAIL
+// --------------------------------------------------
+
+router.get('/:reference', auth.authUser, async (req, res, next) => {
+  try {
+    const order = await Order.findOne({
+      reference: req.params.reference,
+      userId: getUserId(req)
+    }).lean();
+
+    if (!order) {
+      throw httpError(404, 'ORDER_NOT_FOUND', 'Order not found.');
+    }
+
+    res.json({ order });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// --------------------------------------------------
+// ADMIN CONFIGURATION
+// --------------------------------------------------
+
+router.get(
+  '/admin/config',
+  auth.authUser,
+  requirePermission('fees.manage'),
+  async (req, res, next) => {
+    try {
+      res.json({ config: await getConfig() });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+router.put(
+  '/admin/config',
+  auth.authUser,
+  requirePermission('fees.manage'),
+  async (req, res, next) => {
+    try {
+      const oldConfig = await getConfig();
+      const input = req.body || {};
+
+      const config = {
+        ...oldConfig
+      };
+
+      if (input.executionMode !== undefined) {
+        if (!EXECUTION_MODES.includes(input.executionMode)) {
+          throw httpError(400, 'INVALID_MODE', 'Invalid execution mode.');
+        }
+
+        if (input.executionMode === 'automatic') {
+          throw httpError(
+            503,
+            'PROVIDER_REQUIRED',
+            'Automatic mode cannot be enabled without a configured execution provider.'
+          );
+        }
+
+        config.executionMode = input.executionMode;
+      }
+
+      if (input.tradingEnabled !== undefined) {
+        config.tradingEnabled = Boolean(input.tradingEnabled);
+      }
+
+      if (input.defaultCurrency !== undefined) {
+        config.defaultCurrency = normalizeCurrency(input.defaultCurrency);
+      }
+
+      if (input.kesPerUsd !== undefined) {
+        const rate = decimalToUnits(input.kesPerUsd);
+
+        if (rate <= 0n) {
+          throw httpError(400, 'INVALID_RATE', 'Invalid KES exchange rate.');
+        }
+
+        config.kesPerUsd = unitsToDecimal(rate);
+      }
+
+      for (const field of [
+        'buyFeePercent',
+        'sellFeePercent',
+        'minimumOrderUsd',
+        'maximumOrderUsd'
+      ]) {
+        if (input[field] !== undefined) {
+          const number = Number(input[field]);
+
+          if (!Number.isFinite(number) || number < 0) {
+            throw httpError(400, 'INVALID_CONFIG', `Invalid ${field}.`);
+          }
+
+          config[field] = String(number);
+        }
+      }
+
+      if (
+        safeNumber(config.maximumOrderUsd) <
+        safeNumber(config.minimumOrderUsd)
+      ) {
+        throw httpError(
+          400,
+          'INVALID_LIMITS',
+          'Maximum order must be greater than or equal to minimum order.'
+        );
+      }
+
+      const saved = await saveConfig(config, getUserId(req));
+
+      await writeAudit('trading.config.updated', req, {
+        executionMode: saved.executionMode,
+        tradingEnabled: saved.tradingEnabled
+      });
+
+      res.json({
+        message: 'Trading configuration updated.',
+        config: saved
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 );
 
 // --------------------------------------------------
-// ADMIN: VIEW ORDERS
+// ADMIN ASSET PRICES
+// --------------------------------------------------
+
+router.get(
+  '/admin/prices',
+  auth.authUser,
+  requirePermission('fees.manage'),
+  async (req, res, next) => {
+    try {
+      const prices = await AssetPrice.find()
+        .sort({ asset: 1 })
+        .lean();
+
+      res.json({ prices });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+router.put(
+  '/admin/prices/:asset',
+  auth.authUser,
+  requirePermission('fees.manage'),
+  async (req, res, next) => {
+    try {
+      const asset = normalizeAsset(req.params.asset);
+      const priceUnits = decimalToUnits(req.body?.priceUsd);
+
+      if (priceUnits <= 0n) {
+        throw httpError(400, 'INVALID_PRICE', 'Price must be greater than zero.');
+      }
+
+      const price = await AssetPrice.findOneAndUpdate(
+        { asset },
+        {
+          $set: {
+            priceUsd: unitsToDecimal(priceUnits),
+            enabled: req.body?.enabled !== false,
+            source: String(req.body?.source || 'admin').slice(0, 80),
+            updatedBy: getUserId(req)
+          }
+        },
+        {
+          upsert: true,
+          new: true,
+          runValidators: true
+        }
+      );
+
+      await writeAudit('asset.price.updated', req, {
+        asset,
+        priceUsd: price.priceUsd
+      });
+
+      res.json({
+        message: 'Asset price updated.',
+        price
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+router.delete(
+  '/admin/prices/:asset',
+  auth.authUser,
+  requirePermission('fees.manage'),
+  async (req, res, next) => {
+    try {
+      const asset = normalizeAsset(req.params.asset);
+
+      await AssetPrice.updateOne(
+        { asset },
+        {
+          $set: {
+            enabled: false,
+            updatedBy: getUserId(req)
+          }
+        }
+      );
+
+      await writeAudit('asset.price.disabled', req, { asset });
+
+      res.json({
+        message: 'Asset price disabled.'
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// --------------------------------------------------
+// ADMIN ORDER LIST
 // --------------------------------------------------
 
 router.get(
   '/admin',
-  requireDatabase,
-  permission('orders.view'),
-  asyncHandler(async (req, res) => {
-    const page = Math.max(1, Number(req.query.page) || 1);
-    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 30));
-    const filter = {};
-
-    if (req.query.status) {
-      const status = cleanText(req.query.status, 30);
-      const allowed = [
-        'pending', 'processing', 'awaiting_payout',
-        'completed', 'rejected'
-      ];
-
-      if (!allowed.includes(status)) {
-        return res.status(400).json({ error: 'Invalid order status.' });
-      }
-      filter.status = status;
-    }
-
-    if (req.query.side) {
-      const side = cleanText(req.query.side, 10);
-      if (!['buy', 'sell'].includes(side)) {
-        return res.status(400).json({ error: 'Invalid order side.' });
-      }
-      filter.side = side;
-    }
-
-    const [orders, total] = await Promise.all([
-      Order.find(filter)
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .populate('userId', 'name email')
-        .lean(),
-      Order.countDocuments(filter)
-    ]);
-
-    res.json({
-      orders,
-      total,
-      page,
-      pages: Math.ceil(total / limit)
-    });
-  })
-);
-
-// --------------------------------------------------
-// ADMIN: VERIFY BUY PAYMENT
-// --------------------------------------------------
-
-router.post(
-  '/admin/:id/verify-payment',
-  requireDatabase,
-  permission('orders.manage'),
-  asyncHandler(async (req, res) => {
-    if (!validId(req.params.id)) {
-      return res.status(400).json({ error: 'Invalid order ID.' });
-    }
-
-    const reference = cleanText(req.body.verificationReference, 120);
-
-    if (!reference) {
-      return res.status(400).json({
-        error: 'Verification reference is required.'
-      });
-    }
-
-    const order = await Order.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        side: 'buy',
-        status: 'pending',
-        paymentVerified: false
-      },
-      {
-        $set: {
-          paymentVerified: true,
-          paymentVerificationReference: reference,
-          adminId: req.user._id
-        },
-        $push: {
-          audit: {
-            action: 'payment_verified',
-            actorId: req.user._id,
-            reference,
-            note: 'Manual payment verification recorded',
-            at: new Date()
-          }
-        }
-      },
-      { new: true, runValidators: true }
-    );
-
-    if (!order) {
-      return conflict(res, 'Order not found or payment cannot be verified.');
-    }
-
-    res.json({
-      message: 'Payment verification recorded. Confirm the actual payment independently.',
-      order
-    });
-  })
-);
-
-// --------------------------------------------------
-// ADMIN: APPROVE ORDER
-// --------------------------------------------------
-
-router.post(
-  '/admin/:id/approve',
-  requireDatabase,
-  permission('orders.manage'),
-  asyncHandler(async (req, res) => {
-    if (!validId(req.params.id)) {
-      return res.status(400).json({ error: 'Invalid order ID.' });
-    }
-
-    const session = await mongoose.startSession();
-    let result;
-
+  auth.authUser,
+  requirePermission('orders.view'),
+  async (req, res, next) => {
     try {
-      await session.withTransaction(async () => {
-        const order = await Order.findOne({
-          _id: req.params.id,
-          status: 'pending'
-        }).session(session);
+      const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+      const limit = Math.min(
+        100,
+        Math.max(1, parseInt(req.query.limit, 10) || 25)
+      );
 
-        if (!order) throw new Error('ORDER_NOT_PENDING');
+      const filter = {};
 
-        if (order.executionMode !== 'manual') {
-          throw new Error('AUTOMATIC_PROVIDER_NOT_CONFIGURED');
+      if (req.query.status) {
+        if (!ORDER_STATUSES.includes(req.query.status)) {
+          throw httpError(400, 'INVALID_STATUS', 'Invalid order status.');
         }
 
-        if (order.side === 'buy') {
-          if (!order.paymentVerified) {
-            throw new Error('PAYMENT_NOT_VERIFIED');
-          }
+        filter.status = req.query.status;
+      }
 
-          await ledger.transfer({
-            session,
-            reference: ledgerReference('complete-buy', order._id),
-            description: 'Complete verified customer buy order',
-            asset: order.asset,
-            amount: order.quantity,
-            from: orderEscrow(order._id),
-            to: customerAccount(order.userId, 'available'),
-            metadata: {
-              orderId: String(order._id),
-              orderReference: order.reference
-            }
-          });
-
-          order.status = 'completed';
-          order.payoutStatus = 'not_required';
-        } else {
-          order.status = 'awaiting_payout';
-          order.payoutStatus = 'pending';
+      if (req.query.side) {
+        if (!['buy', 'sell'].includes(req.query.side)) {
+          throw httpError(400, 'INVALID_SIDE', 'Invalid order side.');
         }
 
-        order.adminId = req.user._id;
-        order.processedAt = new Date();
+        filter.side = req.query.side;
+      }
 
-        addAudit(
-          order,
-          'approved',
-          req.user._id,
-          '',
-          order.side === 'sell'
-            ? 'Approved; crypto remains in escrow pending fiat payout.'
-            : 'Buy order completed after payment verification.'
+      if (req.query.asset) {
+        filter.asset = normalizeAsset(req.query.asset);
+      }
+
+      if (req.query.userId) {
+        if (!isObjectId(req.query.userId)) {
+          throw httpError(400, 'INVALID_USER', 'Invalid user ID.');
+        }
+
+        filter.userId = req.query.userId;
+      }
+
+      const [orders, total] = await Promise.all([
+        Order.find(filter)
+          .populate('userId', 'name email phone')
+          .sort({ createdAt: -1 })
+          .skip((page - 1) * limit)
+          .limit(limit)
+          .lean(),
+        Order.countDocuments(filter)
+      ]);
+
+      res.json({
+        orders,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit)
+        }
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// --------------------------------------------------
+// ADMIN PAYMENT VERIFICATION
+// --------------------------------------------------
+
+router.post(
+  '/admin/:reference/verify-payment',
+  auth.authUser,
+  requirePermission('orders.manage'),
+  async (req, res, next) => {
+    try {
+      const reference = normalizeReference(req.params.reference);
+
+      const order = await Order.findOne({ reference });
+
+      if (!order) {
+        throw httpError(404, 'ORDER_NOT_FOUND', 'Order not found.');
+      }
+
+      if (order.status !== 'pending_payment') {
+        throw httpError(
+          409,
+          'INVALID_ORDER_STATUS',
+          'Only pending-payment orders can be verified.'
         );
+      }
 
-        await order.save({ session });
-        result = order;
+      order.status = 'payment_verified';
+      order.paymentReference = String(
+        req.body?.paymentReference || ''
+      ).trim().slice(0, 120);
+
+      order.paymentVerifiedAt = new Date();
+      order.paymentVerifiedBy = getUserId(req);
+
+      await order.save();
+
+      await writeAudit('order.payment.verified', req, {
+        reference,
+        paymentReference: order.paymentReference
       });
 
       res.json({
-        message: result.status === 'awaiting_payout'
-          ? 'Sell order approved. Crypto remains reserved pending payout.'
-          : 'Buy order completed.',
-        order: result
+        message: 'Payment verification recorded. This is an admin attestation, not an automatic bank confirmation.',
+        order
       });
-    } catch (err) {
-      const messages = {
-        ORDER_NOT_PENDING: 'This order is no longer pending.',
-        PAYMENT_NOT_VERIFIED: 'Verify the payment before approval.',
-        AUTOMATIC_PROVIDER_NOT_CONFIGURED:
-          'Automatic execution is not configured.'
-      };
-
-      if (messages[err.message]) return conflict(res, messages[err.message]);
-      throw err;
-    } finally {
-      await session.endSession();
+    } catch (error) {
+      next(error);
     }
-  })
+  }
 );
 
 // --------------------------------------------------
-// ADMIN: REJECT ORDER AND RELEASE ESCROW
+// ADMIN APPROVE ORDER
 // --------------------------------------------------
 
 router.post(
-  '/admin/:id/reject',
-  requireDatabase,
-  permission('orders.manage'),
-  asyncHandler(async (req, res) => {
-    if (!validId(req.params.id)) {
-      return res.status(400).json({ error: 'Invalid order ID.' });
-    }
-
-    const reason = cleanText(req.body.reason, 300);
-    if (reason.length < 3) {
-      return res.status(400).json({ error: 'Provide a rejection reason.' });
-    }
-
-    const session = await mongoose.startSession();
-    let result;
-
+  '/admin/:reference/approve',
+  auth.authUser,
+  requirePermission('orders.manage'),
+  async (req, res, next) => {
     try {
-      await session.withTransaction(async () => {
-        const order = await Order.findOne({
-          _id: req.params.id,
-          status: 'pending'
-        }).session(session);
+      const reference = normalizeReference(req.params.reference);
 
-        if (!order) throw new Error('ORDER_NOT_PENDING');
+      const order = await Order.findOne({ reference });
+
+      if (!order) {
+        throw httpError(404, 'ORDER_NOT_FOUND', 'Order not found.');
+      }
+
+      if (order.status !== 'payment_verified') {
+        throw httpError(
+          409,
+          'INVALID_ORDER_STATUS',
+          'Order payment must be verified before approval.'
+        );
+      }
+
+      order.status = 'approved';
+      order.approvedAt = new Date();
+      order.approvedBy = getUserId(req);
+
+      await order.save();
+
+      await writeAudit('order.approved', req, { reference });
+
+      res.json({
+        message: 'Order approved.',
+        order
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// --------------------------------------------------
+// ADMIN COMPLETE PAYOUT / RELEASE
+// --------------------------------------------------
+
+router.post(
+  '/admin/:reference/complete',
+  auth.authUser,
+  requirePermission('orders.manage'),
+  async (req, res, next) => {
+    try {
+      const reference = normalizeReference(req.params.reference);
+
+      const order = await Order.findOne({ reference });
+
+      if (!order) {
+        throw httpError(404, 'ORDER_NOT_FOUND', 'Order not found.');
+      }
+
+      if (order.status !== 'approved') {
+        throw httpError(
+          409,
+          'INVALID_ORDER_STATUS',
+          'Only approved orders can be completed.'
+        );
+      }
+
+      const userId = order.userId;
+
+      if (order.side === 'sell') {
+        const releaseReference = `ORDER-SELL-RELEASE-${reference}`;
 
         await ledger.transfer({
-          session,
-          reference: ledgerReference('release', order._id),
-          description: 'Release reserved funds for rejected order',
+          reference: releaseReference,
+          description: `Release sold crypto for order ${reference}`,
           asset: order.asset,
           amount: order.quantity,
-          from: orderEscrow(order._id),
-          to: order.side === 'sell'
-            ? customerAccount(order.userId, 'available')
-            : platformAccount('inventory'),
+          from: {
+            ownerType: 'user',
+            ownerId: userId,
+            bucket: 'locked'
+          },
+          to: {
+            ownerType: 'platform',
+            ownerId: null,
+            bucket: 'inventory'
+          },
           metadata: {
-            orderId: String(order._id),
-            orderReference: order.reference,
-            reason
+            orderReference: reference
           }
         });
+      } else {
+        const releaseReference = `ORDER-BUY-RELEASE-${reference}`;
 
-        order.status = 'rejected';
-        order.rejectionReason = reason;
-        order.adminId = req.user._id;
-        order.processedAt = new Date();
+        await ledger.transfer({
+          reference: releaseReference,
+          description: `Release purchased crypto for order ${reference}`,
+          asset: order.asset,
+          amount: order.quantity,
+          from: {
+            ownerType: 'platform',
+            ownerId: null,
+            bucket: 'inventory'
+          },
+          to: {
+            ownerType: 'user',
+            ownerId: userId,
+            bucket: 'available'
+          },
+          metadata: {
+            orderReference: reference
+          }
+        });
+      }
 
-        addAudit(order, 'rejected', req.user._id, '', reason);
-        await order.save({ session });
-        result = order;
+      order.status = 'completed';
+      order.completedAt = new Date();
+      order.completedBy = getUserId(req);
+
+      await order.save();
+
+      await writeAudit('order.completed', req, {
+        reference,
+        side: order.side
       });
 
       res.json({
-        message: 'Order rejected and reserved funds released.',
-        order: result
+        message: 'Order marked completed and ledger release recorded. External fiat payout or blockchain settlement must be independently confirmed.',
+        order
       });
-    } catch (err) {
-      if (err.message === 'ORDER_NOT_PENDING') {
-        return conflict(res, 'This order is no longer pending.');
-      }
-      throw err;
-    } finally {
-      await session.endSession();
+    } catch (error) {
+      next(error);
     }
-  })
+  }
 );
 
 // --------------------------------------------------
-// ADMIN: COMPLETE SELL PAYOUT
-// This records admin confirmation, not a bank transfer.
+// ADMIN REJECT ORDER
 // --------------------------------------------------
 
 router.post(
-  '/admin/:id/complete-payout',
-  requireDatabase,
-  permission('orders.manage'),
-  asyncHandler(async (req, res) => {
-    if (!validId(req.params.id)) {
-      return res.status(400).json({ error: 'Invalid order ID.' });
-    }
-
-    const payoutReference = cleanText(req.body.payoutReference, 120);
-    if (!payoutReference) {
-      return res.status(400).json({
-        error: 'Payout reference is required.'
-      });
-    }
-
-    const session = await mongoose.startSession();
-    let result;
-
+  '/admin/:reference/reject',
+  auth.authUser,
+  requirePermission('orders.manage'),
+  async (req, res, next) => {
     try {
-      await session.withTransaction(async () => {
-        const order = await Order.findOne({
-          _id: req.params.id,
-          side: 'sell',
-          status: 'awaiting_payout',
-          payoutStatus: 'pending'
-        }).session(session);
+      const reference = normalizeReference(req.params.reference);
 
-        if (!order) throw new Error('PAYOUT_NOT_PENDING');
+      const order = await Order.findOne({ reference });
+
+      if (!order) {
+        throw httpError(404, 'ORDER_NOT_FOUND', 'Order not found.');
+      }
+
+      if (order.status === 'completed' || order.status === 'rejected') {
+        throw httpError(
+          409,
+          'INVALID_ORDER_STATUS',
+          'This order cannot be rejected.'
+        );
+      }
+
+      if (order.status === 'payment_verified' || order.status === 'approved') {
+        throw httpError(
+          409,
+          'REFUND_REQUIRED',
+          'Payment was verified. Complete and record the customer fiat refund before rejecting this order.'
+        );
+      }
+
+      if (order.side === 'sell' && order.ledgerReference) {
+        const refundReference = `ORDER-SELL-REFUND-${reference}`;
 
         await ledger.transfer({
-          session,
-          reference: ledgerReference('settle-sell', order._id),
-          description: 'Settle sell order after fiat payout',
+          reference: refundReference,
+          description: `Return reserved crypto for rejected order ${reference}`,
           asset: order.asset,
           amount: order.quantity,
-          from: orderEscrow(order._id),
-          to: platformAccount('inventory'),
+          from: {
+            ownerType: 'user',
+            ownerId: order.userId,
+            bucket: 'locked'
+          },
+          to: {
+            ownerType: 'user',
+            ownerId: order.userId,
+            bucket: 'available'
+          },
           metadata: {
-            orderId: String(order._id),
-            orderReference: order.reference,
-            payoutReference
+            orderReference: reference
           }
         });
+      }
 
-        order.payoutStatus = 'paid';
-        order.payoutReference = payoutReference;
-        order.status = 'completed';
-        order.adminId = req.user._id;
-        order.processedAt = new Date();
+      order.status = 'rejected';
+      order.rejectedAt = new Date();
+      order.rejectedBy = getUserId(req);
+      order.rejectionReason = String(
+        req.body?.reason || 'Rejected by administrator.'
+      ).slice(0, 500);
 
-        addAudit(
-          order,
-          'payout_confirmed',
-          req.user._id,
-          payoutReference,
-          'Administrator confirmed external fiat payout.'
-        );
+      await order.save();
 
-        await order.save({ session });
-        result = order;
+      await writeAudit('order.rejected', req, {
+        reference,
+        reason: order.rejectionReason
       });
 
       res.json({
-        message: 'Payout confirmation recorded and sell order settled.',
-        order: result
+        message: 'Order rejected.',
+        order
       });
-    } catch (err) {
-      if (err.message === 'PAYOUT_NOT_PENDING') {
-        return conflict(res, 'This order is not awaiting payout.');
-      }
-      throw err;
-    } finally {
-      await session.endSession();
+    } catch (error) {
+      next(error);
     }
-  })
+  }
 );
 
 // --------------------------------------------------
-// ADMIN: RECORD CRYPTO INVENTORY FUNDING
-// This is an accounting attestation, not blockchain proof.
+// ADMIN INVENTORY FUNDING
 // --------------------------------------------------
 
 router.post(
   '/admin/inventory/fund',
-  requireDatabase,
-  permission('orders.manage'),
-  asyncHandler(async (req, res) => {
-    const asset = cleanText(req.body.asset, 15).toUpperCase();
-    const amount = cleanText(req.body.amount, 50);
-    const reference = cleanText(req.body.verificationReference, 180);
+  auth.authUser,
+  requirePermission('ledger.manage'),
+  async (req, res, next) => {
+    try {
+      const asset = normalizeAsset(req.body?.asset);
+      const amountUnits = decimalToUnits(req.body?.amount);
+      const amount = unitsToDecimal(amountUnits);
 
-    if (
-      !/^[A-Z0-9]{2,15}$/.test(asset) ||
-      !positiveAmount(amount) ||
-      reference.length < 8
-    ) {
-      return res.status(400).json({
-        error: 'Valid asset, amount and verification reference are required.'
+      const reference = randomReference('CW-INV');
+
+      await ledger.transfer({
+        reference,
+        description: 'Admin inventory funding attestation',
+        asset,
+        amount,
+        from: {
+          ownerType: 'platform',
+          ownerId: null,
+          bucket: 'external_clearing'
+        },
+        to: {
+          ownerType: 'platform',
+          ownerId: null,
+          bucket: 'inventory'
+        },
+        allowNegativeSource: true,
+        metadata: {
+          reason: String(req.body?.reason || '').slice(0, 500),
+          attestedBy: String(getUserId(req)),
+          externalSettlementVerified: false
+        }
       });
+
+      await writeAudit('inventory.funded', req, {
+        reference,
+        asset,
+        amount
+      });
+
+      res.status(201).json({
+        message: 'Inventory ledger entry recorded. This does not prove blockchain receipt or custody of the crypto asset.',
+        reference,
+        asset,
+        amount
+      });
+    } catch (error) {
+      next(error);
     }
-
-    await ledger.transfer({
-      reference: 'inventory-funding:' + crypto
-        .createHash('sha256')
-        .update(reference)
-        .digest('hex'),
-      description: 'Record administrator-verified crypto inventory',
-      asset,
-      amount,
-      from: platformAccount('external_clearing'),
-      to: platformAccount('inventory'),
-      allowNegativeSource: true,
-      metadata: {
-        verificationReference: reference,
-        adminId: String(req.user._id),
-        attestationOnly: true
-      }
-    });
-
-    res.status(201).json({
-      message: 'Inventory adjustment recorded. Verify blockchain receipt separately.',
-      asset,
-      amount
-    });
-  })
+  }
 );
 
 // --------------------------------------------------
-// ADMIN: VIEW CUSTOMER LEDGER BALANCES
+// ADMIN BALANCE VIEW
 // --------------------------------------------------
 
 router.get(
   '/admin/balances/:userId',
-  requireDatabase,
-  permission('customers.view'),
-  asyncHandler(async (req, res) => {
-    if (!validId(req.params.userId)) {
-      return res.status(400).json({ error: 'Invalid customer ID.' });
+  auth.authUser,
+  requirePermission('ledger.view'),
+  async (req, res, next) => {
+    try {
+      if (!isObjectId(req.params.userId)) {
+        throw httpError(400, 'INVALID_USER', 'Invalid user ID.');
+      }
+
+      const accounts = await ledger.Account.find({
+        ownerType: 'user',
+        ownerId: req.params.userId
+      }).lean();
+
+      res.json({
+        balances: accounts.map((account) => ({
+          asset: account.asset,
+          bucket: account.bucket,
+          balance: unitsToDecimal(BigInt(account.balanceUnits || '0'))
+        }))
+      });
+    } catch (error) {
+      next(error);
     }
-
-    const accounts = await ledger.Account.find({
-      ownerType: 'user',
-      ownerId: String(req.params.userId)
-    }).lean();
-
-    res.json({
-      balances: accounts.map(account => ({
-        asset: account.asset,
-        bucket: account.bucket,
-        balance: ledger.fromUnits(account.balanceUnits)
-      }))
-    });
-  })
+  }
 );
 
 // --------------------------------------------------
 // ERROR HANDLER
 // --------------------------------------------------
 
-router.use((err, req, res, next) => {
-  console.error('CoinWave orders error:', err);
-
-  if (err.message === 'ASSET_PRICE_UNAVAILABLE') {
-    return res.status(409).json({
-      error: 'This asset has no active admin price configured.'
-    });
+router.use((error, req, res, next) => {
+  if (res.headersSent) {
+    return next(error);
   }
 
-  if (err.message === 'QUOTE_TOO_SMALL') {
-    return res.status(400).json({
-      error: 'The calculated sell amount is too small after fees.'
-    });
+  const status = Number(error.status) || 500;
+
+  if (status >= 500) {
+    console.error('CoinWave orders error:', error);
   }
 
-  if (err.message === 'INVALID_PRICING_CONFIGURATION') {
-    return res.status(503).json({
-      error: 'The administrator pricing configuration is invalid.'
-    });
-  }
-
-  if (err.code === 11000) {
-    return res.status(409).json({
-      error: 'This request conflicts with an existing record. Check the order before retrying.'
-    });
-  }
-
-  if (
-    err.code === 20 ||
-    err.codeName === 'IllegalOperation' ||
-    /Transaction numbers are only allowed/i.test(err.message || '')
-  ) {
-    return res.status(503).json({
-      error: 'CoinWave requires MongoDB transaction support. Use a replica-set database.'
-    });
-  }
-
-  res.status(500).json({
-    error: 'An order operation could not be completed.'
+  res.status(status).json({
+    error:
+      status >= 500
+        ? 'An internal server error occurred.'
+        : error.message,
+    code: error.code || 'ORDERS_ERROR'
   });
 });
+
+// --------------------------------------------------
+// EXPORTS
+// --------------------------------------------------
+
+router.Order = Order;
+router.AssetPrice = AssetPrice;
+router.TradingConfig = TradingConfig;
+router.buildQuote = buildQuote;
 
 module.exports = router;
