@@ -10,27 +10,72 @@ const fs = require('fs');
 
 const app = express();
 
-app.use(helmet({ contentSecurityPolicy: false }));
+// --------------------------------------------------
+// SECURITY AND MIDDLEWARE
+// --------------------------------------------------
+
+app.use(helmet({
+  contentSecurityPolicy: false
+}));
+
 app.use(cors());
+
 app.set('trust proxy', 1);
-app.use(express.json());
+
+app.use(express.json({
+  limit: '1mb'
+}));
+
+// Prevent private backend files from being served
+// through the public static directory.
+const privateFiles = new Set([
+  'server.js',
+  'auth.js',
+  'admin.js',
+  'orders.js',
+  'ledger.js',
+  'package.json',
+  'package-lock.json',
+  'yarn.lock'
+]);
+
+app.use((req, res, next) => {
+  const filename = path.basename(req.path);
+
+  if (privateFiles.has(filename)) {
+    return res.sendStatus(404);
+  }
+
+  next();
+});
 
 app.use(express.static(__dirname));
 
+// --------------------------------------------------
+// API ROUTES
+// --------------------------------------------------
+
 app.use('/api/auth', require('./auth'));
+
 app.use('/api/admin', require('./admin'));
 
-// Serve website pages.
-function sendFirst(res, candidates) {
-  for (const c of candidates) {
-    const p = path.join(__dirname, c);
+// Customer and admin order management.
+app.use('/api/orders', require('./orders'));
 
-    if (fs.existsSync(p)) {
-      return res.sendFile(p);
+// --------------------------------------------------
+// WEBSITE PAGE ROUTES
+// --------------------------------------------------
+
+function sendFirst(res, candidates) {
+  for (const candidate of candidates) {
+    const filePath = path.join(__dirname, candidate);
+
+    if (fs.existsSync(filePath)) {
+      return res.sendFile(filePath);
     }
   }
 
-  return res.status(404).send('Not found');
+  return res.status(404).send('Page not found');
 }
 
 app.get('/', (req, res) => {
@@ -42,14 +87,27 @@ app.get(['/login', '/signup'], (req, res) => {
 });
 
 app.get('/dashboard', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+
   sendFirst(res, ['dashboard.html']);
 });
 
 app.get('/admin', (req, res) => {
   res.set('Cache-Control', 'no-store');
+
   sendFirst(res, ['admin.html']);
 });
 
+// Terms and Privacy pages.
+app.get('/terms', (req, res) => {
+  sendFirst(res, ['terms.html']);
+});
+
+app.get('/privacy', (req, res) => {
+  sendFirst(res, ['privacy.html']);
+});
+
+// CSS and JavaScript compatibility routes.
 app.get(['/style.css', '/css/style.css'], (req, res) => {
   sendFirst(res, ['style.css', 'css/style.css']);
 });
@@ -58,12 +116,17 @@ app.get(['/app.js', '/js/app.js'], (req, res) => {
   sendFirst(res, ['app.js', 'js/app.js']);
 });
 
-// Database status.
+// --------------------------------------------------
+// DATABASE STATUS
+// --------------------------------------------------
+
 let dbState = process.env.MONGO_URI
   ? 'connecting'
   : 'MONGO_URI not set';
 
 app.get('/api/health', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+
   res.json({
     status: 'ok',
     db: dbState,
@@ -71,7 +134,10 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Market cache.
+// --------------------------------------------------
+// MARKET DATA CACHE
+// --------------------------------------------------
+
 const CACHE_MS = 60 * 1000;
 const API_TIMEOUT_MS = 12000;
 
@@ -97,10 +163,13 @@ async function fetchJson(url) {
     });
 
     if (!response.ok) {
-      throw new Error('API returned status ' + response.status);
+      throw new Error(
+        'API returned status ' + response.status
+      );
     }
 
     return await response.json();
+
   } finally {
     clearTimeout(timer);
   }
@@ -116,14 +185,19 @@ function sortByMarketCap(data) {
       Number.isFinite(Number(c.marketCap)) &&
       Number(c.marketCap) >= 0
     )
-    .sort((a, b) => Number(b.marketCap) - Number(a.marketCap))
+    .sort((a, b) =>
+      Number(b.marketCap) - Number(a.marketCap)
+    )
     .map((c, index) => ({
       ...c,
       rank: index + 1
     }));
 }
 
-// PRIMARY SOURCE: COINGECKO.
+// --------------------------------------------------
+// PRIMARY MARKET SOURCE: COINGECKO
+// --------------------------------------------------
+
 async function fromCoinGecko() {
   const url =
     'https://api.coingecko.com/api/v3/coins/markets' +
@@ -153,7 +227,10 @@ async function fromCoinGecko() {
   return sortByMarketCap(data);
 }
 
-// BACKUP SOURCE: COINPAPRIKA.
+// --------------------------------------------------
+// BACKUP MARKET SOURCE: COINPAPRIKA
+// --------------------------------------------------
+
 async function fromCoinPaprika() {
   const url =
     'https://api.coinpaprika.com/v1/tickers?quotes=USD';
@@ -191,11 +268,14 @@ async function fromCoinPaprika() {
   return sortByMarketCap(data);
 }
 
-// MARKET API.
+// --------------------------------------------------
+// MARKET API
+// --------------------------------------------------
+
 app.get('/api/markets', async (req, res) => {
   res.set('Cache-Control', 'no-store');
 
-  // Serve fresh cached data.
+  // Return fresh cached market data.
   if (
     cache.data &&
     Date.now() - cache.time < CACHE_MS
@@ -204,8 +284,14 @@ app.get('/api/markets', async (req, res) => {
   }
 
   const sources = [
-    { name: 'CoinGecko', getData: fromCoinGecko },
-    { name: 'CoinPaprika', getData: fromCoinPaprika }
+    {
+      name: 'CoinGecko',
+      getData: fromCoinGecko
+    },
+    {
+      name: 'CoinPaprika',
+      getData: fromCoinPaprika
+    }
   ];
 
   for (const source of sources) {
@@ -218,12 +304,16 @@ app.get('/api/markets', async (req, res) => {
           data
         };
 
-        console.log(source.name + ' market data updated');
+        console.log(
+          source.name + ' market data updated'
+        );
 
         return res.json(data);
       }
 
-      throw new Error('No valid market data returned');
+      throw new Error(
+        'No valid market data returned'
+      );
 
     } catch (err) {
       console.error(
@@ -235,20 +325,46 @@ app.get('/api/markets', async (req, res) => {
     }
   }
 
-  // Use the last successful data if both APIs fail.
+  // Use previous successful data if both providers fail.
   if (cache.data && cache.data.length) {
-    console.warn('Using previously cached market data');
+    console.warn(
+      'Using previously cached market data'
+    );
+
     return res.json(cache.data);
   }
 
-  // Neither API nor cache has usable data.
+  // No provider or cached data is available.
   return res.status(503).json({
     error: 'Market data is temporarily unavailable.',
     message: 'Please try again shortly.'
   });
 });
 
-// START SERVER.
+// --------------------------------------------------
+// API ERROR HANDLER
+// Keep this after the API routes.
+// --------------------------------------------------
+
+app.use((err, req, res, next) => {
+  console.error(
+    'CoinWave server error:',
+    err.message
+  );
+
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  res.status(500).json({
+    error: 'A server error occurred. Please try again.'
+  });
+});
+
+// --------------------------------------------------
+// START SERVER
+// --------------------------------------------------
+
 const PORT = process.env.PORT || 3000;
 
 (async () => {
@@ -257,18 +373,27 @@ const PORT = process.env.PORT || 3000;
       await mongoose.connect(process.env.MONGO_URI);
 
       dbState = 'connected';
+
       console.log('MongoDB connected');
 
-    } catch (e) {
-      dbState = 'error: ' + e.message;
+    } catch (err) {
+      dbState = 'error';
 
-      console.error('MongoDB error:', e.message);
+      console.error(
+        'MongoDB connection failed:',
+        err.message
+      );
     }
+
   } else {
-    console.log('MONGO_URI is not set, running without a database');
+    console.log(
+      'MONGO_URI is not set, running without a database'
+    );
   }
 
   app.listen(PORT, () => {
-    console.log('CoinWave v2 on port ' + PORT);
+    console.log(
+      'CoinWave v2 running on port ' + PORT
+    );
   });
 })();
