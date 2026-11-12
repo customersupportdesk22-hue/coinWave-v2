@@ -71,4 +71,12 @@ tbody tr:hover { background: var(--surface-2); }
   .nav .link { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
-          
+
+/* Mobile table fit: keep the 24h column inside the card */
+@media (max-width: 600px) {
+  .table-card { overflow-x: auto; }
+  th, td { padding: 12px 10px; }
+  .coin { gap: 10px; }
+  .coin img { width: 24px; height: 24px; }
+  .coin .n, td.num { font-size: 15px; }
+}
