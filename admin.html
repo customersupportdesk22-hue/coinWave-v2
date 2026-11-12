@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,668 +6,92 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="theme-color" content="#06133f">
   <title>CoinWave | Admin Dashboard</title>
-
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
-
   <style>
-    .adm { padding-top: 28px; padding-bottom: 60px; }
-    .adm h1 { font-size: 27px; letter-spacing: -.03em; }
-    .adm .sub { color: var(--muted); margin-top: 5px; }
-
-    .admin-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 14px;
-    }
-
-    .admin-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      color: var(--up);
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    .admin-status::before {
-      content: "";
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--up);
-    }
-
-    .tabs {
-      display: flex;
-      gap: 18px;
-      margin: 24px 0;
-      border-bottom: 1px solid var(--line);
-      overflow-x: auto;
-      scrollbar-width: thin;
-    }
-
-    .tab {
-      flex: 0 0 auto;
-      background: none;
-      border: 0;
-      color: var(--muted);
-      font: 600 14px var(--font);
-      padding: 12px 3px;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-    }
-
-    .tab.on {
-      color: var(--text);
-      border-bottom-color: var(--accent);
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-      gap: 14px;
-    }
-
-    .stat {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 20px;
-      min-width: 0;
-    }
-
-    .stat .l { color: var(--muted); font-size: 14px; }
-
-    .stat .v {
-      font-size: 32px;
-      font-weight: 700;
-      letter-spacing: -.03em;
-      margin-top: 8px;
-      overflow-wrap: anywhere;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .section-heading {
-      font-size: 18px;
-      font-weight: 700;
-      margin: 26px 0 12px;
-    }
-
-    .msg {
-      color: var(--muted);
-      padding: 14px 0;
-      font-size: 14px;
-    }
-
-    .bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 14px;
-    }
-
-    .bar .count { color: var(--muted); font-size: 13px; }
-
-    .search-wrap {
-      width: min(100%, 340px);
-    }
-
-    .search-wrap input {
-      width: 100%;
-      min-height: 44px;
-      padding: 0 13px;
-      border: 1px solid var(--line);
-      border-radius: 9px;
-      background: var(--surface);
-      color: var(--text);
-      font: 14px var(--font);
-    }
-
-    .list {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
-
-    .item { border-bottom: 1px solid var(--line); }
-    .item:last-child { border-bottom: 0; }
-
-    .row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      width: 100%;
-      padding: 14px 16px;
-      background: none;
-      border: 0;
-      color: var(--text);
-      font: 15px var(--font);
-      text-align: left;
-      cursor: pointer;
-    }
-
-    .row:hover { background: var(--surface-2); }
-
-    .row img {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      object-fit: contain;
-      background: var(--surface-2);
-    }
-
-    .row .n { flex: 1; min-width: 0; font-weight: 600; }
-
-    .row .n small {
-      display: block;
-      color: var(--muted);
-      font-weight: 400;
-      font-size: 12px;
-      margin-top: 2px;
-    }
-
-    .badge {
-      flex: 0 0 auto;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 5px 10px;
-      border-radius: 999px;
-      background: var(--surface-2);
-      color: var(--muted);
-    }
-
-    .badge.set {
-      color: var(--up);
-      background: rgba(34,197,94,.12);
-    }
-
-    .form {
-      padding: 5px 16px 18px;
-      display: grid;
-      gap: 13px;
-      background: var(--surface-2);
-    }
-
-    .form label {
-      font-size: 13px;
-      font-weight: 500;
-      display: block;
-      margin-bottom: 5px;
-      color: var(--muted);
-    }
-
-    .form input {
-      width: 100%;
-      min-height: 44px;
-      padding: 0 12px;
-      border-radius: 8px;
-      background: var(--bg);
-      border: 1px solid var(--line);
-      color: var(--text);
-      font: 14px var(--font);
-    }
-
-    .form input:focus,
-    .search-wrap input:focus {
-      border-color: var(--accent);
-      outline: 2px solid rgba(8,124,240,.12);
-    }
-
-    .form .acts {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .form .note { font-size: 13px; }
-    .ok { color: var(--up); }
-    .bad { color: var(--down); }
-
-    .admin-note {
-      margin-top: 18px;
-      padding: 14px;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.6;
-      background: var(--surface);
-    }
-
-    .empty {
-      padding: 25px 16px;
-      color: var(--muted);
-      text-align: center;
-    }
-
-    button:disabled { opacity: .6; cursor: not-allowed; }
-
-    @media (max-width: 600px) {
-      .adm { padding-top: 20px; }
-      .adm h1 { font-size: 23px; }
-      .stat { padding: 16px; }
-      .stat .v { font-size: 27px; }
-      .tabs { gap: 13px; }
-      .row { padding: 13px 11px; }
-    }
+    .adm{padding:26px 0 60px}.admin-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:22px}.adm h1{font-size:27px;letter-spacing:-.03em}.sub{color:var(--muted);margin-top:5px}.admin-status{display:inline-flex;align-items:center;gap:8px;color:var(--up);font-size:13px;font-weight:600}.admin-status:before{content:"";width:8px;height:8px;border-radius:50%;background:var(--up)}
+    .admin-layout{display:grid;grid-template-columns:225px minmax(0,1fr);gap:22px;align-items:start}.sidebar{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:10px;position:sticky;top:85px;max-height:calc(100vh - 105px);overflow:auto}.side-label{color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:13px 10px 7px}.tab{width:100%;display:flex;align-items:center;gap:10px;background:transparent;border:0;border-radius:8px;color:var(--muted);font:600 13px var(--font);text-align:left;padding:11px 10px;cursor:pointer}.tab:hover{background:var(--surface-2);color:var(--text)}.tab.on{background:var(--surface-2);color:var(--text);box-shadow:inset 3px 0 var(--accent)}.tab .ico{width:20px;text-align:center;font-size:15px}.tab .soon{margin-left:auto;font-size:9px;padding:3px 6px;border-radius:20px;background:var(--surface-2);color:var(--muted)}.main-panel{min-width:0}.panel{display:none}.panel.active{display:block}.section-heading{font-size:19px;font-weight:700;margin:4px 0 7px}.section-desc{color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:18px}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:13px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;min-width:0}.stat .l{color:var(--muted);font-size:13px}.stat .v{font-size:29px;font-weight:700;letter-spacing:-.03em;margin-top:8px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}.msg{color:var(--muted);padding:14px 0;font-size:14px}.admin-note{margin-top:18px;padding:14px;border:1px solid var(--line);border-radius:10px;color:var(--muted);font-size:13px;line-height:1.6;background:var(--surface)}.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}.count{color:var(--muted);font-size:13px}.search-wrap{width:min(100%,340px)}.search-wrap input,.field input{width:100%;min-height:43px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);font:14px var(--font)}.search-wrap input:focus,.field input:focus{outline:2px solid rgba(8,124,240,.15);border-color:var(--accent)}.list{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}.item{border-bottom:1px solid var(--line)}.item:last-child{border-bottom:0}.row{display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:none;border:0;color:var(--text);font:15px var(--font);text-align:left;cursor:pointer}.row:hover{background:var(--surface-2)}.row img{width:30px;height:30px;border-radius:50%;object-fit:contain;background:var(--surface-2)}.row .n{flex:1;min-width:0;font-weight:600}.row .n small{display:block;color:var(--muted);font-weight:400;font-size:12px;margin-top:2px}.badge{flex:0 0 auto;font-size:11px;font-weight:600;padding:5px 9px;border-radius:999px;background:var(--surface-2);color:var(--muted)}.badge.set{color:var(--up);background:rgba(34,197,94,.12)}.form{padding:15px 16px 18px;display:grid;gap:13px;background:var(--surface-2)}.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px}.acts{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.note{font-size:12px}.ok{color:var(--up)}.bad{color:var(--down)}.empty{padding:25px 16px;color:var(--muted);text-align:center}.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:13px}.feature-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:17px;min-width:0}.feature-card h3{font-size:14px;margin-bottom:7px}.feature-card p{font-size:12px;color:var(--muted);line-height:1.6}.feature-state{display:inline-block;margin-top:12px;padding:4px 8px;border-radius:20px;background:var(--surface-2);color:var(--muted);font-size:10px;font-weight:700}.warning-panel{border:1px solid rgba(234,179,8,.35);background:rgba(234,179,8,.06);border-radius:10px;padding:14px;margin:0 0 16px;font-size:13px;line-height:1.6}.warning-panel strong{display:block;margin-bottom:4px}button:disabled{opacity:.6;cursor:not-allowed}
+    @media(max-width:800px){.admin-layout{grid-template-columns:1fr;gap:14px}.sidebar{position:static;max-height:none;display:flex;gap:5px;overflow-x:auto;white-space:nowrap;padding:7px}.side-label{display:none}.tab{width:auto;flex:0 0 auto;padding:10px}.tab .soon{display:none}}
+    @media(max-width:600px){.adm{padding-top:18px}.adm h1{font-size:23px}.stat{padding:15px}.stat .v{font-size:25px}.row{padding:13px 11px}}
   </style>
 </head>
-
 <body>
-  <header class="header">
-    <div class="wrap">
-      <a class="logo" href="/">Coin<b>Wave</b></a>
-      <nav class="nav">
-        <a class="link" href="/dashboard">Dashboard</a>
-        <button class="btn btn-sm" id="logout" type="button">Log out</button>
-      </nav>
-    </div>
-  </header>
-
-  <main class="wrap adm">
-    <div class="admin-top">
-      <div>
-        <h1>Admin dashboard</h1>
-        <p class="sub">Manage and monitor CoinWave.</p>
-      </div>
-      <span class="admin-status">Admin session</span>
-    </div>
-
-    <div class="tabs" role="tablist" aria-label="Admin sections">
-      <button class="tab on" type="button" data-t="overview" role="tab" aria-selected="true">Overview</button>
-      <button class="tab" type="button" data-t="addresses" role="tab" aria-selected="false">Deposit addresses</button>
-    </div>
-
-    <section id="overview" role="tabpanel">
-      <h2 class="section-heading">Platform overview</h2>
-      <p class="msg" id="stats-message" aria-live="polite">Loading statistics...</p>
-      <div class="stats" id="stats" style="display:none"></div>
-      <p class="admin-note">
-        These figures come from the existing registered-user statistics endpoint.
-        Trading volume, customer balances, order totals and financial reports will
-        be connected when their respective backend modules are implemented.
-      </p>
-    </section>
-
-    <section id="addresses" role="tabpanel" style="display:none">
-      <h2 class="section-heading">Crypto deposit addresses</h2>
-      <p class="sub" style="margin-bottom:16px">
-        Manage the public wallet addresses displayed to customers.
-      </p>
-
-      <div class="bar">
-        <div class="search-wrap">
-          <input id="q" class="search" type="search"
-            placeholder="Search coins by name or symbol"
-            aria-label="Search coins">
+<header class="header"><div class="wrap"><a class="logo" href="/">Coin<b>Wave</b></a><nav class="nav"><a class="link" href="/dashboard">Dashboard</a><button class="btn btn-sm" id="logout" type="button">Log out</button></nav></div></header>
+<main class="wrap adm">
+  <div class="admin-top"><div><h1>Admin dashboard</h1><p class="sub">Manage and monitor CoinWave operations.</p></div><span class="admin-status">Admin session</span></div>
+  <div class="admin-layout">
+    <aside class="sidebar" aria-label="Admin navigation">
+      <div class="side-label">Management</div>
+      <button class="tab on" data-t="overview" type="button"><span class="ico">▦</span>Overview</button>
+      <button class="tab" data-t="customers" type="button"><span class="ico">♙</span>Customers<span class="soon">API needed</span></button>
+      <button class="tab" data-t="orders" type="button"><span class="ico">⇄</span>Orders &amp; trading<span class="soon">API needed</span></button>
+      <button class="tab" data-t="wallets" type="button"><span class="ico">▣</span>Wallets &amp; balances<span class="soon">API needed</span></button>
+      <button class="tab" data-t="addresses" type="button"><span class="ico">⌖</span>Deposit addresses</button>
+      <button class="tab" data-t="payments" type="button"><span class="ico">▤</span>Payment settings<span class="soon">API needed</span></button>
+      <button class="tab" data-t="assets" type="button"><span class="ico">◈</span>Asset management<span class="soon">API needed</span></button>
+      <button class="tab" data-t="pricing" type="button"><span class="ico">％</span>Pricing &amp; fees<span class="soon">API needed</span></button>
+      <div class="side-label">Customer operations</div>
+      <button class="tab" data-t="support" type="button"><span class="ico">☏</span>Support &amp; chat<span class="soon">API needed</span></button>
+      <button class="tab" data-t="notifications" type="button"><span class="ico">♧</span>Notifications<span class="soon">API needed</span></button>
+      <button class="tab" data-t="kyc" type="button"><span class="ico">✓</span>KYC verification<span class="soon">API needed</span></button>
+      <div class="side-label">Platform</div>
+      <button class="tab" data-t="website" type="button"><span class="ico">⚙</span>Website settings<span class="soon">API needed</span></button>
+      <button class="tab" data-t="security" type="button"><span class="ico">♜</span>Staff &amp; security<span class="soon">API needed</span></button>
+      <button class="tab" data-t="reports" type="button"><span class="ico">▥</span>Reports<span class="soon">API needed</span></button>
+      <button class="tab" data-t="system" type="button"><span class="ico">⌘</span>System health<span class="soon">API needed</span></button>
+    </aside>
+    <div class="main-panel">
+      <section class="panel active" id="overview" role="tabpanel">
+        <h2 class="section-heading">Platform overview</h2><p class="section-desc">A snapshot of registered CoinWave customers and platform activity.</p>
+        <p class="msg" id="stats-message" aria-live="polite">Loading statistics...</p><div class="stats" id="stats" style="display:none"></div>
+        <div class="admin-note">The figures above use the existing registered-user statistics endpoint. Trading volume, wallet totals, pending orders and financial reports are not yet included in this statistics API.</div>
+        <h2 class="section-heading" style="margin-top:25px">Admin modules</h2>
+        <div class="feature-grid">
+          <div class="feature-card"><h3>Orders &amp; trading</h3><p>Review buy and sell requests, payment verification, approvals and payouts.</p><span class="feature-state">Backend integration required</span></div>
+          <div class="feature-card"><h3>Customer wallets</h3><p>View available and locked balances with transaction history and reconciliation.</p><span class="feature-state">Backend integration required</span></div>
+          <div class="feature-card"><h3>Pricing &amp; fees</h3><p>Manage asset prices, exchange rates, spreads and transaction fees.</p><span class="feature-state">Backend integration required</span></div>
+          <div class="feature-card"><h3>Customer verification</h3><p>Review KYC submissions and record verification decisions.</p><span class="feature-state">Backend integration required</span></div>
         </div>
-        <span class="count" id="count">Loading...</span>
-      </div>
-
-      <div class="list" id="list" aria-live="polite">
-        <p class="msg" style="padding:16px">Loading coins...</p>
-      </div>
-
-      <p class="admin-note">
-        Always verify the blockchain network and wallet address before saving.
-        A saved address does not automatically verify incoming deposits.
-      </p>
-    </section>
-  </main>
-
-  <script>
-    'use strict';
-
-    var $ = function (id) {
-      return document.getElementById(id);
-    };
-
-    function el(tag, cls, text) {
-      var e = document.createElement(tag);
-      if (cls) e.className = cls;
-      if (text != null) e.textContent = text;
-      return e;
-    }
-
-    function api(url, opts) {
-      opts = opts || {};
-      opts.credentials = 'same-origin';
-
-      return fetch(url, opts).then(function (response) {
-        if (response.status === 401) {
-          location.href = '/login';
-          throw new Error('Your session has expired.');
-        }
-
-        return response.text().then(function (text) {
-          var data = {};
-
-          try {
-            data = text ? JSON.parse(text) : {};
-          } catch (e) {
-            throw new Error('The server returned an invalid response.');
-          }
-
-          if (!response.ok) {
-            throw new Error(data.error || 'Request failed.');
-          }
-
-          return data;
-        });
-      });
-    }
-
-    // Tabs
-    document.querySelectorAll('.tab').forEach(function (button) {
-      button.addEventListener('click', function () {
-        document.querySelectorAll('.tab').forEach(function (tab) {
-          var active = tab === button;
-          tab.classList.toggle('on', active);
-          tab.setAttribute('aria-selected', active ? 'true' : 'false');
-        });
-
-        $('overview').style.display =
-          button.dataset.t === 'overview' ? 'block' : 'none';
-
-        $('addresses').style.display =
-          button.dataset.t === 'addresses' ? 'block' : 'none';
-      });
-    });
-
-    // Overview statistics
-    function card(label, value) {
-      var box = el('div', 'stat');
-      box.appendChild(el('div', 'l', label));
-
-      var number = Number(value);
-      var display = Number.isFinite(number)
-        ? number.toLocaleString('en-US')
-        : '—';
-
-      box.appendChild(el('div', 'v', display));
-      return box;
-    }
-
-    function loadStats() {
-      $('stats-message').textContent = 'Loading statistics...';
-
-      api('/api/auth/admin/stats')
-        .then(function (data) {
-          var stats = $('stats');
-          stats.innerHTML = '';
-
-          stats.appendChild(card('Total users', data.total));
-          stats.appendChild(card('New today', data.today));
-          stats.appendChild(card('New in the last 7 days', data.week));
-
-          stats.style.display = 'grid';
-          $('stats-message').style.display = 'none';
-        })
-        .catch(function (error) {
-          $('stats').style.display = 'none';
-          $('stats-message').textContent = error.message;
-        });
-    }
-
-    loadStats();
-
-    // Deposit address manager
-    var saved = {};
-    var items = [];
-
-    function updateCount() {
-      var count = Object.keys(saved).length;
-      $('count').textContent =
-        count + ' of ' + items.length + ' coins have an address';
-    }
-
-    function buildItem(coin) {
-      var wrap = el('div', 'item');
-      var row = el('button', 'row');
-      row.type = 'button';
-      row.setAttribute('aria-expanded', 'false');
-
-      var img = el('img');
-      img.alt = '';
-      img.loading = 'lazy';
-
-      if (typeof coin.image === 'string' &&
-          /^https?:\/\//i.test(coin.image)) {
-        img.src = coin.image;
-      }
-
-      var name = el('div', 'n', coin.name || coin.symbol);
-      name.appendChild(el('small', '', coin.symbol));
-
-      var badge = el('span', 'badge');
-
-      row.appendChild(img);
-      row.appendChild(name);
-      row.appendChild(badge);
-
-      var form = el('div', 'form');
-      form.style.display = 'none';
-
-      function field(label, placeholder) {
-        var group = el('div');
-        var labelElement = el('label', '', label);
-        var input = el('input');
-
-        input.placeholder = placeholder || '';
-        input.autocomplete = 'off';
-        input.autocapitalize = 'off';
-        input.spellcheck = false;
-
-        group.appendChild(labelElement);
-        group.appendChild(input);
-        form.appendChild(group);
-
-        return input;
-      }
-
-      var address = field('Wallet address', 'Paste the wallet address');
-      var network = field('Network', 'For example TRC20, ERC20 or BEP20');
-      var memo = field('Memo or tag (optional)', 'Only if required');
-
-      var actions = el('div', 'acts');
-      var save = el('button', 'btn btn-primary btn-sm', 'Save address');
-      var clear = el('button', 'btn btn-sm', 'Remove address');
-      var note = el('span', 'note');
-
-      save.type = 'button';
-      clear.type = 'button';
-
-      actions.appendChild(save);
-      actions.appendChild(clear);
-      actions.appendChild(note);
-      form.appendChild(actions);
-
-      function sync() {
-        var entry = saved[coin.symbol];
-
-        badge.textContent = entry ? 'Set' : 'Not set';
-        badge.className = 'badge' + (entry ? ' set' : '');
-
-        address.value = entry ? entry.address : '';
-        network.value = entry ? (entry.network || '') : '';
-        memo.value = entry ? (entry.memo || '') : '';
-
-        clear.style.display = entry ? 'inline-flex' : 'none';
-      }
-
-      sync();
-
-      row.addEventListener('click', function () {
-        var opening = form.style.display === 'none';
-        form.style.display = opening ? 'grid' : 'none';
-        row.setAttribute('aria-expanded', opening ? 'true' : 'false');
-        note.textContent = '';
-      });
-
-      save.addEventListener('click', function () {
-        if (save.disabled) return;
-
-        save.disabled = true;
-        note.className = 'note';
-        note.textContent = 'Saving...';
-
-        api('/api/admin/addresses/' + encodeURIComponent(coin.symbol), {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            address: address.value,
-            network: network.value,
-            memo: memo.value
-          })
-        })
-        .then(function (data) {
-          saved[coin.symbol] = data;
-          sync();
-          updateCount();
-          note.className = 'note ok';
-          note.textContent = 'Address saved.';
-        })
-        .catch(function (error) {
-          note.className = 'note bad';
-          note.textContent = error.message;
-        })
-        .finally(function () {
-          save.disabled = false;
-        });
-      });
-
-      clear.addEventListener('click', function () {
-        if (!confirm('Remove the ' + coin.symbol + ' deposit address?')) {
-          return;
-        }
-
-        clear.disabled = true;
-        note.className = 'note';
-        note.textContent = 'Removing...';
-
-        api('/api/admin/addresses/' + encodeURIComponent(coin.symbol), {
-          method: 'DELETE'
-        })
-        .then(function () {
-          delete saved[coin.symbol];
-          sync();
-          updateCount();
-          note.className = 'note ok';
-          note.textContent = 'Address removed.';
-        })
-        .catch(function (error) {
-          note.className = 'note bad';
-          note.textContent = error.message;
-        })
-        .finally(function () {
-          clear.disabled = false;
-        });
-      });
-
-      wrap.appendChild(row);
-      wrap.appendChild(form);
-      wrap._coin = coin;
-
-      return wrap;
-    }
-
-    function loadAddresses() {
-      $('list').innerHTML = '';
-      $('list').appendChild(el('p', 'msg', 'Loading coins...'));
-
-      Promise.all([
-        api('/api/markets'),
-        api('/api/admin/addresses')
-      ])
-      .then(function (results) {
-        var markets = results[0];
-        saved = results[1] || {};
-        items = [];
-        var seen = {};
-
-        if (!Array.isArray(markets)) {
-          throw new Error('Market data is unavailable.');
-        }
-
-        markets.forEach(function (coin) {
-          if (!coin || !coin.symbol) return;
-
-          var symbol = String(coin.symbol).toUpperCase();
-
-          if (seen[symbol]) return;
-
-          seen[symbol] = true;
-
-          items.push({
-            name: String(coin.name || symbol),
-            symbol: symbol,
-            image: coin.image || ''
-          });
-        });
-
-        var list = $('list');
-        list.innerHTML = '';
-
-        if (!items.length) {
-          list.appendChild(el('p', 'empty', 'No coins are currently available.'));
-          updateCount();
-          return;
-        }
-
-        items.forEach(function (coin) {
-          list.appendChild(buildItem(coin));
-        });
-
-        updateCount();
-        filterCoins();
-      })
-      .catch(function (error) {
-        $('list').innerHTML = '';
-        $('list').appendChild(el('p', 'msg', error.message));
-        $('count').textContent = 'Unable to load';
-      });
-    }
-
-    function filterCoins() {
-      var query = $('q').value.trim().toLowerCase();
-
-      document.querySelectorAll('#list .item').forEach(function (item) {
-        var coin = item._coin;
-
-        var matches =
-          !query ||
-          coin.name.toLowerCase().includes(query) ||
-          coin.symbol.toLowerCase().includes(query);
-
-        item.style.display = matches ? '' : 'none';
-      });
-    }
-
-    $('q').addEventListener('input', filterCoins);
-
-    loadAddresses();
-
-    // Logout
-    $('logout').addEventListener('click', function () {
-      var button = $('logout');
-      button.disabled = true;
-      button.textContent = 'Logging out...';
-
-      fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'same-origin'
-      })
-      .finally(function () {
-        location.href = '/';
-      });
-    });
-  </script>
+      </section>
+      <section class="panel" id="addresses" role="tabpanel" hidden>
+        <h2 class="section-heading">Crypto deposit addresses</h2><p class="section-desc">Manage public wallet addresses displayed to customers.</p>
+        <div class="bar"><div class="search-wrap"><input id="q" type="search" placeholder="Search coins by name or symbol" aria-label="Search coins"></div><span class="count" id="count">Loading...</span></div>
+        <div class="list" id="list" aria-live="polite"><p class="msg" style="padding:16px">Loading coins...</p></div>
+        <p class="admin-note">Always verify the blockchain network and wallet address before saving. Saving an address does not verify incoming deposits or prove blockchain ownership.</p>
+      </section>
+      <section class="panel" id="customers" role="tabpanel" hidden><h2 class="section-heading">Customer management</h2><p class="section-desc">Customer profiles, account status, registration details and support history.</p><div class="warning-panel"><strong>Backend integration required</strong>Customer listing, search, account suspension and customer-detail APIs are not yet connected to this page.</div></section>
+      <section class="panel" id="orders" role="tabpanel" hidden><h2 class="section-heading">Orders &amp; trading</h2><p class="section-desc">Buy and sell orders, payment verification, approvals, rejections and payout records.</p><div class="warning-panel"><strong>Backend integration required</strong>The order module has its own API foundation, but this page does not yet load or manage orders. Connect the exact order response fields and permission checks before enabling admin actions.</div><div class="admin-note">Automatic execution must remain disabled until a real execution provider is configured and tested. Manual payout confirmation is an admin attestation, not proof of an external bank or blockchain transfer.</div></section>
+      <section class="panel" id="wallets" role="tabpanel" hidden><h2 class="section-heading">Wallets &amp; balances</h2><p class="section-desc">Customer available balances, locked funds, platform inventory and ledger history.</p><div class="warning-panel"><strong>Backend integration required</strong>Wallet inspection, ledger search, reconciliation and controlled adjustment screens are not yet connected. No balance adjustment should be exposed until the backend enforces permissions, transaction references and audit records.</div></section>
+      <section class="panel" id="payments" role="tabpanel" hidden><h2 class="section-heading">Payment settings</h2><p class="section-desc">Configure bank transfer instructions and supported checkout providers.</p><div class="warning-panel"><strong>Backend integration required</strong>Bank details, payment methods, provider credentials and webhook verification need persistent settings and secure backend endpoints. A checkout link alone cannot confirm a payment.</div></section>
+      <section class="panel" id="assets" role="tabpanel" hidden><h2 class="section-heading">Asset management</h2><p class="section-desc">Control which crypto assets and networks are available to customers.</p><div class="warning-panel"><strong>Backend integration required</strong>Custom asset creation, network configuration, visibility and maintenance controls need an asset-management API. Market listings must not automatically become tradable assets.</div></section>
+      <section class="panel" id="pricing" role="tabpanel" hidden><h2 class="section-heading">Pricing &amp; fees</h2><p class="section-desc">Manage trading prices, spreads, fixed fees and fiat conversion rates.</p><div class="warning-panel"><strong>Admin pricing interface not connected</strong>The order module contains pricing endpoints, but this page does not yet load or save their settings. Price changes should be validated and audited by the backend.</div><div class="admin-note">Customer-submitted prices must never be trusted. Order amounts should be calculated and snapshotted by the server when an order is created.</div></section>
+      <section class="panel" id="support" role="tabpanel" hidden><h2 class="section-heading">Customer support &amp; live chat</h2><p class="section-desc">Support inbox, customer conversations, assignment and resolution.</p><div class="warning-panel"><strong>Backend integration required</strong>Persistent chat messages, unread counts, staff assignment, replies and conversation status are not yet connected.</div></section>
+      <section class="panel" id="notifications" role="tabpanel" hidden><h2 class="section-heading">Notifications</h2><p class="section-desc">Send platform announcements and manage customer notification records.</p><div class="warning-panel"><strong>Backend integration required</strong>The notification sending and customer notification-management APIs must be connected before this section can send or modify messages.</div></section>
+      <section class="panel" id="kyc" role="tabpanel" hidden><h2 class="section-heading">KYC verification</h2><p class="section-desc">Review customer identity submissions and verification status.</p><div class="warning-panel"><strong>Backend integration required</strong>Document storage, secure access, review decisions and audit history are not yet connected. Sensitive identity documents must not be exposed through public URLs.</div></section>
+      <section class="panel" id="website" role="tabpanel" hidden><h2 class="section-heading">Website settings</h2><p class="section-desc">Manage public contact details, support channels, service notices and platform availability.</p><div class="warning-panel"><strong>Backend integration required</strong>Persistent global settings and admin-controlled support email, WhatsApp and maintenance mode are not yet connected.</div></section>
+      <section class="panel" id="security" role="tabpanel" hidden><h2 class="section-heading">Staff &amp; security</h2><p class="section-desc">Admin roles, permissions, login protection and administrative activity records.</p><div class="warning-panel"><strong>Backend integration required</strong>Current role foundations are not a complete staff-management system. Database-backed staff invitations, role changes, 2FA and audit-log screens still need implementation.</div></section>
+      <section class="panel" id="reports" role="tabpanel" hidden><h2 class="section-heading">Reports &amp; financial records</h2><p class="section-desc">Transaction summaries, trading volume, fees, exports and reconciliation reports.</p><div class="warning-panel"><strong>Backend integration required</strong>Financial reports must be generated from ledger and verified transaction records, not from customer-submitted order values.</div></section>
+      <section class="panel" id="system" role="tabpanel" hidden><h2 class="section-heading">System health</h2><p class="section-desc">Application availability, database connection and service monitoring.</p><div class="warning-panel"><strong>Limited health endpoint available</strong>The server has a basic health endpoint. Detailed database, market-provider, queue and integration monitoring still needs to be implemented.</div></section>
+    </div>
+  </div>
+</main>
+<script>
+'use strict';
+var $=function(id){return document.getElementById(id);};
+function el(tag,cls,text){var node=document.createElement(tag);if(cls)node.className=cls;if(text!=null)node.textContent=text;return node;}
+function api(url,opts){opts=opts||{};opts.credentials='same-origin';return fetch(url,opts).then(function(response){if(response.status===401){location.href='/login';throw new Error('Your session has expired.');}return response.text().then(function(body){var data={};try{data=body?JSON.parse(body):{};}catch(error){throw new Error('The server returned an invalid response.');}if(!response.ok)throw new Error(data.error||'Request failed.');return data;});});}
+var tabs=document.querySelectorAll('.tab');var panels=document.querySelectorAll('.panel');
+tabs.forEach(function(button){button.addEventListener('click',function(){var target=button.dataset.t;tabs.forEach(function(tab){var active=tab===button;tab.classList.toggle('on',active);tab.setAttribute('aria-selected',active?'true':'false');});panels.forEach(function(panel){var active=panel.id===target;panel.classList.toggle('active',active);panel.hidden=!active;});});});
+function card(label,value){var box=el('div','stat');box.appendChild(el('div','l',label));var number=Number(value);box.appendChild(el('div','v',Number.isFinite(number)?number.toLocaleString('en-US'):'—'));return box;}
+function loadStats(){$('stats-message').textContent='Loading statistics...';api('/api/auth/admin/stats').then(function(data){var stats=$('stats');stats.innerHTML='';stats.appendChild(card('Total users',data.total));stats.appendChild(card('New today',data.today));stats.appendChild(card('New in the last 7 days',data.week));stats.style.display='grid';$('stats-message').style.display='none';}).catch(function(error){$('stats').style.display='none';$('stats-message').style.display='block';$('stats-message').textContent=error.message;});}
+loadStats();
+var saved={};var items=[];
+function updateCount(){var count=Object.keys(saved).length;$('count').textContent=count+' of '+items.length+' coins have an address';}
+function buildItem(coin){var wrap=el('div','item');var row=el('button','row');row.type='button';row.setAttribute('aria-expanded','false');var img=el('img');img.alt='';img.loading='lazy';if(typeof coin.image==='string'&&/^https?:\/\//i.test(coin.image))img.src=coin.image;var name=el('div','n',coin.name||coin.symbol);name.appendChild(el('small','',coin.symbol));var badge=el('span','badge');row.appendChild(img);row.appendChild(name);row.appendChild(badge);var form=el('div','form');form.style.display='none';function field(label,placeholder){var group=el('div','field');group.appendChild(el('label','',label));var input=el('input');input.placeholder=placeholder||'';input.autocomplete='off';input.autocapitalize='off';input.spellcheck=false;group.appendChild(input);form.appendChild(group);return input;}var address=field('Wallet address','Paste the wallet address');var network=field('Network','For example TRC20, ERC20 or BEP20');var memo=field('Memo or tag (optional)','Only if required');var actions=el('div','acts');var save=el('button','btn btn-primary btn-sm','Save address');var clear=el('button','btn btn-sm','Remove address');var note=el('span','note');save.type='button';clear.type='button';actions.appendChild(save);actions.appendChild(clear);actions.appendChild(note);form.appendChild(actions);function sync(){var entry=saved[coin.symbol];badge.textContent=entry?'Set':'Not set';badge.className='badge'+(entry?' set':'');address.value=entry?entry.address:'';network.value=entry?(entry.network||''):'';memo.value=entry?(entry.memo||''):'';clear.style.display=entry?'inline-flex':'none';}sync();row.addEventListener('click',function(){var opening=form.style.display==='none';form.style.display=opening?'grid':'none';row.setAttribute('aria-expanded',opening?'true':'false');note.textContent='';});save.addEventListener('click',function(){if(save.disabled)return;if(!address.value.trim()||!network.value.trim()){note.className='note bad';note.textContent='Address and network are required.';return;}save.disabled=true;note.className='note';note.textContent='Saving...';api('/api/admin/addresses/'+encodeURIComponent(coin.symbol),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({address:address.value,network:network.value,memo:memo.value})}).then(function(data){saved[coin.symbol]=data;sync();updateCount();note.className='note ok';note.textContent='Address saved.';}).catch(function(error){note.className='note bad';note.textContent=error.message;}).finally(function(){save.disabled=false;});});clear.addEventListener('click',function(){if(!confirm('Remove the '+coin.symbol+' deposit address?'))return;clear.disabled=true;note.className='note';note.textContent='Removing...';api('/api/admin/addresses/'+encodeURIComponent(coin.symbol),{method:'DELETE'}).then(function(){delete saved[coin.symbol];sync();updateCount();note.className='note ok';note.textContent='Address removed.';}).catch(function(error){note.className='note bad';note.textContent=error.message;}).finally(function(){clear.disabled=false;});});wrap.appendChild(row);wrap.appendChild(form);wrap._coin=coin;return wrap;}
+function loadAddresses(){$('list').innerHTML='';$('list').appendChild(el('p','msg','Loading coins...'));Promise.all([api('/api/markets'),api('/api/admin/addresses')]).then(function(results){var markets=results[0];saved=results[1]||{};items=[];var seen={};if(!Array.isArray(markets))throw new Error('Market data is unavailable.');markets.forEach(function(coin){if(!coin||!coin.symbol)return;var symbol=String(coin.symbol).toUpperCase();if(seen[symbol])return;seen[symbol]=true;items.push({name:String(coin.name||symbol),symbol:symbol,image:coin.image||''});});var list=$('list');list.innerHTML='';if(!items.length){list.appendChild(el('p','empty','No coins are currently available.'));updateCount();return;}items.forEach(function(coin){list.appendChild(buildItem(coin));});updateCount();filterCoins();}).catch(function(error){$('list').innerHTML='';$('list').appendChild(el('p','msg',error.message));$('count').textContent='Unable to load';});}
+function filterCoins(){var query=$('q').value.trim().toLowerCase();document.querySelectorAll('#list .item').forEach(function(item){var coin=item._coin;var matches=!query||coin.name.toLowerCase().includes(query)||coin.symbol.toLowerCase().includes(query);item.style.display=matches?'':'none';});}
+$('q').addEventListener('input',filterCoins);loadAddresses();
+$('logout').addEventListener('click',function(){var button=$('logout');button.disabled=true;button.textContent='Logging out...';fetch('/api/auth/logout',{method:'POST',credentials:'same-origin'}).finally(function(){location.href='/';});});
+</script>
 </body>
 </html>
