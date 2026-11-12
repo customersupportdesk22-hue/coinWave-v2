@@ -1,552 +1,215 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CoinWave | Crypto Markets, Buying and Selling</title>
-  <meta name="description" content="Explore digital asset markets, compare live crypto prices and access CoinWave trading services.">
+  <title>CoinWave | Explore, buy and sell crypto</title>
+  <meta name="description" content="Discover digital assets, explore cryptocurrency markets and access CoinWave trading services.">
   <meta name="theme-color" content="#06133f">
+  <meta property="og:title" content="CoinWave | Explore crypto with confidence">
+  <meta property="og:description" content="Explore digital asset markets and discover CoinWave.">
+  <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
-
   <style>
     :root {
-      --cw-navy:#06133f;
-      --cw-blue:#087cf0;
-      --cw-cyan:#12c8f4;
-      --cw-gold:#ffc400;
-      --cw-ink:#101a35;
-      --cw-muted:#64708a;
-      --cw-border:#e7ebf3;
-      --cw-bg:#f5f8ff;
-      --cw-green:#15965d;
-      --cw-red:#dc4555;
+      --cw-navy:#06133f; --cw-navy-2:#0a205d; --cw-blue:#087cf0;
+      --cw-cyan:#12c8f4; --cw-gold:#ffc400; --cw-ink:#101a35;
+      --cw-muted:#68758f; --cw-border:#e5ebf5; --cw-bg:#f5f8ff;
+      --cw-white:#fff; --cw-green:#0b9b69; --cw-red:#d84a59;
+      --cw-shadow:0 18px 48px rgba(8,31,83,.09);
     }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth;scroll-padding-top:90px}
+    body{margin:0;font-family:"IBM Plex Sans",sans-serif;color:var(--cw-ink);background:var(--cw-bg);-webkit-font-smoothing:antialiased}
+    a{text-decoration:none}
+    button,input{font:inherit}
+    .wrap{width:min(1180px,calc(100% - 40px));margin:0 auto}
+    .header{position:sticky;top:0;z-index:50;background:rgba(5,17,57,.97);border-bottom:1px solid rgba(255,255,255,.1);backdrop-filter:blur(16px)}
+    .header .wrap{min-height:76px;display:flex;align-items:center;justify-content:space-between;gap:22px}
+    .logo{display:inline-flex;align-items:center;gap:11px;color:#fff;font-size:26px;font-weight:800;letter-spacing:-.9px;white-space:nowrap}
+    .logo-mark{width:40px;height:40px;display:grid;place-items:center;border-radius:13px;color:#fff;font-size:23px;font-weight:800;background:linear-gradient(145deg,var(--cw-cyan),#0754d8 62%,#07194f);box-shadow:0 5px 18px rgba(0,145,255,.3)}
+    .logo b{color:var(--cw-cyan)}
+    .nav{display:flex;align-items:center;gap:7px}
+    .nav .link{color:#e5efff;font-weight:600;padding:11px 12px;border-radius:9px;font-size:14px}
+    .nav .link:hover{background:rgba(255,255,255,.08);color:#fff}
+    .btn{display:inline-flex;justify-content:center;align-items:center;gap:9px;min-height:46px;padding:0 20px;border-radius:12px;border:1px solid #dce4f1;color:var(--cw-navy);background:#fff;font-weight:700;transition:transform .2s,box-shadow .2s,border-color .2s;cursor:pointer}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(4,24,73,.13)}
+    .btn-sm{min-height:39px;padding:0 15px;border-color:rgba(255,255,255,.25);color:#fff;background:transparent;font-size:13px}
+    .btn-primary{border-color:transparent;color:#07153d;background:linear-gradient(110deg,#ffdf69,var(--cw-gold));box-shadow:0 7px 20px rgba(255,196,0,.2)}
+    .btn-blue{border-color:transparent;color:#fff;background:linear-gradient(110deg,#168cf8,#0865d9);box-shadow:0 8px 22px rgba(8,124,240,.2)}
+    .btn-outline-light{color:#fff;border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.07)}
+    .menu-toggle{display:none;border:1px solid rgba(255,255,255,.22);background:transparent;color:#fff;border-radius:10px;width:42px;height:40px;font-size:21px}
+    .hero{position:relative;overflow:hidden;color:#fff;background:radial-gradient(ellipse at 82% 18%,#075bb4 0,transparent 43%),linear-gradient(135deg,#06133f,#071b52 68%,#062b69);padding:0 0 68px}
+    .hero-art{display:block;width:100%;max-height:410px;object-fit:cover;object-position:center top;border-bottom:1px solid rgba(255,255,255,.12)}
+    .hero-copy{padding:42px 0 0;text-align:center}
+    .eyebrow{display:inline-flex;align-items:center;gap:8px;color:#ffda45;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase}
+    .eyebrow:before{content:"";width:22px;height:2px;background:var(--cw-gold);border-radius:2px}
+    .hero h1{margin:15px auto 16px;max-width:850px;font-size:clamp(34px,5.4vw,59px);line-height:1.08;letter-spacing:-2px}
+    .hero-copy p{max-width:680px;margin:0 auto;color:#d8e6ff;font-size:17px;line-height:1.75}
+    .actions{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin-top:27px}
+    .hero-note{margin:20px 0 0;color:#a9c2e9;font-size:12px}
+    .trust-strip{position:relative;margin-top:-1px;background:#fff;border-bottom:1px solid var(--cw-border)}
+    .trust-strip .wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:20px 0}
+    .trust-item{display:flex;align-items:center;justify-content:center;gap:11px;color:#4e5d79;font-size:13px;font-weight:600;text-align:center}
+    .trust-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;color:#087cf0;background:#edf5ff;font-size:17px}
+    section.content-section{padding:76px 0}
+    .section-kicker{color:var(--cw-blue);font-size:11px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase}
+    .section-title{margin:9px 0 10px;color:var(--cw-navy);font-size:clamp(27px,3.5vw,38px);line-height:1.15;letter-spacing:-1.1px}
+    .section-subtitle{max-width:670px;margin:0;color:var(--cw-muted);font-size:15px;line-height:1.75}
+    .section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:26px}
+    .section-head h2{margin:0;color:var(--cw-navy);font-size:30px;letter-spacing:-.7px}
+    .search{width:min(320px,100%);min-height:46px;padding:0 16px;border:1px solid #dce4f1;border-radius:12px;outline:none;background:#fff;color:var(--cw-ink);font:inherit}
+    .search:focus{border-color:var(--cw-blue);box-shadow:0 0 0 3px rgba(8,124,240,.12)}
+    .table-card{overflow:auto;border:1px solid var(--cw-border);border-radius:18px;background:#fff;box-shadow:var(--cw-shadow)}
+    table{width:100%;border-collapse:collapse;min-width:500px}
+    th,td{padding:17px 20px;text-align:left;border-bottom:1px solid #edf0f6}
+    th{color:#68758f;background:#f8faff;font-size:11px;letter-spacing:.8px;text-transform:uppercase}
+    td{color:#263451;font-weight:600;font-size:14px}
+    tbody tr:last-child td{border-bottom:0}
+    tbody tr:hover{background:#f9fbff}
+    .num{text-align:right}.hide-sm{width:65px}
+    .coin{display:flex;align-items:center;gap:11px;min-width:155px}
+    .coin img{width:30px;height:30px;object-fit:contain;border-radius:50%}
+    .coin .n{font-weight:700;color:#182544}.coin .s{margin-top:2px;color:#8490a6;font-size:11px;font-weight:600;text-transform:uppercase}
+    .rank{color:#8490a6}.up{color:var(--cw-green)}.down{color:var(--cw-red)}.flat{color:#78849a}
+    .state{padding:28px!important;text-align:center!important;color:#71809a!important;font-weight:500!important;line-height:1.7}
+    .state strong{display:block;margin-bottom:4px;color:var(--cw-navy)}
+    .live-indicator{display:inline-block;margin-left:10px;color:var(--cw-green);font-size:11px;font-weight:700;letter-spacing:0}
+    .market-foot{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-top:16px;color:#7c89a0;font-size:12px}
+    .asset-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:28px}
+    .asset-card{display:block;min-width:0;padding:21px;border:1px solid var(--cw-border);border-radius:17px;background:#fff;box-shadow:0 8px 24px rgba(16,42,92,.04);transition:transform .2s,border-color .2s,box-shadow .2s}
+    .asset-card:hover{transform:translateY(-4px);border-color:#b8d7ff;box-shadow:0 15px 32px rgba(16,42,92,.1)}
+    .asset-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .asset-id{display:flex;align-items:center;gap:11px;min-width:0}
+    .asset-id img{width:39px;height:39px;object-fit:contain}
+    .asset-name{display:block;color:var(--cw-navy);font-weight:800;font-size:15px}
+    .asset-symbol{display:block;margin-top:3px;color:#8994a8;font-size:11px;font-weight:700;letter-spacing:.6px}
+    .asset-arrow{color:#8c9ab2;font-size:18px}
+    .asset-action{display:block;margin-top:18px;padding-top:13px;border-top:1px solid #edf1f7;color:var(--cw-blue);font-size:12px;font-weight:700}
+    .soft-section{background:#fff}
+    .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:30px}
+    .feature-card{padding:25px;border:1px solid var(--cw-border);border-radius:17px;background:#fff}
+    .feature-icon{width:45px;height:45px;display:grid;place-items:center;border-radius:13px;background:#edf5ff;color:#087cf0;font-size:21px}
+    .feature-card h3{margin:18px 0 8px;color:var(--cw-navy);font-size:17px}
+    .feature-card p{margin:0;color:var(--cw-muted);font-size:13px;line-height:1.75}
+    .steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:30px}
+    .step-card{position:relative;padding:25px;border:1px solid var(--cw-border);border-radius:17px;background:#fff}
+    .step-no{display:grid;place-items:center;width:35px;height:35px;border-radius:11px;background:#eaf4ff;color:var(--cw-blue);font-weight:800}
+    .step-card h3{margin:17px 0 8px;color:var(--cw-navy);font-size:17px}
+    .step-card p{margin:0;color:var(--cw-muted);font-size:13px;line-height:1.7}
+    .cta-panel{display:flex;align-items:center;justify-content:space-between;gap:25px;padding:38px 42px;border-radius:22px;color:#fff;background:radial-gradient(circle at 85% 0,rgba(18,200,244,.25),transparent 32%),linear-gradient(120deg,#06133f,#0a347e);box-shadow:var(--cw-shadow)}
+    .cta-panel h2{margin:0 0 8px;font-size:clamp(24px,3vw,34px);letter-spacing:-.8px}
+    .cta-panel p{margin:0;color:#c8d9f4;font-size:14px;line-height:1.7}
+    .cta-actions{display:flex;gap:10px;flex-wrap:wrap;flex-shrink:0}
+    .footer{padding:52px 0 25px;color:#d6e1f7;background:#06133f}
+    .footer-top{display:grid;grid-template-columns:1.5fr repeat(3,1fr);gap:34px;padding-bottom:35px}
+    .footer-brand p{max-width:300px;color:#aebddd;font-size:13px;line-height:1.75}
+    .footer h3{margin:0 0 15px;color:#fff;font-size:14px}
+    .footer a{display:block;width:fit-content;margin:10px 0;color:#b9c9e7;font-size:13px}
+    .footer a:hover{color:var(--cw-cyan)}
+    .risk{margin:0;padding:22px 0 18px;border-top:1px solid rgba(255,255,255,.13);color:#aebddd;font-size:11px;line-height:1.8}
+    .copy{display:flex;justify-content:space-between;gap:15px;margin:0;color:#8799bd;font-size:11px}
 
-    * {box-sizing:border-box}
-    html {scroll-behavior:smooth;scroll-padding-top:90px}
-    body {
-      margin:0;
-      font-family:"IBM Plex Sans",sans-serif;
-      color:var(--cw-ink);
-      background:var(--cw-bg);
+    .asset-card:focus-visible,.btn:focus-visible,.nav a:focus-visible{outline:3px solid rgba(18,200,244,.85);outline-offset:3px}
+    .asset-card{color:inherit}
+    .asset-price{display:block;margin-top:16px;color:var(--cw-navy);font-size:19px;font-weight:800;letter-spacing:-.4px}
+    .asset-change{display:inline-block;margin-top:4px;font-size:12px;font-weight:700}
+    .asset-change.up{color:var(--cw-green)}.asset-change.down{color:var(--cw-red)}.asset-change.flat{color:#78849a}
+    .asset-loading,.asset-empty{grid-column:1/-1;color:var(--cw-muted);font-size:14px;text-align:center;padding:24px}
+    .asset-fallback{width:39px;height:39px;display:grid;place-items:center;border-radius:50%;background:#edf5ff;color:#087cf0;font-size:12px;font-weight:800}
+    .market-foot .market-source{display:flex;align-items:center;gap:7px}
+    .market-source:before{content:"";width:7px;height:7px;border-radius:50%;background:#0b9b69;display:inline-block}
+    @media(max-width:900px){.nav .link{padding:9px 7px;font-size:13px}.asset-grid{grid-template-columns:repeat(2,1fr)}.footer-top{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:680px){
+      .wrap{width:min(100% - 28px,1180px)}
+      .header .wrap{min-height:66px}.logo{font-size:23px}.logo-mark{width:35px;height:35px}
+      .menu-toggle{display:block}.nav{display:none;position:absolute;top:66px;left:0;right:0;padding:13px 14px 17px;background:#06133f;border-top:1px solid rgba(255,255,255,.1);box-shadow:0 15px 25px rgba(0,0,0,.2);align-items:stretch;flex-direction:column}
+      .nav.open{display:flex}.nav .link{display:block;padding:12px}.nav .btn{width:100%}
+      .hero{padding-bottom:45px}.hero-art{min-height:190px;max-height:230px}.hero-copy{padding-top:28px}.hero h1{letter-spacing:-1.2px}.hero-copy p{font-size:15px}
+      .trust-strip .wrap{grid-template-columns:1fr;gap:12px;padding:17px 0}.trust-item{justify-content:flex-start;text-align:left}
+      section.content-section{padding:55px 0}.section-head{align-items:stretch;flex-direction:column}.section-head h2{font-size:27px}.search{width:100%}
+      th,td{padding:14px 12px}.asset-grid{gap:11px}.asset-card{padding:15px}.asset-id img{width:32px;height:32px}
+      .feature-grid,.steps-grid{grid-template-columns:1fr;gap:12px}.cta-panel{align-items:flex-start;flex-direction:column;padding:28px 23px}.footer-top{grid-template-columns:1fr 1fr;gap:25px}.footer-brand{grid-column:1/-1}
+      .copy{flex-direction:column}
     }
-    a {text-decoration:none}
-    button,input {font:inherit}
-    button {cursor:pointer}
-    .wrap {width:min(1160px,calc(100% - 40px));margin:0 auto}
+    @media(max-width:390px){.asset-grid{grid-template-columns:1fr 1fr}.asset-card{padding:12px}.asset-name{font-size:13px}.asset-id{gap:7px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important;animation:none!important}}
 
-    .header {
-      position:sticky;
-      top:0;
-      z-index:20;
-      background:rgba(5,17,57,.97);
-      border-bottom:1px solid rgba(255,255,255,.1);
-      backdrop-filter:blur(14px);
+    /* Live trading terminal */
+    .cw-live-section{padding:0 0 72px;background:#07152e;color:#fff;overflow:hidden}
+    .cw-ticker-wrap{min-height:54px;border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.1);background:#081a38}
+    .cw-ticker-wrap .tradingview-widget-container{width:100%;min-height:54px}
+    .cw-live-inner{padding-top:52px}
+    .cw-live-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:22px}
+    .cw-live-kicker{color:#3bbcf7;font-size:11px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase}
+    .cw-live-title{margin:8px 0 8px;color:#fff;font-size:clamp(27px,3.5vw,38px);letter-spacing:-1px}
+    .cw-live-copy{max-width:650px;margin:0;color:#aebed8;font-size:14px;line-height:1.7}
+    .cw-live-status{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid rgba(55,207,147,.25);border-radius:999px;color:#9ce8c8;background:rgba(18,155,105,.1);font-size:11px;font-weight:700;white-space:nowrap}
+    .cw-live-status:before{content:"";width:7px;height:7px;border-radius:50%;background:#27d18b;box-shadow:0 0 0 4px rgba(39,209,139,.12)}
+    .cw-chart-card{overflow:hidden;border:1px solid rgba(159,187,229,.18);border-radius:16px;background:#0b1b36;box-shadow:0 20px 50px rgba(0,0,0,.22)}
+    .cw-chart-top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid rgba(159,187,229,.14)}
+    .cw-chart-label{color:#e9f1ff;font-size:13px;font-weight:700}
+    .cw-chart-caption{color:#91a5c5;font-size:11px}
+    .cw-chart-frame{height:590px;width:100%}
+    .cw-chart-frame .tradingview-widget-container,.cw-chart-frame .tradingview-widget-container__widget{height:100%;width:100%}
+    .cw-chart-frame iframe{border:0}
+    .cw-live-note{margin:13px 2px 0;color:#8194b3;font-size:11px;line-height:1.6}
+    @media(max-width:680px){
+      .cw-live-section{padding-bottom:48px}
+      .cw-live-inner{padding-top:37px}
+      .cw-live-head{align-items:flex-start;flex-direction:column}
+      .cw-chart-top{align-items:flex-start;flex-direction:column}
+      .cw-chart-frame{height:480px}
     }
-    .header .wrap {
-      min-height:76px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:20px;
-    }
-    .logo {
-      display:inline-flex;
-      align-items:center;
-      gap:10px;
-      color:#fff;
-      font-size:27px;
-      font-weight:800;
-      letter-spacing:-.9px;
-    }
-    .logo-mark {
-      width:39px;
-      height:39px;
-      display:grid;
-      place-items:center;
-      border-radius:13px;
-      color:#fff;
-      font-size:23px;
-      font-weight:800;
-      background:linear-gradient(145deg,var(--cw-cyan),#0754d8 62%,#07194f);
-      box-shadow:0 5px 18px rgba(0,145,255,.3);
-    }
-    .logo b {color:var(--cw-cyan)}
-    .nav {display:flex;align-items:center;gap:12px}
-    .nav .link {color:#e5efff;font-weight:600;padding:10px 14px}
+    @media(max-width:390px){.cw-chart-frame{height:430px}}
 
-    .btn {
-      display:inline-flex;
-      justify-content:center;
-      align-items:center;
-      min-height:44px;
-      padding:0 20px;
-      border-radius:12px;
-      border:1px solid #dce4f1;
-      color:var(--cw-navy);
-      background:#fff;
-      font-weight:700;
-      transition:.2s ease;
-      cursor:pointer;
-    }
-    .btn:hover {
-      transform:translateY(-1px);
-      box-shadow:0 8px 22px rgba(4,24,73,.12);
-    }
-    .btn-sm {
-      min-height:39px;
-      padding:0 16px;
-      border-color:rgba(255,255,255,.25);
-      color:#fff;
-      background:transparent;
-    }
-    .btn-primary {
-      border-color:transparent;
-      color:#07153d;
-      background:linear-gradient(110deg,#ffd84d,var(--cw-gold));
-      box-shadow:0 7px 20px rgba(255,196,0,.2);
-    }
 
-    .hero {
-      position:relative;
-      overflow:hidden;
-      color:#fff;
-      background:radial-gradient(ellipse at 80% 15%,#075bb4 0,transparent 42%),var(--cw-navy);
-      padding:0 0 42px;
-    }
-    .hero-art {
-      display:block;
-      width:100%;
-      max-height:410px;
-      object-fit:cover;
-      object-position:center top;
-      border-bottom:1px solid rgba(255,255,255,.12);
-    }
-    .hero-copy {padding:34px 0 0;text-align:center}
-    .eyebrow {
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      color:#ffda45;
-      font-size:12px;
-      font-weight:800;
-      letter-spacing:2px;
-      text-transform:uppercase;
-    }
-    .hero h1 {
-      margin:12px auto;
-      max-width:800px;
-      font-size:clamp(30px,5vw,48px);
-      line-height:1.12;
-      letter-spacing:-1.5px;
-    }
-    .hero-copy p {
-      max-width:650px;
-      margin:0 auto;
-      color:#d8e6ff;
-      font-size:17px;
-      line-height:1.65;
-    }
-    .actions {
-      display:flex;
-      justify-content:center;
-      flex-wrap:wrap;
-      gap:12px;
-      margin-top:24px;
-    }
-    .actions .btn:not(.btn-primary) {
-      color:#fff;
-      border-color:rgba(255,255,255,.3);
-      background:rgba(255,255,255,.08);
-    }
+    /* Fast market snapshot and exchange-style market movers */
+    html{scroll-behavior:smooth}
+    a,button{-webkit-tap-highlight-color:transparent;tap-highlight-color:transparent}
+    a:active,button:active{filter:brightness(.97)}
+    a:focus:not(:focus-visible),button:focus:not(:focus-visible){outline:none}
+    .asset-card:focus-visible,.btn:focus-visible,.nav a:focus-visible,.mover-link:focus-visible{outline:2px solid #9aa9bd;outline-offset:3px;box-shadow:none}
+    .cw-movers-section{padding-top:12px!important}
+    .movers-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:24px}
+    .movers-heading .section-title{margin-bottom:8px}
+    .movers-updated{flex-shrink:0;color:#8490a6;font-size:11px;font-weight:600}
+    .movers-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+    .mover-panel{min-width:0;padding:20px 22px;border:1px solid #e6ebf2;border-radius:17px;background:#fff;box-shadow:0 8px 26px rgba(20,37,68,.045)}
+    .mover-panel-head{display:flex;justify-content:space-between;align-items:center;padding-bottom:15px;border-bottom:1px solid #edf0f5}
+    .mover-panel-head h3{margin:0;color:#17233d;font-size:15px;font-weight:800}
+    .mover-tag{padding:5px 9px;border-radius:7px;font-size:10px;font-weight:800;letter-spacing:.3px}
+    .mover-tag.positive{color:#13845a;background:#eaf7f1}
+    .mover-tag.negative{color:#c04b55;background:#fff0f0}
+    .mover-list{display:grid}
+    .mover-link{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:14px;min-height:61px;padding:10px 0;border-bottom:1px solid #f0f2f6;color:inherit;text-decoration:none;transition:background .15s}
+    .mover-link:last-child{border-bottom:0}
+    .mover-link:hover{background:#fafbfd}
+    .mover-identity{display:flex;align-items:center;gap:10px;min-width:0}
+    .mover-identity img,.mover-icon{width:31px;height:31px;flex:0 0 31px;object-fit:contain;border-radius:50%}
+    .mover-icon{display:grid;place-items:center;background:#f0f3f7;color:#526078;font-size:10px;font-weight:800}
+    .mover-name{overflow:hidden;color:#1d2942;font-size:12px;font-weight:750;text-overflow:ellipsis;white-space:nowrap}
+    .mover-symbol{display:block;margin-top:3px;color:#8a95a8;font-size:10px;font-weight:650}
+    .mover-price{color:#26334b;font-size:12px;font-weight:700;white-space:nowrap}
+    .mover-change{min-width:76px;text-align:right;font-size:12px;font-weight:800;white-space:nowrap}
+    .mover-change.up{color:#13845a}.mover-change.down{color:#c04b55}
+    .market-skeleton td{height:66px}.market-row{cursor:pointer}.market-row:active{background:#f7f8fa}.market-row:focus{outline:none}.market-row:focus-visible{outline:2px solid #aab5c5;outline-offset:-2px}
+    .skeleton-line{display:inline-block;width:76px;height:11px;border-radius:7px;background:linear-gradient(90deg,#edf0f5 25%,#f7f8fa 38%,#edf0f5 63%);background-size:400% 100%;animation:cw-shimmer 1.35s ease infinite}
+    .skeleton-asset{width:145px}.skeleton-short{width:48px}
+    .asset-skeleton{display:flex;flex-direction:column;gap:13px;min-height:150px}
+    .skeleton-icon{width:36px;height:36px;border-radius:50%}
+    .mover-skeleton{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:61px;border-bottom:1px solid #f0f2f6}
+    .mover-skeleton span{display:block;width:65px;height:10px;border-radius:8px;background:#f0f2f6}
+    .mover-skeleton span:first-child{width:120px}
+    @keyframes cw-shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
+    @media(max-width:680px){.movers-heading{align-items:flex-start;flex-direction:column}.movers-grid{grid-template-columns:1fr}.mover-panel{padding:17px}.mover-link{gap:8px}.mover-price{font-size:11px}.mover-change{min-width:68px;font-size:11px}}
+    @media(prefers-reduced-motion:reduce){.skeleton-line{animation:none}}
 
-    .section {padding:58px 0}
-    .section-white {background:#fff}
-    .section-heading {
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-end;
-      gap:18px;
-      margin-bottom:24px;
-    }
-    .section-heading h2 {
-      margin:0;
-      color:var(--cw-navy);
-      font-size:clamp(25px,3vw,32px);
-      letter-spacing:-.7px;
-    }
-    .section-heading p {
-      margin:7px 0 0;
-      color:var(--cw-muted);
-      line-height:1.6;
-    }
-
-    /* Live market ticker */
-    .live-ticker {
-      color:#fff;
-      background:#081b4c;
-      border-bottom:1px solid rgba(255,255,255,.1);
-    }
-    .ticker-inner {
-      min-height:66px;
-      display:flex;
-      align-items:center;
-      gap:22px;
-      overflow-x:auto;
-      scrollbar-width:thin;
-    }
-    .live-label {
-      display:flex;
-      align-items:center;
-      gap:8px;
-      flex:0 0 auto;
-      color:#b9c9e7;
-      font-size:12px;
-      font-weight:800;
-      letter-spacing:.8px;
-      text-transform:uppercase;
-    }
-    .live-dot {
-      width:8px;
-      height:8px;
-      border-radius:50%;
-      background:#16d58a;
-      box-shadow:0 0 0 4px rgba(22,213,138,.12);
-    }
-    .live-dot.offline {background:#f0ad35;box-shadow:0 0 0 4px rgba(240,173,53,.12)}
-    .ticker-item {
-      display:flex;
-      align-items:center;
-      gap:9px;
-      flex:0 0 auto;
-      font-size:13px;
-    }
-    .ticker-symbol {color:#fff;font-weight:800}
-    .ticker-price {color:#dce8ff;font-weight:600}
-    .ticker-change {font-weight:700}
-    .ticker-change.up {color:#39d99a}
-    .ticker-change.down {color:#ff7180}
-    .ticker-divider {height:25px;width:1px;background:rgba(255,255,255,.13);flex:0 0 1px}
-    .stream-status {
-      margin-left:auto;
-      flex:0 0 auto;
-      color:#aebddd;
-      font-size:11px;
-    }
-
-    /* Market overview */
-    .market-overview {padding:35px 0 10px}
-    .overview-grid {
-      display:grid;
-      grid-template-columns:repeat(4,minmax(0,1fr));
-      gap:14px;
-    }
-    .overview-card {
-      padding:19px;
-      border:1px solid var(--cw-border);
-      border-radius:16px;
-      background:#fff;
-      box-shadow:0 8px 25px rgba(16,42,92,.035);
-    }
-    .overview-label {
-      color:var(--cw-muted);
-      font-size:12px;
-      font-weight:700;
-    }
-    .overview-value {
-      display:block;
-      margin-top:9px;
-      color:var(--cw-navy);
-      font-size:23px;
-      font-weight:800;
-      letter-spacing:-.5px;
-    }
-    .overview-note {display:block;margin-top:5px;color:#8994a8;font-size:11px}
-
-    /* Popular assets */
-    .asset-grid {
-      display:grid;
-      grid-template-columns:repeat(4,minmax(0,1fr));
-      gap:16px;
-    }
-    .asset-card {
-      display:flex;
-      align-items:center;
-      gap:13px;
-      min-width:0;
-      padding:18px;
-      border:1px solid var(--cw-border);
-      border-radius:16px;
-      background:#fff;
-      color:var(--cw-ink);
-      text-align:left;
-      cursor:pointer;
-      transition:.2s ease;
-    }
-    .asset-card:hover,.asset-card:focus-visible {
-      border-color:#8bc3ff;
-      transform:translateY(-3px);
-      box-shadow:0 12px 28px rgba(8,70,150,.09);
-      outline:none;
-    }
-    .asset-card img {
-      width:42px;
-      height:42px;
-      flex:0 0 42px;
-      object-fit:contain;
-    }
-    .asset-meta {min-width:0}
-    .asset-name {display:block;font-weight:800}
-    .asset-symbol {display:block;margin-top:3px;color:var(--cw-muted);font-size:12px}
-    .asset-price {
-      display:block;
-      margin-top:5px;
-      color:var(--cw-navy);
-      font-size:12px;
-      font-weight:700;
-    }
-    .asset-hint {margin-left:auto;color:var(--cw-blue);font-size:20px}
-
-    /* Market movers */
-    .movers-panel {
-      overflow:hidden;
-      border:1px solid var(--cw-border);
-      border-radius:18px;
-      background:#fff;
-      box-shadow:0 12px 35px rgba(16,42,92,.05);
-    }
-    .movers-top {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:15px;
-      padding:20px;
-      border-bottom:1px solid #edf0f6;
-    }
-    .movers-top h3 {margin:0;color:var(--cw-navy);font-size:18px}
-    .mover-tabs {display:flex;gap:7px}
-    .mover-tab {
-      min-height:35px;
-      padding:0 13px;
-      border:1px solid #e4eaf4;
-      border-radius:9px;
-      color:#68758f;
-      background:#fff;
-      font-size:12px;
-      font-weight:800;
-    }
-    .mover-tab.active {
-      border-color:#d7eaff;
-      color:var(--cw-blue);
-      background:#edf6ff;
-    }
-    .mover-list {display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
-    .mover-item {
-      display:flex;
-      align-items:center;
-      gap:12px;
-      min-width:0;
-      padding:17px 20px;
-      border-right:1px solid #edf0f6;
-      border-bottom:1px solid #edf0f6;
-      color:var(--cw-ink);
-      transition:background .15s ease;
-    }
-    .mover-item:hover {background:#f8fbff}
-    .mover-item img {width:32px;height:32px;object-fit:contain;flex:0 0 32px}
-    .mover-info {min-width:0;flex:1}
-    .mover-name {display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:800}
-    .mover-symbol {display:block;margin-top:3px;color:var(--cw-muted);font-size:11px}
-    .mover-change {font-size:12px;font-weight:800;white-space:nowrap}
-    .mover-empty {grid-column:1/-1;padding:25px;text-align:center;color:var(--cw-muted);font-size:13px}
-
-    /* Market table */
-    #markets {padding:58px 0 72px}
-    .section-head {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:18px;
-      margin-bottom:22px;
-    }
-    .section-head h2 {
-      margin:0;
-      color:var(--cw-navy);
-      font-size:30px;
-      letter-spacing:-.7px;
-    }
-    .search {
-      width:min(300px,100%);
-      min-height:44px;
-      padding:0 15px;
-      border:1px solid #dce4f1;
-      border-radius:12px;
-      outline:none;
-      background:#fff;
-      color:var(--cw-ink);
-      font:inherit;
-    }
-    .search:focus {border-color:var(--cw-blue);box-shadow:0 0 0 3px rgba(8,124,240,.12)}
-    .table-card {
-      overflow:auto;
-      border:1px solid var(--cw-border);
-      border-radius:18px;
-      background:#fff;
-      box-shadow:0 12px 35px rgba(16,42,92,.06);
-    }
-    table {width:100%;border-collapse:collapse;min-width:900px}
-    th,td {
-      padding:17px 20px;
-      text-align:left;
-      border-bottom:1px solid #edf0f6;
-      white-space:nowrap;
-    }
-    th {
-      color:#68758f;
-      background:#f8faff;
-      font-size:12px;
-      letter-spacing:.8px;
-      text-transform:uppercase;
-    }
-    td {color:#263451;font-weight:600}
-    tbody tr:last-child td {border-bottom:0}
-    .num {text-align:right}
-    .hide-sm {width:65px}
-    .coin {display:flex;align-items:center;gap:11px}
-    .coin img {width:30px;height:30px;border-radius:50%;object-fit:contain}
-    .coin .n {font-weight:700}
-    .coin .s {margin-top:2px;color:#7a879d;font-size:12px}
-    .up {color:var(--cw-green)}
-    .down {color:var(--cw-red)}
-    .flat {color:#758198}
-    .state {padding:28px;text-align:center;color:#71809a}
-    .state strong {display:block;margin-bottom:6px;color:var(--cw-navy)}
-    .live-indicator {margin-left:10px;color:var(--cw-green);font-size:12px;font-weight:700}
-
-    /* Discover */
-    .discover-grid {
-      display:grid;
-      grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:17px;
-    }
-    .discover-card {
-      display:block;
-      min-height:190px;
-      padding:23px;
-      border:1px solid var(--cw-border);
-      border-radius:18px;
-      background:#fff;
-      color:var(--cw-ink);
-      transition:.2s ease;
-    }
-    .discover-card:hover,.discover-card:focus-visible {
-      border-color:#8bc3ff;
-      transform:translateY(-3px);
-      box-shadow:0 12px 28px rgba(8,70,150,.09);
-      outline:none;
-    }
-    .discover-icon {
-      width:44px;
-      height:44px;
-      display:grid;
-      place-items:center;
-      margin-bottom:17px;
-      border-radius:13px;
-      color:#087cf0;
-      background:#eaf4ff;
-      font-size:22px;
-      font-weight:800;
-    }
-    .discover-card h3 {margin:0 0 8px;color:var(--cw-navy);font-size:17px}
-    .discover-card p {margin:0;color:var(--cw-muted);font-size:14px;line-height:1.65}
-    .discover-action {display:inline-block;margin-top:15px;color:var(--cw-blue);font-size:13px;font-weight:800}
-
-    .info-panel {
-      margin-top:20px;
-      padding:25px;
-      border:1px solid var(--cw-border);
-      border-radius:18px;
-      background:#fff;
-    }
-    .info-panel h3 {margin:0 0 8px;color:var(--cw-navy)}
-    .info-panel p {margin:0;color:var(--cw-muted);line-height:1.7}
-
-    .cta {
-      padding:55px 0;
-      color:#fff;
-      background:linear-gradient(115deg,#06133f,#073f87);
-      text-align:center;
-    }
-    .cta h2 {margin:0 0 10px;font-size:clamp(25px,4vw,34px)}
-    .cta p {max-width:620px;margin:0 auto;color:#d7e7ff;line-height:1.7}
-    .cta .actions {margin-top:22px}
-
-    .footer {padding:46px 0 24px;color:#d6e1f7;background:#06133f}
-    .cols {display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
-    .cols h3 {margin:0 0 14px;color:#fff;font-size:15px}
-    .cols a {display:block;width:fit-content;margin:9px 0;color:#b9c9e7}
-    .cols a:hover {color:var(--cw-cyan)}
-    .risk {
-      margin:34px 0 18px;
-      padding-top:20px;
-      border-top:1px solid rgba(255,255,255,.13);
-      color:#aebddd;
-      font-size:12px;
-      line-height:1.7;
-    }
-    .copy {margin:0;color:#8799bd;font-size:12px}
-
-    @media(max-width:900px) {
-      .asset-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
-      .discover-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
-      .overview-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
-      .mover-list {grid-template-columns:repeat(2,minmax(0,1fr))}
-    }
-    @media(max-width:640px) {
-      .wrap {width:min(100% - 28px,1160px)}
-      .header .wrap {min-height:66px}
-      .logo {font-size:23px}
-      .logo-mark {width:34px;height:34px}
-      .nav {gap:7px}
-      .nav .link {display:none}
-      .nav .btn-sm {min-height:36px;padding:0 11px;font-size:13px}
-      .hero {padding-bottom:34px}
-      .hero-art {min-height:190px;max-height:230px}
-      .hero-copy {padding-top:26px}
-      .hero-copy p {font-size:15px}
-      .section {padding:43px 0}
-      .section-head {align-items:stretch;flex-direction:column}
-      .search {width:100%}
-      th,td {padding:14px 12px}
-      .asset-grid {gap:10px}
-      .asset-card {padding:13px;gap:9px}
-      .asset-card img {width:34px;height:34px;flex-basis:34px}
-      .discover-grid {grid-template-columns:1fr}
-      .discover-card {min-height:0}
-      .cols {grid-template-columns:1fr 1fr}
-      .cols>div:last-child {grid-column:1/-1}
-      .ticker-inner {gap:15px;min-height:58px}
-      .stream-status {display:none}
-      .overview-card {padding:15px}
-      .overview-value {font-size:20px}
-      .mover-list {grid-template-columns:1fr}
-      .mover-item {border-right:0}
-      .movers-top {align-items:flex-start;flex-direction:column}
-    }
-    @media(max-width:380px) {
-      .asset-card {padding:10px;gap:7px}
-      .asset-card img {width:29px;height:29px;flex-basis:29px}
-      .asset-name {font-size:13px}
-      .asset-price {font-size:11px}
-      .overview-value {font-size:18px}
-    }
   </style>
 </head>
-
 <body>
   <header class="header">
     <div class="wrap">
@@ -554,336 +217,238 @@
         <span class="logo-mark" aria-hidden="true">₿</span>
         <span>Coin<b>Wave</b></span>
       </a>
-
-      <nav class="nav" aria-label="Main navigation">
+      <button class="menu-toggle" id="menuToggle" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
+      <nav class="nav" id="mainNav" aria-label="Main navigation">
+        <a class="link" href="#live-trading">Trade</a>
         <a class="link" href="#markets">Markets</a>
-        <a class="link" href="#discover">Discover</a>
+        <a class="link" href="#market-movers">Movers</a>
+        <a class="link" href="#popular">Assets</a>
+        <a class="link" href="/discover/buy-sell">Buy &amp; Sell</a>
+        <a class="link" href="/discover/security">Security</a>
         <a class="btn btn-sm" href="/login">Log in</a>
-        <a class="btn btn-sm btn-primary" href="/signup">Sign up</a>
+        <a class="btn btn-sm btn-primary" href="/signup">Create account</a>
       </nav>
     </div>
   </header>
 
   <main>
-    <!-- Live streaming market ticker -->
-    <div class="live-ticker" aria-label="Live cryptocurrency prices">
-      <div class="wrap ticker-inner">
-        <div class="live-label">
-          <span class="live-dot" id="streamDot"></span>
-          LIVE MARKET
+    <section class="hero">
+      <!-- Keep the existing CoinWave artwork path so the current brand asset remains in use. -->
+      <img class="hero-art" src="/coinwave-banner.png" alt="CoinWave digital asset trading">
+      <div class="wrap hero-copy">
+        <span class="eyebrow">A clearer way to explore digital assets</span>
+        <h1>Make your next move in the world of crypto.</h1>
+        <p>Explore cryptocurrency markets, follow the assets you care about and access CoinWave services from one simple platform.</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="/signup">Get started <span aria-hidden="true">→</span></a>
+          <a class="btn btn-outline-light" href="#markets">Explore markets</a>
         </div>
-        <div class="ticker-divider"></div>
+        <p class="hero-note">Market information is provided for general information and can change quickly.</p>
+      </div>
+    </section>
 
-        <div class="ticker-item">
-          <span class="ticker-symbol">BTC</span>
-          <span class="ticker-price" id="ticker-BTC">Loading…</span>
-          <span class="ticker-change" id="ticker-change-BTC">—</span>
-        </div>
-        <div class="ticker-item">
-          <span class="ticker-symbol">ETH</span>
-          <span class="ticker-price" id="ticker-ETH">Loading…</span>
-          <span class="ticker-change" id="ticker-change-ETH">—</span>
-        </div>
-        <div class="ticker-item">
-          <span class="ticker-symbol">BNB</span>
-          <span class="ticker-price" id="ticker-BNB">Loading…</span>
-          <span class="ticker-change" id="ticker-change-BNB">—</span>
-        </div>
-        <div class="ticker-item">
-          <span class="ticker-symbol">SOL</span>
-          <span class="ticker-price" id="ticker-SOL">Loading…</span>
-          <span class="ticker-change" id="ticker-change-SOL">—</span>
-        </div>
-        <div class="ticker-item">
-          <span class="ticker-symbol">XRP</span>
-          <span class="ticker-price" id="ticker-XRP">Loading…</span>
-          <span class="ticker-change" id="ticker-change-XRP">—</span>
-        </div>
-        <span class="stream-status" id="streamStatus">Connecting to live prices…</span>
+    <div class="trust-strip" aria-label="Platform highlights">
+      <div class="wrap">
+        <div class="trust-item"><span class="trust-icon" aria-hidden="true">◈</span>Explore digital asset markets</div>
+        <div class="trust-item"><span class="trust-icon" aria-hidden="true">↗</span>Follow price movements</div>
+        <div class="trust-item"><span class="trust-icon" aria-hidden="true">⌑</span>Account and support tools in one place</div>
       </div>
     </div>
 
-    <section class="hero">
-      <img class="hero-art" src="/coinwave-banner.png" alt="CoinWave crypto trading brand banner">
-      <div class="wrap hero-copy">
-        <span class="eyebrow">Trade · Buy · Sell · Grow</span>
-        <h1>Buy and sell crypto with prices you can check.</h1>
-        <p>Explore digital asset markets, compare prices and access your CoinWave account when you are ready to trade.</p>
-        <div class="actions">
-          <a class="btn btn-primary" href="/signup">Create account</a>
-          <a class="btn" href="#markets">View markets</a>
+
+    <section class="cw-live-section" id="live-trading" aria-label="Live crypto trading chart">
+      <div class="cw-ticker-wrap">
+        <div class="tradingview-widget-container">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+          {
+            "symbols": [
+              {"proName":"BINANCE:BTCUSDT","title":"Bitcoin"},
+              {"proName":"BINANCE:ETHUSDT","title":"Ethereum"},
+              {"proName":"BINANCE:BNBUSDT","title":"BNB"},
+              {"proName":"BINANCE:SOLUSDT","title":"Solana"},
+              {"proName":"BINANCE:XRPUSDT","title":"XRP"},
+              {"proName":"BINANCE:ADAUSDT","title":"Cardano"},
+              {"proName":"BINANCE:DOGEUSDT","title":"Dogecoin"},
+              {"proName":"BINANCE:TRXUSDT","title":"TRON"}
+            ],
+            "showSymbolLogo": true,
+            "isTransparent": true,
+            "displayMode": "adaptive",
+            "colorTheme": "dark",
+            "locale": "en"
+          }
+          </script>
         </div>
       </div>
-    </section>
-
-    <!-- Market overview cards -->
-    <section class="market-overview">
-      <div class="wrap">
-        <div class="overview-grid">
-          <div class="overview-card">
-            <span class="overview-label">Listed market assets</span>
-            <strong class="overview-value" id="overviewAssets">—</strong>
-            <span class="overview-note">Assets returned by the market service</span>
-          </div>
-          <div class="overview-card">
-            <span class="overview-label">Top-ranked asset</span>
-            <strong class="overview-value" id="overviewTop">—</strong>
-            <span class="overview-note">By market capitalisation ranking</span>
-          </div>
-          <div class="overview-card">
-            <span class="overview-label">Top 24h performer</span>
-            <strong class="overview-value" id="overviewGainer">—</strong>
-            <span class="overview-note">Among assets currently loaded</span>
-          </div>
-          <div class="overview-card">
-            <span class="overview-label">Live connection</span>
-            <strong class="overview-value" id="overviewConnection">Connecting</strong>
-            <span class="overview-note" id="overviewConnectionNote">Checking live market stream</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" id="popular-assets">
-      <div class="wrap">
-        <div class="section-heading">
+      <div class="wrap cw-live-inner">
+        <div class="cw-live-head">
           <div>
-            <h2>Popular Digital Assets</h2>
-            <p>Select an asset to view its dedicated market details.</p>
+            <span class="cw-live-kicker">Live trading terminal</span>
+            <h2 class="cw-live-title">Follow the market as it moves.</h2>
+            <p class="cw-live-copy">Explore interactive candlestick charts, switch trading pairs, change time intervals and study price action with TradingView charting.</p>
           </div>
+          <span class="cw-live-status">Streaming market display</span>
         </div>
-
-        <div class="asset-grid">
-          <button class="asset-card" type="button" data-asset-symbol="BTC" aria-label="View Bitcoin details">
-            <img src="https://assets.coincap.io/assets/icons/btc@2x.png" alt="Bitcoin logo" loading="lazy">
-            <span class="asset-meta">
-              <span class="asset-name">Bitcoin</span>
-              <span class="asset-symbol">BTC</span>
-              <span class="asset-price" data-card-price="BTC">Loading price…</span>
-            </span>
-            <span class="asset-hint" aria-hidden="true">›</span>
-          </button>
-
-          <button class="asset-card" type="button" data-asset-symbol="ETH" aria-label="View Ethereum details">
-            <img src="https://assets.coincap.io/assets/icons/eth@2x.png" alt="Ethereum logo" loading="lazy">
-            <span class="asset-meta">
-              <span class="asset-name">Ethereum</span>
-              <span class="asset-symbol">ETH</span>
-              <span class="asset-price" data-card-price="ETH">Loading price…</span>
-            </span>
-            <span class="asset-hint" aria-hidden="true">›</span>
-          </button>
-
-          <button class="asset-card" type="button" data-asset-symbol="BNB" aria-label="View BNB details">
-            <img src="https://assets.coincap.io/assets/icons/bnb@2x.png" alt="BNB logo" loading="lazy">
-            <span class="asset-meta">
-              <span class="asset-name">BNB</span>
-              <span class="asset-symbol">BNB</span>
-              <span class="asset-price" data-card-price="BNB">Loading price…</span>
-            </span>
-            <span class="asset-hint" aria-hidden="true">›</span>
-          </button>
-
-          <button class="asset-card" type="button" data-asset-symbol="SOL" aria-label="View Solana details">
-            <img src="https://assets.coincap.io/assets/icons/sol@2x.png" alt="Solana logo" loading="lazy">
-            <span class="asset-meta">
-              <span class="asset-name">Solana</span>
-              <span class="asset-symbol">SOL</span>
-              <span class="asset-price" data-card-price="SOL">Loading price…</span>
-            </span>
-            <span class="asset-hint" aria-hidden="true">›</span>
-          </button>
-
-          <button class="asset-card" type="button" data-asset-symbol="XRP" aria-label="View XRP details">
-            <img src="https://assets.coincap.io/assets/icons/xrp@2x.png" alt="XRP logo" loading="lazy">
-            <span class="asset-meta">
-              <span class="asset-name">XRP</span>
-              <span class="asset-symbol">XRP</span>
-              <span class="asset-price" data-card-price="XRP">Loading price…</span>
-            </span>
-            <span class="asset-hint" aria-hidden="true">›</span>
-          </button>
-
-          <button class="asset-card" type="button" data-asset-symbol="ADA" aria-label="View Cardano details">
-            <img src="https://assets.coincap.io/assets/icons/ada@2x.png" alt="Cardano logo" loading="lazy">
-            <span class="asset-meta">
-              <span class="asset-name">Cardano</span>
-              <span class="asset-symbol">ADA</span>
-              <span class="asset-price" data-card-price="ADA">Loading price…</span>
-            </span>
-            <span class="asset-hint" aria-hidden="true">›</span>
-          </button>
-
-          <button class="asset-card" type="button" data-asset-symbol="DOGE" aria-label="View Dogecoin details">
-            <img src="https://assets.coincap.io/assets/icons/doge@2x.png" alt="Dogecoin logo" loading="lazy">
-            <span class="asset-meta">
-              <span class="asset-name">Dogecoin</span>
-              <span class="asset-symbol">DOGE</span>
-              <span class="asset-price" data-card-price="DOGE">Loading price…</span>
-            </span>
-            <span class="asset-hint" aria-hidden="true">›</span>
-          </button>
-
-          <button class="asset-card" type="button" data-asset-symbol="TRX" aria-label="View TRON details">
-            <img src="https://assets.coincap.io/assets/icons/trx@2x.png" alt="TRON logo" loading="lazy">
-            <span class="asset-meta">
-              <span class="asset-name">TRON</span>
-              <span class="asset-symbol">TRX</span>
-              <span class="asset-price" data-card-price="TRX">Loading price…</span>
-            </span>
-            <span class="asset-hint" aria-hidden="true">›</span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Gainers and losers -->
-    <section class="section section-white" id="market-movers">
-      <div class="wrap">
-        <div class="section-heading">
-          <div>
-            <h2>Market Movers</h2>
-            <p>See which listed assets have gained or lost the most over the last 24 hours.</p>
+        <div class="cw-chart-card">
+          <div class="cw-chart-top">
+            <span class="cw-chart-label">Advanced market chart</span>
+            <span class="cw-chart-caption">Choose a symbol and interval directly inside the chart</span>
           </div>
-        </div>
-
-        <div class="movers-panel">
-          <div class="movers-top">
-            <h3 id="moverHeading">Top Gainers</h3>
-            <div class="mover-tabs" role="group" aria-label="Choose market movers">
-              <button class="mover-tab active" id="gainersTab" type="button" aria-pressed="true">Top Gainers</button>
-              <button class="mover-tab" id="losersTab" type="button" aria-pressed="false">Top Losers</button>
+          <div class="cw-chart-frame">
+            <div class="tradingview-widget-container" style="height:100%;width:100%">
+              <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+              {
+                "allow_symbol_change": true,
+                "calendar": false,
+                "details": true,
+                "hide_side_toolbar": false,
+                "hide_top_toolbar": false,
+                "hide_legend": false,
+                "hide_volume": false,
+                "hotlist": true,
+                "interval": "15",
+                "locale": "en",
+                "save_image": false,
+                "style": "1",
+                "symbol": "BINANCE:BTCUSDT",
+                "theme": "dark",
+                "timezone": "Etc/UTC",
+                "backgroundColor": "#07152e",
+                "gridColor": "rgba(255,255,255,0.06)",
+                "watchlist": [
+                  "BINANCE:BTCUSDT",
+                  "BINANCE:ETHUSDT",
+                  "BINANCE:BNBUSDT",
+                  "BINANCE:SOLUSDT",
+                  "BINANCE:XRPUSDT",
+                  "BINANCE:ADAUSDT",
+                  "BINANCE:DOGEUSDT",
+                  "BINANCE:TRXUSDT"
+                ],
+                "withdateranges": true,
+                "compareSymbols": [],
+                "studies": ["Volume@tv-basicstudies"],
+                "autosize": true
+              }
+              </script>
             </div>
           </div>
-          <div class="mover-list" id="moverList">
-            <div class="mover-empty">Loading market movements…</div>
-          </div>
         </div>
+        <p class="cw-live-note">Chart and ticker are provided by TradingView using the selected exchange's market feed. Market-data availability and update speed may vary by symbol, exchange and region. This chart is for information only; it does not place orders or execute trades on CoinWave.</p>
       </div>
     </section>
 
-    <section id="markets" class="section">
+    <section class="content-section" id="markets">
       <div class="wrap">
         <div class="section-head">
           <div>
-            <h2>Crypto Markets</h2>
-            <span class="live-indicator">● Market data</span>
+            <span class="section-kicker">Market overview</span>
+            <h2 class="section-title">Explore crypto markets</h2>
+            <p class="section-subtitle">Browse supported digital assets and compare the latest available market prices. Select a column heading to sort the list.</p>
           </div>
-          <input id="search" class="search" type="search" placeholder="Search coins" aria-label="Search coins">
+          <input id="search" class="search" type="search" placeholder="Search by coin or symbol…" aria-label="Search cryptocurrencies">
         </div>
-
         <div class="table-card">
-          <table>
+          <table aria-label="Cryptocurrency market prices">
             <thead>
               <tr>
-                <th class="hide-sm">#</th>
-                <th>Asset</th>
-                <th class="num">Price</th>
-                <th class="num">24h Change</th>
-                <th class="num">24h Trading Volume</th>
-                <th class="num">Market Cap</th>
+                <th class="hide-sm" scope="col">#</th>
+                <th scope="col">Asset</th>
+                <th class="num" scope="col">Price (USD)</th>
+                <th class="num" scope="col">24h change</th>
               </tr>
             </thead>
-            <tbody id="rows">
-              <tr><td colspan="6" class="state">Loading market data…</td></tr>
+            <tbody id="rows" aria-live="polite">
+              <tr class="market-skeleton"><td class="rank hide-sm">—</td><td><span class="skeleton-line skeleton-asset"></span></td><td class="num"><span class="skeleton-line"></span></td><td class="num"><span class="skeleton-line skeleton-short"></span></td></tr>
+              <tr class="market-skeleton"><td class="rank hide-sm">—</td><td><span class="skeleton-line skeleton-asset"></span></td><td class="num"><span class="skeleton-line"></span></td><td class="num"><span class="skeleton-line skeleton-short"></span></td></tr>
+              <tr class="market-skeleton"><td class="rank hide-sm">—</td><td><span class="skeleton-line skeleton-asset"></span></td><td class="num"><span class="skeleton-line"></span></td><td class="num"><span class="skeleton-line skeleton-short"></span></td></tr>
             </tbody>
           </table>
         </div>
+        <div class="market-foot">
+          <span class="market-source">Market data supplied by the CoinWave market API</span>
+          <a href="/discover/markets" style="color:#087cf0;font-weight:700">View full market <span aria-hidden="true">→</span></a>
+        </div>
       </div>
     </section>
 
-    <section class="section section-white" id="discover">
+
+    <section class="content-section cw-movers-section" id="market-movers">
       <div class="wrap">
-        <div class="section-heading">
+        <div class="movers-heading">
           <div>
-            <h2>Discover CoinWave</h2>
-            <p>Explore the platform, understand the services and find the right place to continue.</p>
+            <span class="section-kicker">Market pulse</span>
+            <h2 class="section-title">Top gainers &amp; losers</h2>
+            <p class="section-subtitle">The strongest and weakest 24-hour moves in the assets currently supplied by CoinWave markets.</p>
           </div>
+          <span class="movers-updated" id="marketUpdated" role="status">Market snapshot</span>
         </div>
-
-        <div class="discover-grid">
-          <a class="discover-card" href="/discover/markets" data-discover-page="markets">
-            <span class="discover-icon" aria-hidden="true">↗</span>
-            <h3>Explore Markets</h3>
-            <p>Browse available digital assets and review the latest market prices and 24-hour movements.</p>
-            <span class="discover-action">Explore markets →</span>
-          </a>
-
-          <a class="discover-card" href="/discover/buy-sell" data-discover-page="buy-sell">
-            <span class="discover-icon" aria-hidden="true">⇄</span>
-            <h3>Buy &amp; Sell Crypto</h3>
-            <p>Sign in to access the customer account and the trading options made available to your account.</p>
-            <span class="discover-action">Access your account →</span>
-          </a>
-
-          <a class="discover-card" href="/discover/security" data-discover-page="security">
-            <span class="discover-icon" aria-hidden="true">◇</span>
-            <h3>Security &amp; Protection</h3>
-            <p>Learn about account protection, responsible account access and safe handling of your credentials.</p>
-            <span class="discover-action">Read security guidance →</span>
-          </a>
-
-          <a class="discover-card" href="/discover/transactions" data-discover-page="transactions">
-            <span class="discover-icon" aria-hidden="true">⌁</span>
-            <h3>Transaction Process</h3>
-            <p>Understand the key stages involved in submitting and reviewing a transaction on the platform.</p>
-            <span class="discover-action">How it works →</span>
-          </a>
-
-          <a class="discover-card" href="/discover/account" data-discover-page="account">
-            <span class="discover-icon" aria-hidden="true">▣</span>
-            <h3>Account &amp; Verification</h3>
-            <p>Access your account to manage your profile and complete any identity checks requested by the platform.</p>
-            <span class="discover-action">Continue to account →</span>
-          </a>
-
-          <a class="discover-card" href="/discover/support" data-discover-page="support">
-            <span class="discover-icon" aria-hidden="true">?</span>
-            <h3>Customer Support</h3>
-            <p>Find the support access point and sign in to continue with account-related assistance.</p>
-            <span class="discover-action">View support information →</span>
-          </a>
+        <div class="movers-grid">
+          <article class="mover-panel">
+            <div class="mover-panel-head"><h3>Top gainers</h3><span class="mover-tag positive">24h</span></div>
+            <div class="mover-list" id="topGainers">
+              <div class="mover-skeleton"><span></span><span></span><span></span></div>
+              <div class="mover-skeleton"><span></span><span></span><span></span></div>
+              <div class="mover-skeleton"><span></span><span></span><span></span></div>
+            </div>
+          </article>
+          <article class="mover-panel">
+            <div class="mover-panel-head"><h3>Top losers</h3><span class="mover-tag negative">24h</span></div>
+            <div class="mover-list" id="topLosers">
+              <div class="mover-skeleton"><span></span><span></span><span></span></div>
+              <div class="mover-skeleton"><span></span><span></span><span></span></div>
+              <div class="mover-skeleton"><span></span><span></span><span></span></div>
+            </div>
+          </article>
         </div>
       </div>
     </section>
 
-    <section class="section" id="security">
+    <section class="content-section soft-section" id="popular">
       <div class="wrap">
-        <div class="info-panel">
-          <h3>Security &amp; responsible account access</h3>
-          <p>Use a strong, unique password, keep your sign-in details private and access CoinWave through the official website address. Never share passwords or one-time verification codes with anyone. Review transaction details carefully before submitting an order. Digital asset prices can change rapidly, and transactions may carry financial risk.</p>
+        <span class="section-kicker">Popular digital assets</span>
+        <h2 class="section-title">Start with the names you know</h2>
+        <p class="section-subtitle">Open an asset to explore its market information. Asset availability and trading access depend on CoinWave services and account eligibility.</p>
+        <div class="asset-grid" id="popularAssets" aria-live="polite">
+          <div class="asset-card asset-skeleton" aria-hidden="true"><span class="skeleton-line skeleton-icon"></span><span class="skeleton-line skeleton-asset"></span><span class="skeleton-line"></span></div><div class="asset-card asset-skeleton" aria-hidden="true"><span class="skeleton-line skeleton-icon"></span><span class="skeleton-line skeleton-asset"></span><span class="skeleton-line"></span></div><div class="asset-card asset-skeleton" aria-hidden="true"><span class="skeleton-line skeleton-icon"></span><span class="skeleton-line skeleton-asset"></span><span class="skeleton-line"></span></div><div class="asset-card asset-skeleton" aria-hidden="true"><span class="skeleton-line skeleton-icon"></span><span class="skeleton-line skeleton-asset"></span><span class="skeleton-line"></span></div>
+        </div>
+        <div style="margin-top:24px"><a class="btn btn-blue" href="/discover/markets">Discover all markets <span aria-hidden="true">→</span></a></div>
+      </div>
+    </section>
+
+    <section class="content-section" id="platform">
+      <div class="wrap">
+        <span class="section-kicker">The CoinWave experience</span>
+        <h2 class="section-title">Everything starts with clarity</h2>
+        <p class="section-subtitle">A focused place to explore markets, understand the platform and find the tools you need.</p>
+        <div class="feature-grid">
+          <article class="feature-card"><div class="feature-icon" aria-hidden="true">⌁</div><h3>Market discovery</h3><p>Search digital assets, review available price information and open individual asset pages for more context.</p></article>
+          <article class="feature-card"><div class="feature-icon" aria-hidden="true">⇄</div><h3>Buy and sell access</h3><p>Find the platform's buy and sell information and review the applicable order process before proceeding.</p><a href="/discover/buy-sell" style="display:inline-block;margin-top:13px;color:#087cf0;font-size:13px;font-weight:700">Explore buy &amp; sell →</a></article>
+          <article class="feature-card"><div class="feature-icon" aria-hidden="true">⬡</div><h3>Security information</h3><p>Learn about account protection, identity checks and the security practices described by CoinWave.</p><a href="/discover/security" style="display:inline-block;margin-top:13px;color:#087cf0;font-size:13px;font-weight:700">Explore security →</a></article>
         </div>
       </div>
     </section>
 
-    <section class="section section-white" id="transactions">
+    <section class="content-section soft-section">
       <div class="wrap">
-        <div class="info-panel">
-          <h3>How transactions work</h3>
-          <p>Transaction options are available after signing in. Depending on the service and asset, you may be asked to select an asset, enter an amount, review the displayed quote, fees and instructions, and confirm your request. A submitted request is not necessarily completed immediately; check its status in your account. Always follow the instructions shown on the transaction screen.</p>
+        <span class="section-kicker">Get started</span>
+        <h2 class="section-title">Your CoinWave journey in three steps</h2>
+        <p class="section-subtitle">Take time to understand the platform and its requirements before placing an order.</p>
+        <div class="steps-grid">
+          <article class="step-card"><span class="step-no">01</span><h3>Create your account</h3><p>Register with accurate information and follow the account verification steps presented by the platform.</p></article>
+          <article class="step-card"><span class="step-no">02</span><h3>Explore the markets</h3><p>Review asset information, price movements, fees and the risks associated with digital assets.</p></article>
+          <article class="step-card"><span class="step-no">03</span><h3>Review before you trade</h3><p>Read the order details and applicable terms carefully before confirming any transaction.</p></article>
         </div>
       </div>
     </section>
 
-    <section class="section" id="support">
+    <section class="content-section">
       <div class="wrap">
-        <div class="info-panel">
-          <h3>CoinWave customer support</h3>
-          <p>For account-specific assistance, sign in and use the support options available in your customer account. Do not send passwords, one-time codes or private wallet keys to anyone claiming to provide support.</p>
-          <div class="actions" style="justify-content:flex-start">
-            <a class="btn btn-primary" href="/login">Sign in for support</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="cta">
-      <div class="wrap">
-        <h2>Ready to explore CoinWave?</h2>
-        <p>Create an account to access the platform's customer services and available trading features.</p>
-        <div class="actions">
-          <a class="btn btn-primary" href="/signup">Create your account</a>
-          <a class="btn" href="/login">Log in</a>
+        <div class="cta-panel">
+          <div><h2>Discover what you can do with CoinWave.</h2><p>Create an account to access the platform, or explore the markets first.</p></div>
+          <div class="cta-actions"><a class="btn btn-primary" href="/signup">Create account</a><a class="btn btn-outline-light" href="/discover/markets">Explore markets</a></div>
         </div>
       </div>
     </section>
@@ -891,425 +456,42 @@
 
   <footer class="footer">
     <div class="wrap">
-      <div class="cols">
-        <div>
-          <h3>CoinWave</h3>
-          <a href="/">Home</a>
-          <a href="#discover">Discover CoinWave</a>
-          <a href="#markets">Markets</a>
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a class="logo" href="/" aria-label="CoinWave home"><span class="logo-mark" aria-hidden="true">₿</span><span>Coin<b>Wave</b></span></a>
+          <p>Explore digital asset markets and access CoinWave platform services. Make informed decisions and understand the risks before trading.</p>
         </div>
-        <div>
-          <h3>Account &amp; Support</h3>
-          <a href="/login">Customer login</a>
-          <a href="/signup">Create account</a>
-          <a href="/discover/support">Support information</a>
-        </div>
-        <div>
-          <h3>Legal</h3>
-          <a href="/terms">Terms of Service</a>
-          <a href="/privacy">Privacy Policy</a>
-        </div>
+        <div><h3>Explore</h3><a href="/discover/markets">Crypto markets</a><a href="/discover/buy-sell">Buy &amp; sell</a><a href="#popular">Popular assets</a></div>
+        <div><h3>Platform</h3><a href="/discover/security">Security</a><a href="/discover/transactions">Transactions</a><a href="/discover/account">Account</a></div>
+        <div><h3>Help &amp; legal</h3><a href="/discover/support">Contact &amp; support</a><a href="/terms">Terms of service</a><a href="/privacy">Privacy policy</a></div>
       </div>
-
-      <p class="risk">Risk disclosure: Digital assets are volatile and involve significant risk. You may lose some or all of the money you commit to digital asset transactions. Market prices can change rapidly. Nothing on this website should be treated as investment, financial, legal or tax advice. Review the applicable terms, fees and transaction details before proceeding.</p>
-      <p class="copy">&copy; <span id="year"></span> CoinWave. All rights reserved.</p>
+      <p class="risk"><strong>Risk disclosure:</strong> Crypto assets are volatile and involve significant risk. Their value can rise or fall, and you may lose some or all of the money you commit. Market information may be delayed, incomplete or supplied by third parties. Nothing on this website is investment, financial, legal or tax advice, or a recommendation to buy or sell any asset. Review CoinWave's applicable terms, fees, eligibility requirements and risk disclosures before using any service.</p>
+      <p class="copy"><span>© <span id="year"></span> CoinWave. All rights reserved.</span><span>Digital assets involve risk. Please trade responsibly.</span></p>
     </div>
   </footer>
 
   <script>
     (function () {
-      'use strict';
-
-      document.getElementById('year').textContent = new Date().getFullYear();
-
-      const state = {
-        markets: [],
-        livePrices: new Map(),
-        socket: null,
-        socketConnected: false,
-        reconnectTimer: null,
-        reconnectDelay: 3000,
-        moverMode: 'gainers',
-        lastApiUpdate: 0
-      };
-
-      const popularSymbols = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'ADA', 'DOGE', 'TRX'];
-
-      const $ = (id) => document.getElementById(id);
-
-      function money(value) {
-        const number = Number(value);
-        if (!Number.isFinite(number)) return '—';
-
-        return new Intl.NumberFormat('en-US', {
-          style: 'currency',
-          currency: 'USD',
-          maximumFractionDigits: number >= 1000 ? 2 : number >= 1 ? 4 : 8
-        }).format(number);
-      }
-
-      function compactMoney(value) {
-        const number = Number(value);
-        if (!Number.isFinite(number)) return '—';
-
-        return new Intl.NumberFormat('en-US', {
-          notation: 'compact',
-          maximumFractionDigits: 2
-        }).format(number);
-      }
-
-      function percentage(value) {
-        const number = Number(value);
-        if (!Number.isFinite(number)) return '—';
-        return (number > 0 ? '+' : '') + number.toFixed(2) + '%';
-      }
-
-      function changeClass(value) {
-        const number = Number(value);
-        if (!Number.isFinite(number) || number === 0) return 'flat';
-        return number > 0 ? 'up' : 'down';
-      }
-
-      function getPrice(asset) {
-        const symbol = String(asset.symbol || '').toUpperCase();
-        const live = state.livePrices.get(symbol);
-        return live && Number.isFinite(live.price) ? live.price : Number(asset.price);
-      }
-
-      function normaliseMarkets(payload) {
-        const list = Array.isArray(payload)
-          ? payload
-          : Array.isArray(payload && payload.markets)
-            ? payload.markets
-            : Array.isArray(payload && payload.data)
-              ? payload.data
-              : [];
-
-        return list.map((item) => ({
-          rank: Number(item.rank || item.market_cap_rank || 0),
-          name: String(item.name || ''),
-          symbol: String(item.symbol || '').toUpperCase(),
-          image: String(item.image || ''),
-          price: Number(item.price ?? item.current_price),
-          change24h: Number(item.change24h ?? item.price_change_percentage_24h),
-          volume24h: Number(item.volume24h ?? item.total_volume),
-          marketCap: Number(item.marketCap ?? item.market_cap)
-        })).filter(item => item.symbol && Number.isFinite(item.price));
-      }
-
-      function updateTicker(symbol, price, change) {
-        const priceElement = $('ticker-' + symbol);
-        const changeElement = $('ticker-change-' + symbol);
-
-        if (priceElement) priceElement.textContent = money(price);
-
-        if (changeElement) {
-          changeElement.textContent = percentage(change);
-          changeElement.className = 'ticker-change ' + changeClass(change);
-        }
-
-        const cardPrice = document.querySelector('[data-card-price="' + symbol + '"]');
-        if (cardPrice) cardPrice.textContent = money(price);
-      }
-
-      function updatePopularPrices() {
-        popularSymbols.forEach(symbol => {
-          const asset = state.markets.find(item => item.symbol === symbol);
-          if (!asset) return;
-
-          const live = state.livePrices.get(symbol);
-          updateTicker(
-            symbol,
-            getPrice(asset),
-            live && Number.isFinite(live.change)
-              ? live.change
-              : asset.change24h
-          );
+      var toggle = document.getElementById('menuToggle');
+      var nav = document.getElementById('mainNav');
+      if (toggle && nav) {
+        toggle.addEventListener('click', function () {
+          var open = nav.classList.toggle('open');
+          toggle.setAttribute('aria-expanded', String(open));
+          toggle.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+          toggle.textContent = open ? '×' : '☰';
+        });
+        nav.addEventListener('click', function (event) {
+          if (event.target.closest('a')) {
+            nav.classList.remove('open');
+            toggle.setAttribute('aria-expanded', 'false');
+            toggle.setAttribute('aria-label', 'Open navigation');
+            toggle.textContent = '☰';
+          }
         });
       }
-
-      function renderOverview() {
-        const assets = state.markets;
-        $('overviewAssets').textContent = assets.length
-          ? assets.length.toLocaleString()
-          : '—';
-
-        const top = assets.find(item => item.rank === 1) || assets[0];
-        $('overviewTop').textContent = top ? top.symbol : '—';
-
-        const gainers = assets.filter(item => Number.isFinite(item.change24h));
-        gainers.sort((a, b) => b.change24h - a.change24h);
-
-        $('overviewGainer').textContent = gainers.length
-          ? gainers[0].symbol + ' ' + percentage(gainers[0].change24h)
-          : '—';
-      }
-
-      function renderMovers() {
-        const list = $('moverList');
-        const heading = $('moverHeading');
-
-        heading.textContent = state.moverMode === 'gainers'
-          ? 'Top Gainers'
-          : 'Top Losers';
-
-        const sorted = state.markets
-          .filter(item => Number.isFinite(item.change24h))
-          .slice()
-          .sort((a, b) => state.moverMode === 'gainers'
-            ? b.change24h - a.change24h
-            : a.change24h - b.change24h)
-          .slice(0, 6);
-
-        if (!sorted.length) {
-          list.innerHTML = '<div class="mover-empty">Market movements are not available yet.</div>';
-          return;
-        }
-
-        list.replaceChildren();
-
-        sorted.forEach(asset => {
-          const item = document.createElement('a');
-          item.className = 'mover-item';
-          item.href = '/asset?symbol=' + encodeURIComponent(asset.symbol);
-
-          const img = document.createElement('img');
-          img.alt = '';
-          img.loading = 'lazy';
-          img.src = asset.image || '';
-          img.onerror = function () {
-            this.style.visibility = 'hidden';
-          };
-
-          const info = document.createElement('span');
-          info.className = 'mover-info';
-
-          const name = document.createElement('span');
-          name.className = 'mover-name';
-          name.textContent = asset.name;
-
-          const symbol = document.createElement('span');
-          symbol.className = 'mover-symbol';
-          symbol.textContent = asset.symbol;
-
-          const change = document.createElement('span');
-          change.className = 'mover-change ' + changeClass(asset.change24h);
-          change.textContent = percentage(asset.change24h);
-
-          info.append(name, symbol);
-          item.append(img, info, change);
-          list.appendChild(item);
-        });
-      }
-
-      function setStreamStatus(connected, message) {
-        state.socketConnected = connected;
-
-        const dot = $('streamDot');
-        dot.classList.toggle('offline', !connected);
-
-        $('streamStatus').textContent = message;
-        $('overviewConnection').textContent = connected ? 'Connected' : 'Fallback';
-        $('overviewConnectionNote').textContent = connected
-          ? 'Receiving live market updates'
-          : 'Using market API data where available';
-      }
-
-      function applyLiveTicker(tickers) {
-        if (!Array.isArray(tickers)) return;
-
-        tickers.forEach(ticker => {
-          const pair = String(ticker.s || '').toUpperCase();
-          if (!pair.endsWith('USDT')) return;
-
-          const symbol = pair.slice(0, -4);
-          if (!popularSymbols.includes(symbol)) return;
-
-          const price = Number(ticker.c);
-          const change = Number(ticker.P);
-
-          if (!Number.isFinite(price)) return;
-
-          state.livePrices.set(symbol, {
-            price,
-            change: Number.isFinite(change) ? change : 0
-          });
-        });
-
-        updatePopularPrices();
-      }
-
-      function connectLiveStream() {
-        if (!('WebSocket' in window)) {
-          setStreamStatus(false, 'Live stream unavailable');
-          return;
-        }
-
-        if (state.socket) {
-          try { state.socket.close(); } catch (_) {}
-        }
-
-        setStreamStatus(false, 'Connecting to live prices…');
-
-        try {
-          const socket = new WebSocket('wss://stream.binance.com:9443/ws/!ticker@arr');
-          state.socket = socket;
-
-          socket.onopen = function () {
-            state.reconnectDelay = 3000;
-            setStreamStatus(true, 'Live prices connected');
-          };
-
-          socket.onmessage = function (event) {
-            try {
-              const data = JSON.parse(event.data);
-              applyLiveTicker(data);
-            } catch (_) {
-              // Ignore malformed stream messages and keep the connection alive.
-            }
-          };
-
-          socket.onerror = function () {
-            setStreamStatus(false, 'Live stream reconnecting…');
-          };
-
-          socket.onclose = function () {
-            setStreamStatus(false, 'Live stream disconnected — reconnecting');
-            scheduleReconnect();
-          };
-        } catch (_) {
-          setStreamStatus(false, 'Live stream unavailable — using market data');
-          scheduleReconnect();
-        }
-      }
-
-      function scheduleReconnect() {
-        if (state.reconnectTimer) return;
-
-        const delay = state.reconnectDelay;
-        state.reconnectDelay = Math.min(state.reconnectDelay * 2, 30000);
-
-        state.reconnectTimer = window.setTimeout(function () {
-          state.reconnectTimer = null;
-          connectLiveStream();
-        }, delay);
-      }
-
-      async function loadMarketData() {
-        try {
-          const response = await fetch('/api/markets', {
-            method: 'GET',
-            headers: { 'Accept': 'application/json' },
-            cache: 'no-store'
-          });
-
-          if (!response.ok) {
-            throw new Error('Market service returned ' + response.status);
-          }
-
-          const payload = await response.json();
-          const markets = normaliseMarkets(payload);
-
-          if (!markets.length) {
-            throw new Error('No market assets were returned');
-          }
-
-          state.markets = markets;
-          state.lastApiUpdate = Date.now();
-
-          renderOverview();
-          renderMovers();
-          updatePopularPrices();
-
-        } catch (error) {
-          console.warn('CoinWave market overview:', error);
-
-          if (!state.markets.length) {
-            $('moverList').innerHTML =
-              '<div class="mover-empty">Market data is temporarily unavailable. Please try again shortly.</div>';
-            $('overviewAssets').textContent = 'Unavailable';
-          }
-        }
-      }
-
-      function setMoverMode(mode) {
-        state.moverMode = mode;
-
-        const gainers = mode === 'gainers';
-        $('gainersTab').classList.toggle('active', gainers);
-        $('losersTab').classList.toggle('active', !gainers);
-        $('gainersTab').setAttribute('aria-pressed', String(gainers));
-        $('losersTab').setAttribute('aria-pressed', String(!gainers));
-
-        renderMovers();
-      }
-
-      $('gainersTab').addEventListener('click', () => setMoverMode('gainers'));
-      $('losersTab').addEventListener('click', () => setMoverMode('losers'));
-
-      // Popular asset cards open the dedicated asset page.
-      document.addEventListener('click', function (event) {
-        const card = event.target.closest('[data-asset-symbol]');
-        if (!card) return;
-
-        const symbol = String(card.getAttribute('data-asset-symbol') || '')
-          .trim()
-          .toUpperCase();
-
-        if (!/^[A-Z0-9]{2,15}$/.test(symbol)) return;
-
-        event.preventDefault();
-        event.stopPropagation();
-
-        if (typeof event.stopImmediatePropagation === 'function') {
-          event.stopImmediatePropagation();
-        }
-
-        window.location.href = '/asset?symbol=' + encodeURIComponent(symbol);
-      }, true);
-
-      // Discover destinations match the server's supported page routes.
-      document.addEventListener('click', function (event) {
-        const card = event.target.closest('[data-discover-page]');
-        if (!card) return;
-
-        const page = card.getAttribute('data-discover-page');
-        const allowedPages = [
-          'markets',
-          'buy-sell',
-          'security',
-          'transactions',
-          'account',
-          'support'
-        ];
-
-        if (!allowedPages.includes(page)) return;
-
-        event.preventDefault();
-        event.stopPropagation();
-        window.location.href = '/discover/' + page;
-      }, true);
-
-      loadMarketData();
-      connectLiveStream();
-
-      // Refresh the API snapshot periodically as a fallback and to refresh
-      // assets outside the small set covered by the live ticker display.
-      window.setInterval(loadMarketData, 75000);
-
-      window.addEventListener('online', function () {
-        if (!state.socketConnected) connectLiveStream();
-        loadMarketData();
-      });
-
-      window.addEventListener('beforeunload', function () {
-        if (state.reconnectTimer) {
-          window.clearTimeout(state.reconnectTimer);
-        }
-        if (state.socket) {
-          try { state.socket.close(); } catch (_) {}
-        }
-      });
+      var year = document.getElementById('year');
+      if (year) year.textContent = new Date().getFullYear();
     })();
   </script>
 
