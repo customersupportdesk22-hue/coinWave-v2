@@ -1,13 +1,15 @@
+
 {
   "name": "coinwave-v2",
   "version": "2.0.0",
   "private": true,
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "check": "node --check server.js && node --check auth.js && node --check admin.js && node --check orders.js && node --check ledger.js"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22.0.0"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
