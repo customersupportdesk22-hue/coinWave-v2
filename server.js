@@ -15,7 +15,6 @@ app.use(cors());
 app.set('trust proxy', 1);
 app.use(express.json());
 
-// Serve images, CSS, JavaScript and other static files.
 app.use(express.static(__dirname));
 
 app.use('/api/auth', require('./auth'));
@@ -72,15 +71,59 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Market data cache.
+// Market cache.
 const CACHE_MS = 60 * 1000;
+const API_TIMEOUT_MS = 12000;
 
 let cache = {
   time: 0,
   data: null
 };
 
-// PRIMARY SOURCE: COINGECKO
+// Fetch JSON with a timeout.
+async function fetchJson(url) {
+  const controller = new AbortController();
+
+  const timer = setTimeout(() => {
+    controller.abort();
+  }, API_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        accept: 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('API returned status ' + response.status);
+    }
+
+    return await response.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Validate and sort by market capitalization.
+function sortByMarketCap(data) {
+  return data
+    .filter(c =>
+      c &&
+      typeof c === 'object' &&
+      c.symbol &&
+      Number.isFinite(Number(c.marketCap)) &&
+      Number(c.marketCap) >= 0
+    )
+    .sort((a, b) => Number(b.marketCap) - Number(a.marketCap))
+    .map((c, index) => ({
+      ...c,
+      rank: index + 1
+    }));
+}
+
+// PRIMARY SOURCE: COINGECKO.
 async function fromCoinGecko() {
   const url =
     'https://api.coingecko.com/api/v3/coins/markets' +
@@ -90,64 +133,39 @@ async function fromCoinGecko() {
     '&page=1' +
     '&price_change_percentage=24h';
 
-  const r = await fetch(url, {
-    headers: {
-      accept: 'application/json'
-    }
-  });
-
-  if (!r.ok) {
-    throw new Error('CoinGecko status ' + r.status);
-  }
-
-  const raw = await r.json();
+  const raw = await fetchJson(url);
 
   if (!Array.isArray(raw)) {
     throw new Error('Invalid CoinGecko response');
   }
 
-  return raw.map(c => ({
+  const data = raw.map(c => ({
     rank: c.market_cap_rank,
     name: c.name,
     symbol: (c.symbol || '').toUpperCase(),
     image: c.image,
     price: c.current_price,
-
-    // 24-hour price change percentage.
     change24h: c.price_change_percentage_24h,
-
-    // New: 24-hour trading volume in USD.
     volume24h: c.total_volume,
-
-    // New: market capitalization in USD.
     marketCap: c.market_cap
   }));
+
+  return sortByMarketCap(data);
 }
 
-// BACKUP SOURCE: COINPAPRIKA
+// BACKUP SOURCE: COINPAPRIKA.
 async function fromCoinPaprika() {
   const url =
     'https://api.coinpaprika.com/v1/tickers?quotes=USD';
 
-  const r = await fetch(url, {
-    headers: {
-      accept: 'application/json'
-    }
-  });
-
-  if (!r.ok) {
-    throw new Error('CoinPaprika status ' + r.status);
-  }
-
-  const raw = await r.json();
+  const raw = await fetchJson(url);
 
   if (!Array.isArray(raw)) {
     throw new Error('Invalid CoinPaprika response');
   }
 
-  return raw
+  const data = raw
     .filter(c => c.rank > 0 && c.rank <= 100)
-    .sort((a, b) => a.rank - b.rank)
     .map(c => {
       const usd = c.quotes && c.quotes.USD
         ? c.quotes.USD
@@ -164,24 +182,20 @@ async function fromCoinPaprika() {
           '/logo.png',
 
         price: usd.price ?? null,
-
-        // 24-hour price change percentage.
         change24h: usd.percent_change_24h ?? null,
-
-        // New: 24-hour trading volume in USD.
         volume24h: usd.volume_24h ?? null,
-
-        // New: market capitalization in USD.
         marketCap: usd.market_cap ?? null
       };
     });
+
+  return sortByMarketCap(data);
 }
 
-// MARKET API
+// MARKET API.
 app.get('/api/markets', async (req, res) => {
   res.set('Cache-Control', 'no-store');
 
-  // Return cached data when available.
+  // Serve fresh cached data.
   if (
     cache.data &&
     Date.now() - cache.time < CACHE_MS
@@ -190,42 +204,51 @@ app.get('/api/markets', async (req, res) => {
   }
 
   const sources = [
-    fromCoinGecko,
-    fromCoinPaprika
+    { name: 'CoinGecko', getData: fromCoinGecko },
+    { name: 'CoinPaprika', getData: fromCoinPaprika }
   ];
 
   for (const source of sources) {
     try {
-      const data = await source();
+      const data = await source.getData();
 
-      if (data && data.length) {
+      if (Array.isArray(data) && data.length > 0) {
         cache = {
           time: Date.now(),
-          data: data
+          data
         };
+
+        console.log(source.name + ' market data updated');
 
         return res.json(data);
       }
 
+      throw new Error('No valid market data returned');
+
     } catch (err) {
       console.error(
-        'Markets error:',
-        err.message
+        source.name + ' market error:',
+        err.name === 'AbortError'
+          ? 'Request timed out'
+          : err.message
       );
     }
   }
 
-  // Use the last successful cache if both sources fail.
-  if (cache.data) {
+  // Use the last successful data if both APIs fail.
+  if (cache.data && cache.data.length) {
+    console.warn('Using previously cached market data');
     return res.json(cache.data);
   }
 
+  // Neither API nor cache has usable data.
   return res.status(503).json({
-    error: 'Market data is temporarily unavailable.'
+    error: 'Market data is temporarily unavailable.',
+    message: 'Please try again shortly.'
   });
 });
 
-// START SERVER
+// START SERVER.
 const PORT = process.env.PORT || 3000;
 
 (async () => {
@@ -234,26 +257,18 @@ const PORT = process.env.PORT || 3000;
       await mongoose.connect(process.env.MONGO_URI);
 
       dbState = 'connected';
-
       console.log('MongoDB connected');
 
     } catch (e) {
       dbState = 'error: ' + e.message;
 
-      console.error(
-        'MongoDB error:',
-        e.message
-      );
+      console.error('MongoDB error:', e.message);
     }
   } else {
-    console.log(
-      'MONGO_URI is not set, running without a database'
-    );
+    console.log('MONGO_URI is not set, running without a database');
   }
 
   app.listen(PORT, () => {
-    console.log(
-      'CoinWave v2 on port ' + PORT
-    );
+    console.log('CoinWave v2 on port ' + PORT);
   });
 })();
