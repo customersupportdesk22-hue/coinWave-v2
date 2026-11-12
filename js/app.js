@@ -299,7 +299,7 @@
     fill(gainersTarget, gainers, 'gainers');
     fill(losersTarget, losers, 'losers');
     if (updatedTarget) {
-      updatedTarget.textContent = '24h market performance · ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      updatedTarget.textContent = (live.lastTick ? 'Binance ticker updates · ' : 'Market snapshot · ') + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     }
   }
 
@@ -362,6 +362,7 @@
     ],
     i: 0,
     tries: 0,
+    lastTick: 0,
     reconnectTimer: null
   };
 
@@ -450,7 +451,18 @@
 
       live.tries = 0;
       dot.hidden = false;
-      arr.forEach(applyTick);
+      var ticked = false;
+      arr.forEach(function (tick) {
+        var before = tick && tick.s && live.map[tick.s.slice(0, -4)];
+        var prior = before ? before.price : null;
+        applyTick(tick);
+        if (before && before.price !== prior) ticked = true;
+      });
+      if (ticked) {
+        live.lastTick = Date.now();
+        renderMovers();
+        renderPopular();
+      }
     };
 
     ws.onclose = function () {
@@ -468,22 +480,10 @@
   function setCoins(d) {
     if (!Array.isArray(d)) throw new Error('Unexpected market response');
 
-    var old = {};
-    coins.forEach(function (c) {
-      if (c.live) old[String(c.symbol || '').toUpperCase()] = c;
-    });
-
     d = d.filter(function (c) {
       return c && typeof c === 'object' && c.symbol;
     }).map(function (c) {
-      var item = Object.assign({}, c);
-      var previous = old[String(item.symbol).toUpperCase()];
-      if (previous) {
-        item.price = previous.price;
-        item.change24h = previous.change24h;
-        item.live = true;
-      }
-      return item;
+      return Object.assign({}, c);
     });
 
     coins = d;
