@@ -1,0 +1,960 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#071b3b">
+  <meta name="description" content="Read the CoinWave Terms of Service covering account use, digital assets, platform services, risks and responsibilities.">
+  <title>Terms of Service | CoinWave</title>
+
+  <style>
+    :root {
+      --navy: #071b3b;
+      --navy-light: #102c55;
+      --blue: #087cf0;
+      --blue-dark: #0066d5;
+      --gold: #e7b94f;
+      --bg: #f4f7fc;
+      --white: #ffffff;
+      --text: #17243b;
+      --muted: #65738b;
+      --line: #e3eaf4;
+      --shadow: 0 12px 35px rgba(10, 35, 75, .07);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 95px;
+    }
+
+    body {
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.75;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      color: var(--blue-dark);
+      text-decoration: underline;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: var(--navy);
+      border-bottom: 1px solid rgba(255,255,255,.09);
+      box-shadow: 0 4px 18px rgba(0,0,0,.12);
+    }
+
+    .topbar-inner {
+      max-width: 1160px;
+      min-height: 76px;
+      margin: auto;
+      padding: 12px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -.7px;
+    }
+
+    .brand:hover {
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 11px;
+      display: grid;
+      place-items: center;
+      color: var(--navy);
+      background: linear-gradient(135deg, #f4d77c, var(--gold));
+      font-size: 21px;
+      font-weight: 900;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 42px;
+      padding: 9px 16px;
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 11px;
+      color: #fff;
+      background: rgba(255,255,255,.08);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .2s, transform .2s, border-color .2s;
+    }
+
+    .back-button:hover {
+      background: rgba(255,255,255,.17);
+      border-color: rgba(255,255,255,.4);
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .back-button:active {
+      transform: scale(.97);
+    }
+
+    .back-arrow {
+      font-size: 19px;
+      line-height: 1;
+    }
+
+    .home-link {
+      color: #e8effb;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .home-link:hover {
+      color: #fff;
+    }
+
+    .page-wrap {
+      max-width: 1160px;
+      margin: 38px auto 65px;
+      padding: 0 22px;
+    }
+
+    .hero {
+      padding: 39px 38px;
+      border-radius: 20px;
+      background: linear-gradient(120deg, #071b3b, #123d70);
+      color: #fff;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 50%;
+      right: -70px;
+      top: -115px;
+      box-shadow: 0 0 0 35px rgba(255,255,255,.025),
+                  0 0 0 70px rgba(255,255,255,.02);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      margin-bottom: 10px;
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.7px;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      font-size: clamp(29px, 5vw, 43px);
+      line-height: 1.2;
+      letter-spacing: -1.2px;
+      margin-bottom: 12px;
+    }
+
+    .hero p {
+      max-width: 720px;
+      color: #d3deee;
+      font-size: 15px;
+    }
+
+    .updated {
+      display: inline-flex;
+      margin-top: 20px;
+      padding: 7px 12px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 8px;
+      color: #e8effb;
+      background: rgba(255,255,255,.07);
+      font-size: 12px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 265px minmax(0, 1fr);
+      gap: 25px;
+      align-items: start;
+      margin-top: 26px;
+    }
+
+    .toc {
+      position: sticky;
+      top: 100px;
+      padding: 23px 19px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: var(--white);
+      box-shadow: var(--shadow);
+    }
+
+    .toc h2 {
+      margin-bottom: 14px;
+      color: var(--navy);
+      font-size: 15px;
+    }
+
+    .toc ol {
+      padding-left: 19px;
+    }
+
+    .toc li {
+      padding: 5px 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .toc a {
+      color: #465773;
+    }
+
+    .toc a:hover {
+      color: var(--blue);
+    }
+
+    .content {
+      min-width: 0;
+      padding: 34px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--white);
+      box-shadow: var(--shadow);
+    }
+
+    .notice {
+      margin-bottom: 27px;
+      padding: 17px 19px;
+      border: 1px solid #f0dca9;
+      border-left: 4px solid var(--gold);
+      border-radius: 10px;
+      background: #fffaf0;
+      color: #59451b;
+      font-size: 13px;
+    }
+
+    .content section {
+      padding: 0 0 25px;
+      margin-bottom: 25px;
+      border-bottom: 1px solid var(--line);
+      scroll-margin-top: 100px;
+    }
+
+    .content section:last-of-type {
+      margin-bottom: 0;
+      border-bottom: 0;
+    }
+
+    .content h2 {
+      margin-bottom: 11px;
+      color: var(--navy);
+      font-size: 20px;
+      line-height: 1.4;
+      letter-spacing: -.3px;
+    }
+
+    .content h3 {
+      margin: 17px 0 7px;
+      color: #263a59;
+      font-size: 15px;
+    }
+
+    .content p {
+      margin: 9px 0;
+      color: #53627a;
+      font-size: 14px;
+    }
+
+    .content ul {
+      margin: 9px 0 10px 22px;
+      color: #53627a;
+      font-size: 14px;
+    }
+
+    .content li {
+      margin: 6px 0;
+      padding-left: 3px;
+    }
+
+    .legal-placeholder {
+      color: #9a5b12;
+      font-weight: 700;
+    }
+
+    .bottom-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 13px;
+      margin-top: 25px;
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .footer {
+      padding: 27px 20px;
+      background: var(--navy);
+      color: #c5d1e3;
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .footer a {
+      margin: 0 8px;
+      color: #fff;
+    }
+
+    .footer p {
+      margin-top: 8px;
+      color: #aab9ce;
+    }
+
+    @media (max-width: 800px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .toc {
+        position: static;
+      }
+
+      .toc ol {
+        columns: 2;
+        column-gap: 25px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .topbar-inner {
+        min-height: 65px;
+        padding: 10px 14px;
+      }
+
+      .brand {
+        font-size: 19px;
+      }
+
+      .brand-mark {
+        width: 32px;
+        height: 32px;
+      }
+
+      .home-link {
+        display: none;
+      }
+
+      .back-button {
+        min-height: 39px;
+        padding: 8px 11px;
+        font-size: 12px;
+      }
+
+      .page-wrap {
+        margin: 22px auto 40px;
+        padding: 0 13px;
+      }
+
+      .hero {
+        padding: 28px 22px;
+        border-radius: 15px;
+      }
+
+      .hero p {
+        font-size: 13px;
+      }
+
+      .content {
+        padding: 23px 19px;
+      }
+
+      .content h2 {
+        font-size: 18px;
+      }
+
+      .content p,
+      .content ul {
+        font-size: 13px;
+      }
+
+      .toc ol {
+        columns: 1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark">C</span>
+        <span>CoinWave</span>
+      </a>
+
+      <div class="top-actions">
+        <a class="home-link" href="/">Home</a>
+        <button class="back-button" id="backButton" type="button">
+          <span class="back-arrow" aria-hidden="true">←</span>
+          <span>Go Back</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-wrap">
+    <section class="hero">
+      <span class="eyebrow">Legal information</span>
+      <h1>Terms of Service</h1>
+      <p>
+        These Terms explain the conditions that apply when you access or use
+        CoinWave, including your responsibilities, important service
+        limitations and the risks associated with digital assets.
+      </p>
+      <span class="updated">Last updated: 12 November 2026</span>
+    </section>
+
+    <div class="layout">
+      <aside class="toc">
+        <h2>On this page</h2>
+        <ol>
+          <li><a href="#acceptance">Acceptance of Terms</a></li>
+          <li><a href="#eligibility">Eligibility</a></li>
+          <li><a href="#account">Account Registration</a></li>
+          <li><a href="#verification">Identity Verification</a></li>
+          <li><a href="#services">Platform Services</a></li>
+          <li><a href="#market-data">Market Information</a></li>
+          <li><a href="#orders">Orders and Transactions</a></li>
+          <li><a href="#fees">Fees and Charges</a></li>
+          <li><a href="#risks">Digital Asset Risks</a></li>
+          <li><a href="#prohibited">Prohibited Activities</a></li>
+          <li><a href="#security">Account Security</a></li>
+          <li><a href="#availability">Availability</a></li>
+          <li><a href="#third-party">Third-Party Services</a></li>
+          <li><a href="#suspension">Suspension and Closure</a></li>
+          <li><a href="#privacy">Privacy</a></li>
+          <li><a href="#intellectual">Intellectual Property</a></li>
+          <li><a href="#disclaimer">Disclaimers</a></li>
+          <li><a href="#liability">Limitation of Liability</a></li>
+          <li><a href="#changes">Changes to These Terms</a></li>
+          <li><a href="#law">Applicable Law</a></li>
+          <li><a href="#contact">Contact and Complaints</a></li>
+        </ol>
+      </aside>
+
+      <article class="content">
+        <div class="notice">
+          <strong>Important publication notice:</strong>
+          This document is a comprehensive draft for CoinWave. Before the
+          platform is made available to customers, its operator must verify
+          the legal entity, actual services, fees, transaction procedures,
+          applicable regulatory requirements and contact details. Obtain
+          qualified legal review before publication.
+        </div>
+
+        <section id="acceptance">
+          <h2>1. Acceptance of Terms</h2>
+          <p>
+            These Terms of Service ("Terms") govern your access to and use
+            of the CoinWave website, applications, accounts and related
+            services (collectively, the "Platform").
+          </p>
+          <p>
+            By accessing the Platform, creating an account or using any
+            available service, you confirm that you have read and understood
+            these Terms and agree to be bound by them. If you do not agree,
+            you must not use the Platform.
+          </p>
+          <p>
+            Additional terms may apply to particular features or services.
+            Where additional terms are presented, they should be read
+            together with this document.
+          </p>
+        </section>
+
+        <section id="eligibility">
+          <h2>2. Eligibility</h2>
+          <p>
+            You may use CoinWave only if you are legally capable of entering
+            into a binding agreement and are permitted to access the relevant
+            services under the laws applicable to you.
+          </p>
+          <p>
+            You must not use the Platform if doing so would violate
+            applicable laws, sanctions, restrictions or legal obligations
+            that apply to you or to the Platform operator.
+          </p>
+          <p>
+            Some services may have additional age, location, identity or
+            eligibility requirements. Those requirements must be satisfied
+            before the relevant service is used.
+          </p>
+        </section>
+
+        <section id="account">
+          <h2>3. Account Registration</h2>
+          <p>
+            Certain features may require you to create a CoinWave account.
+            When registering, you agree to provide information that is
+            accurate, complete and kept up to date.
+          </p>
+          <p>You are responsible for:</p>
+          <ul>
+            <li>Providing truthful registration information.</li>
+            <li>Keeping your login credentials confidential.</li>
+            <li>Maintaining access to your registered email address or phone number.</li>
+            <li>Updating information when it changes.</li>
+            <li>Notifying the Platform operator promptly of suspected unauthorised access.</li>
+          </ul>
+          <p>
+            You must not create an account using another person's identity
+            or allow another person to misuse your account.
+          </p>
+        </section>
+
+        <section id="verification">
+          <h2>4. Identity Verification and Compliance</h2>
+          <p>
+            CoinWave may require identity, address, source-of-funds or other
+            verification information before allowing access to particular
+            services, where required by applicable law or the Platform's
+            documented compliance procedures.
+          </p>
+          <p>
+            Verification may involve reviewing information and documents
+            submitted by you or checking information through authorised
+            verification providers.
+          </p>
+          <p>
+            Access to certain services may be restricted while verification
+            is pending, incomplete or unsuccessful. Any such restriction
+            should be handled in accordance with applicable law and the
+            Platform's published procedures.
+          </p>
+        </section>
+
+        <section id="services">
+          <h2>5. Platform Services</h2>
+          <p>
+            CoinWave may provide digital-asset information, account
+            functionality and other features displayed on the Platform.
+            The exact services available to you depend on the features
+            actually launched and enabled by the operator.
+          </p>
+          <p>
+            A displayed asset, price, chart, button or service description
+            does not by itself mean that purchases, sales, deposits,
+            withdrawals, custody or transfers are available.
+          </p>
+          <p>
+            Where transaction services are offered, the applicable process,
+            conditions and fees should be presented to you before you
+            confirm a transaction.
+          </p>
+        </section>
+
+        <section id="market-data">
+          <h2>6. Market Information and Data</h2>
+          <p>
+            The Platform may display cryptocurrency prices, market
+            capitalisation, trading volumes, price movements, charts and
+            other market information obtained from third-party sources.
+          </p>
+          <p>
+            Market information may be delayed, incomplete, estimated or
+            different from prices available on other platforms. Data may
+            change without notice and should not be treated as a guaranteed
+            execution price.
+          </p>
+          <p>
+            You should independently verify important market information
+            before making a financial decision.
+          </p>
+        </section>
+
+        <section id="orders">
+          <h2>7. Orders and Transactions</h2>
+          <p>
+            If CoinWave enables order placement or transaction services,
+            the relevant interface will explain the available order type,
+            asset, quantity, price information and applicable conditions.
+          </p>
+          <p>
+            Submitting an order request does not necessarily mean that the
+            order has been accepted, matched, completed or settled. An order
+            may be delayed, rejected, partially completed or cancelled,
+            depending on the service and applicable conditions.
+          </p>
+          <p>
+            You should carefully review transaction details before
+            confirming them. Blockchain transactions, once sufficiently
+            confirmed, may be irreversible.
+          </p>
+          <p>
+            CoinWave must clearly disclose the actual execution, settlement,
+            cancellation and dispute procedures applicable to each
+            transaction service before that service is launched.
+          </p>
+        </section>
+
+        <section id="fees">
+          <h2>8. Fees and Charges</h2>
+          <p>
+            Fees may apply to particular services or transactions where
+            those fees have been established and disclosed by the operator.
+            Applicable fees should be shown before you confirm a chargeable
+            transaction.
+          </p>
+          <p>
+            Third-party network fees, payment-provider charges, bank fees
+            or other external costs may also apply where relevant. Such
+            charges should be explained before you proceed whenever
+            reasonably possible.
+          </p>
+          <p>
+            Do not assume that a service is free or that a fee applies
+            unless the applicable pricing information has been displayed
+            or otherwise communicated to you.
+          </p>
+        </section>
+
+        <section id="risks">
+          <h2>9. Digital Asset Risks</h2>
+          <p>
+            Digital assets are volatile and may involve substantial risk.
+            Their prices can rise or fall rapidly, and you may lose some
+            or all of the money you commit.
+          </p>
+          <p>Important risks include:</p>
+          <ul>
+            <li><strong>Price volatility:</strong> Digital asset prices can change significantly in short periods.</li>
+            <li><strong>Liquidity risk:</strong> You may not be able to buy or sell an asset at your preferred price or time.</li>
+            <li><strong>Technology risk:</strong> Blockchain networks, wallets, exchanges or related systems may fail or become unavailable.</li>
+            <li><strong>Cybersecurity risk:</strong> Digital assets and accounts may be exposed to theft, fraud or unauthorised access.</li>
+            <li><strong>Regulatory risk:</strong> Laws and regulatory requirements may change and affect the availability or use of digital assets.</li>
+            <li><strong>Transaction risk:</strong> Incorrect addresses, network selection or transaction details may result in irreversible loss.</li>
+          </ul>
+          <p>
+            Only use funds you can afford to lose. Consider obtaining
+            independent financial, legal or tax advice where appropriate.
+          </p>
+        </section>
+
+        <section id="prohibited">
+          <h2>10. Prohibited Activities</h2>
+          <p>You must not use CoinWave to:</p>
+          <ul>
+                   <li>Commit fraud, theft, money laundering or terrorist financing.</li>
+            <li>Violate applicable laws, sanctions or regulatory requirements.</li>
+            <li>Impersonate another person or submit fraudulent documents.</li>
+            <li>Manipulate markets or engage in deceptive trading practices.</li>
+            <li>Interfere with the Platform's security or normal operation.</li>
+            <li>Introduce malware, malicious code or unauthorised automated access.</li>
+            <li>Exploit bugs, vulnerabilities or technical weaknesses.</li>
+            <li>Use the Platform to facilitate any other unlawful activity.</li>
+          </ul>
+          <p>
+            Suspected misuse may be investigated and handled in accordance
+            with applicable law and the Platform's published procedures.
+          </p>
+        </section>
+
+        <section id="security">
+          <h2>11. Account and Platform Security</h2>
+          <p>
+            You must take reasonable steps to protect your account and
+            devices. Do not share passwords, verification codes or other
+            authentication credentials with anyone.
+          </p>
+          <p>
+            If you suspect that your account has been compromised, contact
+            CoinWave through its verified support channel as soon as
+            possible.
+          </p>
+          <p>
+            The Platform operator should maintain appropriate security
+            controls for the services it actually provides. No internet
+            service or security system can be guaranteed to be completely
+            secure.
+          </p>
+        </section>
+
+        <section id="availability">
+          <h2>12. Platform Availability and Maintenance</h2>
+          <p>
+            The Platform may occasionally be unavailable because of
+            maintenance, upgrades, network interruptions, security events,
+            third-party outages or other technical circumstances.
+          </p>
+          <p>
+            Where reasonably practicable, the operator should provide
+            advance notice of planned interruptions that materially affect
+            customers.
+          </p>
+          <p>
+            CoinWave does not guarantee uninterrupted access or that every
+            feature will always be available.
+          </p>
+        </section>
+
+        <section id="third-party">
+          <h2>13. Third-Party Services and Links</h2>
+          <p>
+            The Platform may rely on or link to third-party websites,
+            market-data providers, payment services, verification services
+            or other external systems.
+          </p>
+          <p>
+            Third-party services may have their own terms and privacy
+            policies. You should review those documents before using
+            external services.
+          </p>
+          <p>
+            CoinWave should not be understood to guarantee the accuracy,
+            availability or security of an independent third-party service.
+            Any responsibility for a third-party service will be determined
+            by applicable law and the relevant agreement.
+          </p>
+        </section>
+
+        <section id="suspension">
+          <h2>14. Suspension, Restriction and Account Closure</h2>
+          <p>
+            Access to an account or particular features may be restricted,
+            suspended or terminated where reasonably necessary, including
+            where:
+          </p>
+          <ul>
+            <li>You materially breach these Terms.</li>
+            <li>There is suspected fraud, unlawful activity or account compromise.</li>
+            <li>Verification or compliance requirements are not satisfied.</li>
+            <li>A legal or regulatory obligation requires action.</li>
+            <li>Continuing access creates a material security or operational risk.</li>
+          </ul>
+          <p>
+            Where permitted by law and reasonably practicable, the operator
+            should explain the reason for a restriction and any available
+            review or complaint process.
+          </p>
+          <p>
+            Closing an account does not remove obligations or liabilities
+            that arose before closure. Any remaining assets or pending
+            transactions must be handled under the applicable service
+            terms and law.
+          </p>
+        </section>
+
+        <section id="privacy">
+          <h2>15. Privacy and Personal Information</h2>
+          <p>
+            Your use of CoinWave may involve the collection and processing
+            of personal information. The way such information is handled
+            is explained in the
+            <a href="/privacy">CoinWave Privacy Policy</a>.
+          </p>
+          <p>
+            You should read the Privacy Policy to understand what
+            information is collected, why it is used, how long it may be
+            retained and what rights may be available to you.
+          </p>
+        </section>
+
+        <section id="intellectual">
+          <h2>16. Intellectual Property</h2>
+          <p>
+            The CoinWave name, branding, website design, text, graphics,
+            software and other Platform materials may be protected by
+            intellectual property laws.
+          </p>
+          <p>
+            Unless permitted by law or authorised in writing, you must not
+            copy, reproduce, modify, distribute, commercially exploit or
+            create derivative works from protected Platform materials.
+          </p>
+          <p>
+            Nothing in these Terms transfers ownership of intellectual
+            property to you.
+          </p>
+        </section>
+
+        <section id="disclaimer">
+          <h2>17. Important Disclaimers</h2>
+          <p>
+            Unless expressly stated otherwise in a separate written
+            agreement, information provided through CoinWave is for
+            general informational purposes and is not personalised
+            investment, financial, legal or tax advice.
+          </p>
+          <p>
+            CoinWave does not promise profits, guaranteed returns,
+            protection against market losses or a particular future
+            performance of any digital asset.
+          </p>
+          <p>
+            Nothing on the Platform should be interpreted as a personal
+            recommendation to buy, sell or hold a particular asset.
+          </p>
+          <p>
+            Nothing in these Terms excludes a consumer right, warranty or
+            protection that cannot lawfully be excluded or limited.
+          </p>
+        </section>
+
+        <section id="liability">
+          <h2>18. Limitation of Liability</h2>
+          <p>
+            To the extent permitted by applicable law, the Platform
+            operator is not responsible for losses arising from risks
+            inherent in digital assets, inaccurate third-party market
+            information, interruptions outside its reasonable control or
+            a user's failure to protect account credentials.
+          </p>
+          <p>
+            Nothing in these Terms excludes or limits liability where
+            doing so would be unlawful, including liability that cannot
+            legally be excluded for fraud, deliberate misconduct or other
+            non-excludable matters.
+          </p>
+          <p>
+            Any limitation of liability must be interpreted subject to
+            mandatory consumer protections and other applicable laws.
+          </p>
+        </section>
+
+        <section id="changes">
+          <h2>19. Changes to These Terms</h2>
+          <p>
+            CoinWave may update these Terms when services, legal
+            requirements or operational practices change.
+          </p>
+          <p>
+            The updated version will be published on the Platform with
+            a revised date. Where a change materially affects your rights
+            or obligations, the operator should provide notice in a
+            manner appropriate to the change and applicable law.
+          </p>
+          <p>
+            If you do not agree with an updated version, you should stop
+            using the affected services and follow the applicable account
+            closure or complaint procedure.
+          </p>
+        </section>
+
+        <section id="law">
+          <h2>20. Applicable Law and Disputes</h2>
+          <p>
+            These Terms must be read subject to the mandatory laws and
+            consumer protections applicable to the relationship between
+            you and the CoinWave operator.
+          </p>
+          <p>
+            <span class="legal-placeholder">
+              [The operator must insert the correct governing law,
+              jurisdiction and dispute-resolution procedure after legal
+              review.]
+            </span>
+          </p>
+          <p>
+            If you have a complaint, you should first use the verified
+            CoinWave support or complaints channel identified below,
+            without losing any legal rights you may have.
+          </p>
+        </section>
+
+        <section id="contact">
+          <h2>21. Contact and Complaints</h2>
+          <p>
+            For questions about these Terms, account-related concerns or
+            complaints, use the official CoinWave contact channel displayed
+            within the Platform.
+          </p>
+          <p>
+            <span class="legal-placeholder">
+              [Before publication, insert the verified operator's legal
+              name, support email address, business address and any
+              required complaints contact information.]
+            </span>
+          </p>
+          <p>
+            Do not send passwords, one-time verification codes or private
+            wallet recovery phrases when contacting support.
+          </p>
+        </section>
+
+        <div class="bottom-links">
+          <a href="/">← Return to CoinWave Home</a>
+          <a href="/privacy">Read Privacy Policy →</a>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div>
+      <a href="/">Home</a>
+      <a href="/terms">Terms of Service</a>
+      <a href="/privacy">Privacy Policy</a>
+    </div>
+    <p>© <span id="currentYear">2026</span> CoinWave. All rights reserved.</p>
+  </footer>
+
+  <script>
+    (function () {
+      const backButton = document.getElementById("backButton");
+
+      backButton.addEventListener("click", function () {
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          window.location.assign("/");
+        }
+      });
+
+      document.getElementById("currentYear").textContent =
+        new Date().getFullYear();
+    })();
+  </script>
+</body>
+</html>
