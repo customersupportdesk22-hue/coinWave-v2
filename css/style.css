@@ -531,4 +531,8 @@ tbody tr:hover {
     scroll-behavior: auto !important;
     transition: none !important;
   }
+}/* Remove blue tap highlight across CoinWave */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }
