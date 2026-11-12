@@ -3,42 +3,648 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CoinWave | Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <meta name="theme-color" content="#06133f">
+  <title>CoinWave | Customer Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
+
   <style>
-    .dash { padding-top: 32px; }
-    .dash h1 { font-size: 26px; letter-spacing: -.02em; }
-    .dash .email { color: var(--muted); margin-top: 4px; }
-    .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; margin-top: 20px; }
-    .card h2 { font-size: 15px; font-weight: 500; color: var(--muted); }
-    .total { font-size: 38px; font-weight: 700; letter-spacing: -.02em; margin-top: 6px; font-variant-numeric: tabular-nums; }
-    .empty { text-align: center; padding: 16px 0 4px; }
-    .empty strong { display: block; font-size: 17px; margin-bottom: 6px; }
-    .empty p { color: var(--muted); margin-bottom: 18px; }
+    :root {
+      --dash-navy: #06133f;
+      --dash-blue: #087cf0;
+      --dash-cyan: #12c8f4;
+      --dash-gold: #ffc400;
+      --dash-green: #16a765;
+      --dash-red: #e04454;
+    }
+
+    body { background: #f3f6fc; }
+    .header { position: sticky; }
+    .dash-wrap { width:min(100% - 36px, 1200px); margin:auto; }
+
+    .dashboard { padding:28px 0 60px; }
+    .dash-top {
+      display:flex; justify-content:space-between; align-items:center;
+      gap:16px; flex-wrap:wrap; margin-bottom:24px;
+    }
+    .dash-top h1 {
+      margin:0; font-size:27px; color:var(--dash-navy);
+      letter-spacing:-.8px;
+    }
+    .dash-top p { margin:4px 0 0; color:#75819a; font-size:14px; }
+    .profile-chip {
+      display:flex; align-items:center; gap:10px;
+      background:#fff; border:1px solid #e4eaf4;
+      border-radius:14px; padding:9px 14px;
+    }
+    .avatar {
+      width:38px; height:38px; border-radius:12px;
+      display:grid; place-items:center; color:#fff;
+      font-weight:800; background:linear-gradient(135deg,#087cf0,#12c8f4);
+    }
+    .profile-chip strong { display:block; font-size:13px; }
+    .profile-chip small { color:#8490a7; font-size:11px; }
+
+    .dash-grid {
+      display:grid; grid-template-columns:225px minmax(0,1fr);
+      gap:22px; align-items:start;
+    }
+    .sidebar {
+      background:#fff; border:1px solid #e5ebf5;
+      border-radius:18px; padding:16px; position:sticky; top:94px;
+    }
+    .side-label {
+      color:#9aa5b8; font-size:10px; font-weight:800;
+      letter-spacing:1.3px; text-transform:uppercase;
+      padding:12px 10px 8px;
+    }
+    .side-link {
+      display:flex; align-items:center; gap:11px;
+      padding:11px 12px; margin:3px 0; border-radius:11px;
+      color:#62708a; font-size:14px; font-weight:600;
+      transition:.2s;
+    }
+    .side-link:hover, .side-link.active {
+      color:#087cf0; background:#edf5ff;
+    }
+    .side-icon { width:20px; text-align:center; font-size:17px; }
+    .side-note {
+      margin-top:20px; padding:13px; border-radius:12px;
+      background:#f4f8ff; color:#6c7890; font-size:11px;
+      line-height:1.6;
+    }
+
+    .main-content { min-width:0; }
+    .welcome-banner {
+      padding:25px 27px; border-radius:19px; color:#fff;
+      background:
+        radial-gradient(circle at 90% 15%,rgba(18,200,244,.34),transparent 30%),
+        linear-gradient(115deg,#06133f,#083b85 75%,#087cf0);
+      position:relative; overflow:hidden;
+      box-shadow:0 12px 30px rgba(6,35,92,.13);
+    }
+    .welcome-banner:after {
+      content:""; position:absolute; width:180px; height:180px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:50%; right:-55px; bottom:-115px;
+      box-shadow:0 0 0 24px rgba(255,255,255,.035),
+                 0 0 0 48px rgba(255,255,255,.025);
+    }
+    .welcome-banner .eyebrow {
+      color:#ffda55; font-size:10px; font-weight:800;
+      letter-spacing:1.7px;
+    }
+    .welcome-banner h2 {
+      margin:8px 0 5px; font-size:24px; letter-spacing:-.5px;
+    }
+    .welcome-banner p {
+      margin:0; color:#d7e8ff; font-size:13px;
+    }
+    .welcome-banner .banner-link {
+      display:inline-flex; margin-top:18px; padding:10px 15px;
+      border-radius:10px; background:var(--dash-gold);
+      color:#08163e; font-size:12px; font-weight:800;
+    }
+
+    .stats-grid {
+      display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:13px; margin-top:17px;
+    }
+    .stat-card {
+      background:#fff; border:1px solid #e5ebf5;
+      border-radius:15px; padding:17px; min-width:0;
+    }
+    .stat-label { color:#8792a8; font-size:12px; font-weight:600; }
+    .stat-value {
+      display:block; margin-top:9px; font-size:23px;
+      font-weight:800; letter-spacing:-.6px;
+      color:#142344; overflow-wrap:anywhere;
+    }
+    .stat-foot { margin-top:5px; color:#9aa4b6; font-size:10px; }
+    .stat-icon {
+      float:right; width:32px; height:32px; display:grid;
+      place-items:center; border-radius:10px;
+      background:#edf5ff; font-size:16px;
+    }
+
+    .actions-grid {
+      display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:11px; margin-top:18px;
+    }
+    .action-card {
+      background:#fff; border:1px solid #e5ebf5;
+      border-radius:14px; padding:15px 9px; text-align:center;
+      display:block; transition:.2s;
+    }
+    .action-card:hover {
+      border-color:#b9d7ff; transform:translateY(-2px);
+      box-shadow:0 7px 18px rgba(10,75,160,.07);
+    }
+    .action-card .action-icon {
+      display:grid; place-items:center; width:39px; height:39px;
+      border-radius:12px; margin:0 auto 8px;
+      background:#edf5ff; font-size:19px;
+    }
+    .action-card strong { display:block; font-size:12px; color:#263653; }
+    .action-card small { display:block; margin-top:3px; font-size:10px; color:#9aa4b6; }
+
+    .panel {
+      background:#fff; border:1px solid #e5ebf5;
+      border-radius:17px; margin-top:19px; overflow:hidden;
+    }
+    .panel-head {
+      padding:17px 19px; display:flex; align-items:center;
+      justify-content:space-between; gap:12px;
+      border-bottom:1px solid #edf0f6;
+    }
+    .panel-head h3 { margin:0; font-size:15px; color:#172544; }
+    .panel-head p { margin:3px 0 0; font-size:11px; color:#929db0; }
+    .panel-head a { color:#087cf0; font-size:11px; font-weight:700; }
+
+    .market-scroll { overflow-x:auto; }
+    .market-table { width:100%; border-collapse:collapse; min-width:480px; }
+    .market-table th {
+      padding:12px 16px; text-align:left; color:#9aa4b6;
+      background:#fafcff; font-size:10px; letter-spacing:.5px;
+    }
+    .market-table td {
+      padding:13px 16px; border-top:1px solid #f0f2f7;
+      font-size:12px; white-space:nowrap;
+    }
+    .market-coin { display:flex; align-items:center; gap:9px; }
+    .market-coin img {
+      width:27px; height:27px; border-radius:50%;
+      background:#edf4ff;
+    }
+    .market-coin strong { display:block; font-size:12px; }
+    .market-coin small { display:block; color:#929db0; font-size:10px; }
+    .positive { color:var(--dash-green); font-weight:700; }
+    .negative { color:var(--dash-red); font-weight:700; }
+    .right { text-align:right!important; }
+
+    .asset-empty, .activity-empty {
+      padding:28px 18px; text-align:center;
+    }
+    .empty-icon {
+      width:49px; height:49px; margin:0 auto 10px;
+      display:grid; place-items:center; border-radius:15px;
+      background:#edf5ff; font-size:23px;
+    }
+    .asset-empty strong, .activity-empty strong {
+      display:block; color:#263653; font-size:14px;
+    }
+    .asset-empty p, .activity-empty p {
+      margin:5px auto 13px; max-width:330px;
+      color:#929db0; font-size:11px; line-height:1.6;
+    }
+    .small-btn {
+      display:inline-flex; padding:9px 13px; border-radius:9px;
+      color:#fff; background:#087cf0; font-size:11px; font-weight:700;
+    }
+    .status-note {
+      margin:14px 18px 18px; padding:11px 13px;
+      background:#fff9e8; border:1px solid #ffedb6;
+      border-radius:10px; color:#80621a; font-size:11px;
+      line-height:1.6;
+    }
+
+    .account-details {
+      display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:12px; padding:17px 19px;
+    }
+    .detail-item small {
+      display:block; color:#98a2b4; font-size:10px;
+      margin-bottom:4px;
+    }
+    .detail-item strong {
+      display:block; color:#293956; font-size:12px;
+      overflow-wrap:anywhere;
+    }
+    .verified {
+      display:inline-flex; align-items:center; gap:5px;
+      color:#168d5a!important;
+    }
+
+    .dash-footer {
+      margin-top:25px; padding:17px 5px;
+      color:#98a3b6; text-align:center; font-size:10px;
+    }
+    .mobile-bottom { display:none; }
+
+    @media(max-width:850px) {
+      .dash-grid { grid-template-columns:1fr; }
+      .sidebar { display:none; }
+      .stats-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .stat-card:last-child { grid-column:1/-1; }
+      .mobile-bottom {
+        display:flex; position:fixed; z-index:30; bottom:0;
+        left:0; right:0; justify-content:space-around;
+        background:#fff; border-top:1px solid #e5ebf5;
+        padding:9px 5px calc(9px + env(safe-area-inset-bottom));
+        box-shadow:0 -5px 20px rgba(8,30,75,.06);
+      }
+      .mobile-bottom a {
+        display:flex; flex-direction:column; align-items:center;
+        gap:3px; color:#8190a8; font-size:9px; font-weight:700;
+      }
+      .mobile-bottom a span { font-size:18px; }
+      .mobile-bottom a.active { color:#087cf0; }
+      .dash-footer { padding-bottom:85px; }
+    }
+
+    @media(max-width:520px) {
+      .dash-wrap { width:calc(100% - 24px); }
+      .dashboard { padding-top:19px; }
+      .dash-top h1 { font-size:23px; }
+      .welcome-banner { padding:21px 19px; }
+      .welcome-banner h2 { font-size:21px; }
+      .stats-grid { gap:9px; }
+      .stat-card { padding:13px; }
+      .stat-value { font-size:20px; }
+      .actions-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .account-details { grid-template-columns:1fr 1fr; padding:15px; }
+      .profile-chip { padding:7px 10px; }
+    }
   </style>
 </head>
+
 <body>
-  <header class="header"><div class="wrap">
-    <a class="logo" href="/">Coin<b>Wave</b></a>
-    <nav class="nav"><a class="link" href="/#markets">Markets</a><a class="link" id="adminLink" href="/admin" style="display:none">Admin</a><button class="btn btn-sm" id="logout">Log out</button></nav>
-  </div></header>
-  <main class="wrap dash">
-    <h1 id="hello">&nbsp;</h1>
-    <p class="email" id="email"></p>
-    <section class="card"><h2>Estimated balance</h2><div class="total">$0.00</div></section>
-    <section class="card"><h2>Your assets</h2>
-      <div class="empty"><strong>No assets yet</strong><p>Deposits and trading arrive in the next phase. For now, browse live prices.</p>
-      <a class="btn btn-primary" href="/#markets">View markets</a></div>
-    </section>
+  <header class="header">
+    <div class="wrap">
+      <a class="logo" href="/">
+        <span class="logo-mark">↗</span>
+        Coin<b>Wave</b>
+      </a>
+      <nav class="nav">
+        <a class="link" href="/#markets">Markets</a>
+        <a class="link" id="adminLink" href="/admin" style="display:none">Admin</a>
+        <button class="btn btn-sm" id="logout">Log out</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="dashboard dash-wrap" id="dashboard" hidden>
+    <div class="dash-top">
+      <div>
+        <h1>Dashboard overview</h1>
+        <p>Manage your CoinWave account and explore the crypto market.</p>
+      </div>
+      <div class="profile-chip">
+        <div class="avatar" id="avatar">C</div>
+        <div>
+          <strong id="profileName">Customer</strong>
+          <small id="profileEmail">Loading account...</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-grid">
+      <aside class="sidebar">
+        <div class="side-label">Main menu</div>
+        <a class="side-link active" href="#overview"><span class="side-icon">▦</span>Overview</a>
+        <a class="side-link" href="#assets"><span class="side-icon">◈</span>My assets</a>
+        <a class="side-link" href="#markets"><span class="side-icon">↗</span>Markets</a>
+        <a class="side-link" href="#activity"><span class="side-icon">◷</span>Activity</a>
+        <div class="side-label">Account</div>
+        <a class="side-link" href="#account"><span class="side-icon">♙</span>My profile</a>
+        <a class="side-link" href="/#markets"><span class="side-icon">◎</span>Explore coins</a>
+        <div class="side-note">
+          <strong>CoinWave security</strong><br>
+          Keep your password private. CoinWave will never ask you to share it.
+        </div>
+      </aside>
+
+      <section class="main-content" id="overview">
+        <div class="welcome-banner">
+          <div class="eyebrow">COINWAVE CUSTOMER PORTAL</div>
+          <h2>Welcome back, <span id="welcomeName">Customer</span> 👋</h2>
+          <p>Your crypto journey starts here. Explore markets and manage your account.</p>
+          <a class="banner-link" href="/#markets">Explore crypto markets →</a>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card">
+            <span class="stat-icon">◈</span>
+            <div class="stat-label">Portfolio balance</div>
+            <strong class="stat-value">—</strong>
+            <div class="stat-foot">Wallet balance not connected yet</div>
+          </article>
+          <article class="stat-card">
+            <span class="stat-icon">⇄</span>
+            <div class="stat-label">Available balance</div>
+            <strong class="stat-value">—</strong>
+            <div class="stat-foot">Awaiting wallet integration</div>
+          </article>
+          <article class="stat-card">
+            <span class="stat-icon">⌁</span>
+            <div class="stat-label">24-hour portfolio change</div>
+            <strong class="stat-value">—</strong>
+            <div class="stat-foot">Portfolio tracking not connected</div>
+          </article>
+        </div>
+
+        <div class="actions-grid">
+          <a class="action-card" href="/#markets">
+            <span class="action-icon">🛒</span>
+            <strong>Buy crypto</strong>
+            <small>Explore markets</small>
+          </a>
+          <a class="action-card" href="/#markets">
+            <span class="action-icon">⇄</span>
+            <strong>Sell crypto</strong>
+            <small>View available coins</small>
+          </a>
+          <a class="action-card" href="#assets">
+            <span class="action-icon">▣</span>
+            <strong>My wallets</strong>
+            <small>Asset overview</small>
+          </a>
+          <a class="action-card" href="#activity">
+            <span class="action-icon">◷</span>
+            <strong>Transactions</strong>
+            <small>Recent activity</small>
+          </a>
+        </div>
+
+        <section class="panel" id="assets">
+          <div class="panel-head">
+            <div>
+              <h3>My assets</h3>
+              <p>Your cryptocurrency holdings</p>
+            </div>
+            <a href="/#markets">Explore markets →</a>
+          </div>
+          <div class="asset-empty">
+            <div class="empty-icon">◈</div>
+            <strong>Your wallet is waiting</strong>
+            <p>Your real cryptocurrency balances will appear here once wallet and trading services are connected.</p>
+            <a class="small-btn" href="/#markets">Explore crypto</a>
+          </div>
+          <div class="status-note">
+            Wallet deposits, withdrawals and trading are not enabled in this dashboard yet. No funds are stored or transferred by this page.
+          </div>
+        </section>
+
+        <section class="panel" id="markets">
+          <div class="panel-head">
+            <div>
+              <h3>Market watch</h3>
+              <p>Live cryptocurrency market information</p>
+            </div>
+            <a href="/#markets">View all markets →</a>
+          </div>
+          <div class="market-scroll">
+            <table class="market-table">
+              <thead>
+                <tr>
+                  <th>Asset</th>
+                  <th class="right">Price</th>
+                  <th class="right">24H change</th>
+                </tr>
+              </thead>
+              <tbody id="marketRows">
+                <tr><td colspan="3" style="text-align:center;color:#929db0;padding:25px">Loading live markets...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel" id="activity">
+          <div class="panel-head">
+            <div>
+              <h3>Recent activity</h3>
+              <p>Your latest account transactions</p>
+            </div>
+          </div>
+          <div class="activity-empty">
+            <div class="empty-icon">◷</div>
+            <strong>No transactions to display</strong>
+            <p>Your confirmed deposits, withdrawals, purchases and sales will appear here when transaction services are connected.</p>
+          </div>
+        </section>
+
+        <section class="panel" id="account">
+          <div class="panel-head">
+            <div>
+              <h3>Account information</h3>
+              <p>Your registered customer details</p>
+            </div>
+            <span class="verified">● Account loaded</span>
+          </div>
+          <div class="account-details">
+            <div class="detail-item">
+              <small>Full name</small>
+              <strong id="accountName">—</strong>
+            </div>
+            <div class="detail-item">
+              <small>Email address</small>
+              <strong id="accountEmail">—</strong>
+            </div>
+            <div class="detail-item">
+              <small>Country</small>
+              <strong id="accountCountry">—</strong>
+            </div>
+            <div class="detail-item">
+              <small>Phone number</small>
+              <strong id="accountPhone">—</strong>
+            </div>
+            <div class="detail-item">
+              <small>Preferred currency</small>
+              <strong id="accountCurrency">—</strong>
+            </div>
+            <div class="detail-item">
+              <small>Account status</small>
+              <strong class="verified">● Signed in</strong>
+            </div>
+          </div>
+        </section>
+      </section>
+    </div>
+
+    <footer class="dash-footer">
+      © <span id="year"></span> CoinWave Trade. All rights reserved.
+      <br>Cryptocurrency prices can change rapidly. Always review transaction details before trading.
+    </footer>
   </main>
+
+  <nav class="mobile-bottom" aria-label="Dashboard navigation">
+    <a class="active" href="#overview"><span>▦</span>Home</a>
+    <a href="#assets"><span>◈</span>Assets</a>
+    <a href="#markets"><span>↗</span>Markets</a>
+    <a href="#activity"><span>◷</span>Activity</a>
+    <a href="#account"><span>♙</span>Account</a>
+  </nav>
+
   <script>
-    fetch('/api/auth/me').then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
-      .then(function (u) { document.getElementById('hello').textContent = 'Welcome, ' + u.name; document.getElementById('email').textContent = u.email; if (u.isAdmin) document.getElementById('adminLink').style.display = 'inline'; })
-      .catch(function () { location.href = '/login'; });
-    document.getElementById('logout').addEventListener('click', function () {
-      fetch('/api/auth/logout', { method: 'POST' }).then(function () { location.href = '/'; });
+  (function () {
+    'use strict';
+
+    var dashboard = document.getElementById('dashboard');
+    var logout = document.getElementById('logout');
+
+    function showError() {
+      location.href = '/login';
+    }
+
+    function setText(id, value) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = value || '—';
+    }
+
+    function loadUser() {
+      fetch('/api/auth/me', {
+        credentials: 'same-origin',
+        headers: { 'Accept': 'application/json' }
+      })
+      .then(function (response) {
+        if (!response.ok) throw new Error('Authentication required');
+        return response.json();
+      })
+      .then(function (user) {
+        setText('profileName', user.name);
+        setText('profileEmail', user.email);
+        setText('welcomeName', (user.name || 'Customer').split(' ')[0]);
+        setText('accountName', user.name);
+        setText('accountEmail', user.email);
+        setText('accountCountry', user.country);
+        setText('accountPhone', user.phone);
+        setText('accountCurrency', user.currency);
+
+        var initial = (user.name || 'C').trim().charAt(0).toUpperCase();
+        setText('avatar', initial);
+
+        if (user.isAdmin) {
+          document.getElementById('adminLink').style.display = 'inline';
+        }
+
+        dashboard.hidden = false;
+        loadMarkets();
+      })
+      .catch(showError);
+    }
+
+    function formatPrice(value) {
+      var n = Number(value);
+      if (!Number.isFinite(n)) return '—';
+      if (n >= 1) {
+        return '$' + n.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      }
+      if (n >= 0.01) return '$' + n.toFixed(4);
+      return '$' + n.toFixed(8).replace(/0+$/, '');
+    }
+
+    function loadMarkets() {
+      var rows = document.getElementById('marketRows');
+
+      fetch('/api/markets', { headers: { 'Accept': 'application/json' } })
+      .then(function (response) {
+        if (!response.ok) throw new Error('Market unavailable');
+        return response.json();
+      })
+      .then(function (coins) {
+        if (!Array.isArray(coins)) throw new Error('Invalid market data');
+
+        rows.textContent = '';
+
+        coins.slice(0, 6).forEach(function (coin) {
+          var tr = document.createElement('tr');
+
+          var asset = document.createElement('td');
+          var box = document.createElement('div');
+          box.className = 'market-coin';
+
+          if (coin.image) {
+            var img = document.createElement('img');
+            img.src = coin.image;
+            img.alt = '';
+            img.loading = 'lazy';
+            img.onerror = function () { img.style.visibility = 'hidden'; };
+            box.appendChild(img);
+          }
+
+          var nameBox = document.createElement('div');
+          var name = document.createElement('strong');
+          name.textContent = coin.name || 'Unknown';
+          var symbol = document.createElement('small');
+          symbol.textContent = String(coin.symbol || '').toUpperCase();
+          nameBox.appendChild(name);
+          nameBox.appendChild(symbol);
+          box.appendChild(nameBox);
+          asset.appendChild(box);
+
+          var price = document.createElement('td');
+          price.className = 'right';
+          price.textContent = formatPrice(coin.price);
+
+          var change = document.createElement('td');
+          change.className = 'right';
+          var percent = Number(coin.change24h);
+          if (Number.isFinite(percent)) {
+            change.textContent = (percent > 0 ? '+' : '') + percent.toFixed(2) + '%';
+            change.className = 'right ' + (percent > 0 ? 'positive' : percent < 0 ? 'negative' : '');
+          } else {
+            change.textContent = '—';
+          }
+
+          tr.appendChild(asset);
+          tr.appendChild(price);
+          tr.appendChild(change);
+          rows.appendChild(tr);
+        });
+
+        if (!rows.children.length) {
+          rows.textContent = '';
+          var empty = document.createElement('tr');
+          var cell = document.createElement('td');
+          cell.colSpan = 3;
+          cell.textContent = 'No market data is currently available.';
+          cell.style.textAlign = 'center';
+          empty.appendChild(cell);
+          rows.appendChild(empty);
+        }
+      })
+      .catch(function () {
+        rows.textContent = '';
+        var tr = document.createElement('tr');
+        var td = document.createElement('td');
+        td.colSpan = 3;
+        td.textContent = 'Market prices are temporarily unavailable. Please try again later.';
+        td.style.textAlign = 'center';
+        td.style.color = '#929db0';
+        tr.appendChild(td);
+        rows.appendChild(tr);
+      });
+    }
+
+    logout.addEventListener('click', function () {
+      logout.disabled = true;
+      logout.textContent = 'Logging out...';
+
+      fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'same-origin'
+      })
+      .then(function () { location.href = '/'; })
+      .catch(function () {
+        logout.disabled = false;
+        logout.textContent = 'Log out';
+        alert('Could not log out. Please try again.');
+      });
     });
+
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    loadUser();
+
+    // Refresh the dashboard market preview every minute.
+    setInterval(function () {
+      if (!dashboard.hidden) loadMarkets();
+    }, 60000);
+  })();
   </script>
 </body>
 </html>
+
