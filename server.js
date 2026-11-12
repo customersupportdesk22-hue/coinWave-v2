@@ -23,7 +23,8 @@ app.get('/', (req, res) => sendFirst(res, ['index.html']));
 app.get(['/style.css', '/css/style.css'], (req, res) => sendFirst(res, ['style.css', 'css/style.css']));
 app.get(['/app.js', '/js/app.js'], (req, res) => sendFirst(res, ['app.js', 'js/app.js']));
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+let dbState = process.env.MONGO_URI ? 'connecting' : 'MONGO_URI not set';
+app.get('/api/health', (req, res) => res.json({ status: 'ok', db: dbState, jwt: process.env.JWT_SECRET ? 'set' : 'JWT_SECRET not set' }));
 
 // Market data: two sources, cached so the page never flashes or hits rate limits.
 const CACHE_MS = 60 * 1000;
@@ -82,8 +83,10 @@ app.get('/api/markets', async (req, res) => {
 const PORT = process.env.PORT || 3000;
 (async () => {
   if (process.env.MONGO_URI) {
-    try { await mongoose.connect(process.env.MONGO_URI); console.log('MongoDB connected'); }
-    catch (e) { console.error('MongoDB error:', e.message); }
+    try { await mongoose.connect(process.env.MONGO_URI); dbState = 'connected'; console.log('MongoDB connected'); }
+    catch (e) { dbState = 'error: ' + e.message; console.error('MongoDB error:', e.message); }
+  } else {
+    console.log('MONGO_URI is not set, running without a database');
   }
   app.listen(PORT, () => console.log('CoinWave v2 on port ' + PORT));
 })();
