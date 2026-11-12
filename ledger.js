@@ -8,12 +8,16 @@ const FACTOR = 10n ** BigInt(SCALE);
 
 const ASSET_PATTERN = /^[A-Z0-9]{2,15}$/;
 const OWNER_TYPES = ['user', 'platform'];
+
 const BUCKETS = [
   'available',
   'locked',
   'inventory',
   'external_clearing'
 ];
+
+const MAX_WHOLE_DIGITS = 36;
+const MAX_METADATA_BYTES = 8192;
 
 // --------------------------------------------------
 // EXACT AMOUNT CONVERSION
@@ -22,9 +26,14 @@ const BUCKETS = [
 function toUnits(value) {
   const input = String(value ?? '').trim();
 
-  if (!/^\d+(\.\d{1,18})?$/.test(input)) {
+  const pattern = new RegExp(
+    '^\\d{1,' + MAX_WHOLE_DIGITS +
+    '}(\\.\\d{1,18})?$'
+  );
+
+  if (!pattern.test(input)) {
     throw new Error(
-      'Invalid amount. Use up to 18 decimal places.'
+      'Invalid amount. Use up to 36 whole digits and 18 decimal places.'
     );
   }
 
@@ -63,7 +72,9 @@ function fromUnits(units) {
 // --------------------------------------------------
 
 function normalizeAsset(asset) {
-  const value = String(asset || '').trim().toUpperCase();
+  const value = String(asset || '')
+    .trim()
+    .toUpperCase();
 
   if (!ASSET_PATTERN.test(value)) {
     throw new Error('Invalid asset symbol.');
@@ -91,6 +102,17 @@ function validateAccount(account) {
     throw new Error('Invalid ledger account bucket.');
   }
 
+  // External clearing and platform inventory
+  // must never belong to a customer.
+  if (
+    ['inventory', 'external_clearing'].includes(account.bucket) &&
+    account.ownerType !== 'platform'
+  ) {
+    throw new Error(
+      'This ledger bucket is reserved for platform accounts.'
+    );
+  }
+
   return {
     ownerType: account.ownerType,
     ownerId,
@@ -104,6 +126,55 @@ function accountKey(account) {
     account.ownerId,
     account.bucket
   ].join(':');
+}
+
+function readBalanceUnits(value) {
+  const input = String(value ?? '0');
+
+  if (!/^-?\d+$/.test(input)) {
+    throw new Error('Invalid stored ledger balance.');
+  }
+
+  return BigInt(input);
+}
+
+// --------------------------------------------------
+// METADATA VALIDATION
+// --------------------------------------------------
+
+function validateMetadata(metadata) {
+  if (
+    !metadata ||
+    typeof metadata !== 'object' ||
+    Array.isArray(metadata)
+  ) {
+    throw new Error('Invalid transaction metadata.');
+  }
+
+  let serialized;
+
+  try {
+    serialized = JSON.stringify(metadata);
+  } catch {
+    throw new Error(
+      'Transaction metadata must be JSON serializable.'
+    );
+  }
+
+  if (
+    typeof serialized !== 'string' ||
+    Buffer.byteLength(serialized, 'utf8') > MAX_METADATA_BYTES
+  ) {
+    throw new Error(
+      'Transaction metadata exceeds the allowed size.'
+    );
+  }
+
+  try {
+    return JSON.parse(serialized);
+  } catch {
+    throw new Error('Invalid transaction metadata.');
+  }
 }
 
 // --------------------------------------------------
@@ -155,7 +226,10 @@ accountSchema.index(
     asset: 1,
     bucket: 1
   },
-  { unique: true }
+  {
+    unique: true,
+    name: 'cw_ledger_account_unique'
+  }
 );
 
 // --------------------------------------------------
@@ -217,7 +291,9 @@ const transactionSchema = new mongoose.Schema({
     default: {}
   }
 
-}, { timestamps: true });
+}, {
+  timestamps: true
+});
 
 // --------------------------------------------------
 // LEDGER ENTRY MODEL
@@ -255,7 +331,9 @@ const entrySchema = new mongoose.Schema({
     match: ASSET_PATTERN
   }
 
-}, { timestamps: true });
+}, {
+  timestamps: true
+});
 
 entrySchema.index({
   accountId: 1,
@@ -268,14 +346,18 @@ entrySchema.index(
     accountId: 1,
     side: 1
   },
-  { unique: true }
+  {
+    unique: true,
+    name: 'cw_ledger_entry_unique'
+  }
 );
 
 // --------------------------------------------------
 // MODELS
 // --------------------------------------------------
 
-const Account = mongoose.models.CWLedgerAccount ||
+const Account =
+  mongoose.models.CWLedgerAccount ||
   mongoose.model('CWLedgerAccount', accountSchema);
 
 const LedgerTransaction =
@@ -285,7 +367,8 @@ const LedgerTransaction =
     transactionSchema
   );
 
-const LedgerEntry = mongoose.models.CWLedgerEntry ||
+const LedgerEntry =
+  mongoose.models.CWLedgerEntry ||
   mongoose.model('CWLedgerEntry', entrySchema);
 
 // --------------------------------------------------
@@ -339,15 +422,30 @@ async function findExistingTransaction({
   toAccount,
   session
 }) {
-  const existing = await LedgerTransaction.findOne({
+  let query = LedgerTransaction.findOne({
     reference
-  }).session(session);
+  });
+
+  if (session) {
+    query = query.session(session);
+  }
+
+  const existing = await query;
 
   if (!existing) {
     return null;
   }
 
+  // Legacy transactions without amountUnits must be
+  // reconciled rather than assumed to be safe retries.
+  if (!existing.amountUnits) {
+    throw new Error(
+      'This transaction uses an older ledger format and requires reconciliation.'
+    );
+  }
+
   const sameTransaction =
+    existing.status === 'posted' &&
     existing.asset === asset &&
     existing.amountUnits === amountUnits.toString() &&
     String(existing.fromAccountId) === String(fromAccount._id) &&
@@ -359,8 +457,187 @@ async function findExistingTransaction({
     );
   }
 
-  // A matching retry is safe to recognize as already posted.
   return existing;
+}
+
+// --------------------------------------------------
+// TRANSFER VALIDATION
+// --------------------------------------------------
+
+function validateTransfer(options) {
+  if (!options || typeof options !== 'object') {
+    throw new Error('Invalid ledger transfer.');
+  }
+
+  const reference = String(options.reference || '').trim();
+
+  if (!reference || reference.length > 180) {
+    throw new Error(
+      'A valid transaction reference is required.'
+    );
+  }
+
+  const description = String(
+    options.description || ''
+  ).trim();
+
+  if (!description || description.length > 300) {
+    throw new Error(
+      'A valid transaction description is required.'
+    );
+  }
+
+  const asset = normalizeAsset(options.asset);
+  const amountUnits = toUnits(options.amount);
+
+  if (amountUnits <= 0n) {
+    throw new Error('Amount must be greater than zero.');
+  }
+
+  const from = validateAccount(options.from);
+  const to = validateAccount(options.to);
+
+  if (accountKey(from) === accountKey(to)) {
+    throw new Error(
+      'Source and destination accounts must differ.'
+    );
+  }
+
+  const allowNegativeSource =
+    options.allowNegativeSource === true;
+
+  if (
+    allowNegativeSource &&
+    (
+      from.ownerType !== 'platform' ||
+      from.bucket !== 'external_clearing'
+    )
+  ) {
+    throw new Error(
+      'Negative balances are only permitted for platform external clearing.'
+    );
+  }
+
+  return {
+    reference,
+    description,
+    asset,
+    amountUnits,
+    from,
+    to,
+    allowNegativeSource,
+    metadata: validateMetadata(options.metadata || {})
+  };
+}
+
+// --------------------------------------------------
+// INTERNAL TRANSFER EXECUTION
+// --------------------------------------------------
+
+async function executeTransfer(data, session) {
+  const source = await getAccount({
+    ...data.from,
+    asset: data.asset,
+    session
+  });
+
+  const destination = await getAccount({
+    ...data.to,
+    asset: data.asset,
+    session
+  });
+
+  const existing = await findExistingTransaction({
+    reference: data.reference,
+    asset: data.asset,
+    amountUnits: data.amountUnits,
+    fromAccount: source,
+    toAccount: destination,
+    session
+  });
+
+  if (existing) {
+    return existing;
+  }
+
+  const sourceBalance = readBalanceUnits(
+    source.balanceUnits
+  );
+
+  const destinationBalance = readBalanceUnits(
+    destination.balanceUnits
+  );
+
+  if (
+    !data.allowNegativeSource &&
+    sourceBalance < data.amountUnits
+  ) {
+    throw new Error(
+      'Insufficient available balance.'
+    );
+  }
+
+  const newSourceBalance =
+    sourceBalance - data.amountUnits;
+
+  const newDestinationBalance =
+    destinationBalance + data.amountUnits;
+
+  // Only the explicitly authorized platform clearing
+  // source can become negative.
+  if (
+    newSourceBalance < 0n &&
+    !data.allowNegativeSource
+  ) {
+    throw new Error(
+      'This transfer would create a negative balance.'
+    );
+  }
+
+  source.balanceUnits = newSourceBalance.toString();
+
+  destination.balanceUnits =
+    newDestinationBalance.toString();
+
+  await source.save({ session });
+  await destination.save({ session });
+
+  const [transaction] =
+    await LedgerTransaction.create([{
+      reference: data.reference,
+      description: data.description,
+      asset: data.asset,
+      amount: fromUnits(data.amountUnits),
+      amountUnits: data.amountUnits.toString(),
+      fromAccountId: source._id,
+      toAccountId: destination._id,
+      status: 'posted',
+      metadata: data.metadata
+    }], {
+      session
+    });
+
+  // One debit and one equal credit for every transfer.
+  await LedgerEntry.create([
+    {
+      transactionId: transaction._id,
+      accountId: source._id,
+      side: 'debit',
+      amountUnits: data.amountUnits.toString(),
+      asset: data.asset
+    },
+    {
+      transactionId: transaction._id,
+      accountId: destination._id,
+      side: 'credit',
+      amountUnits: data.amountUnits.toString(),
+      asset: data.asset
+    }
+  ], {
+    session
+  });
+
+  return transaction;
 }
 
 // --------------------------------------------------
@@ -368,188 +645,27 @@ async function findExistingTransaction({
 // --------------------------------------------------
 
 async function transfer(options) {
-  if (!options || typeof options !== 'object') {
-    throw new Error('Invalid ledger transfer.');
-  }
+  const data = validateTransfer(options);
 
-  const {
-    from,
-    to,
-    amount,
-    reference,
-    description,
-    metadata = {},
-    session: suppliedSession,
-    allowNegativeSource = false
-  } = options;
-
-  const asset = normalizeAsset(options.asset);
-
-  if (
-    typeof reference !== 'string' ||
-    !reference.trim() ||
-    reference.length > 180
-  ) {
-    throw new Error(
-      'A valid transaction reference is required.'
-    );
-  }
-
-  if (
-    typeof description !== 'string' ||
-    !description.trim() ||
-    description.length > 300
-  ) {
-    throw new Error(
-      'A valid transaction description is required.'
-    );
-  }
-
-  if (
-    !metadata ||
-    typeof metadata !== 'object' ||
-    Array.isArray(metadata)
-  ) {
-    throw new Error('Invalid transaction metadata.');
-  }
-
-  const amountUnits = toUnits(amount);
-
-  if (amountUnits <= 0n) {
-    throw new Error('Amount must be greater than zero.');
-  }
-
-  const sourceDetails = validateAccount(from);
-  const destinationDetails = validateAccount(to);
-
-  if (
-    accountKey(sourceDetails) ===
-    accountKey(destinationDetails)
-  ) {
-    throw new Error(
-      'Source and destination accounts must differ.'
-    );
-  }
-
-  // Negative balances are only permitted for the
-  // platform external clearing account.
-  if (allowNegativeSource) {
-    if (
-      sourceDetails.ownerType !== 'platform' ||
-      sourceDetails.bucket !== 'external_clearing'
-    ) {
-      throw new Error(
-        'Negative balances are only permitted for platform external clearing.'
-      );
-    }
-  }
+  const suppliedSession = options.session || null;
+  const ownsSession = !suppliedSession;
 
   const session = suppliedSession ||
     await mongoose.startSession();
 
-  const ownsSession = !suppliedSession;
+  let result;
+  let failure = null;
 
   try {
-    const execute = async () => {
-      const source = await getAccount({
-        ...sourceDetails,
-        asset,
-        session
-      });
-
-      const destination = await getAccount({
-        ...destinationDetails,
-        asset,
-        session
-      });
-
-      // Safe idempotency check after account resolution.
-      const existing = await findExistingTransaction({
-        reference: reference.trim(),
-        asset,
-        amountUnits,
-        fromAccount: source,
-        toAccount: destination,
-        session
-      });
-
-      if (existing) {
-        return existing;
-      }
-
-      const sourceBalance = BigInt(
-        source.balanceUnits || '0'
-      );
-
-      const destinationBalance = BigInt(
-        destination.balanceUnits || '0'
-      );
-
-      if (
-        !allowNegativeSource &&
-        sourceBalance < amountUnits
-      ) {
-        throw new Error(
-          'Insufficient available balance.'
-        );
-      }
-
-      // Apply exactly equal debit and credit amounts.
-      source.balanceUnits = (
-        sourceBalance - amountUnits
-      ).toString();
-
-      destination.balanceUnits = (
-        destinationBalance + amountUnits
-      ).toString();
-
-      await source.save({ session });
-      await destination.save({ session });
-
-      const [transaction] =
-        await LedgerTransaction.create([{
-          reference: reference.trim(),
-          description: description.trim(),
-          asset,
-          amount: fromUnits(amountUnits),
-          amountUnits: amountUnits.toString(),
-          fromAccountId: source._id,
-          toAccountId: destination._id,
-          status: 'posted',
-          metadata
-        }], { session });
-
-      // Every posted transfer must have two matching entries.
-      await LedgerEntry.create([
-        {
-          transactionId: transaction._id,
-          accountId: source._id,
-          side: 'debit',
-          amountUnits: amountUnits.toString(),
-          asset
-        },
-        {
-          transactionId: transaction._id,
-          accountId: destination._id,
-          side: 'credit',
-          amountUnits: amountUnits.toString(),
-          asset
-        }
-      ], { session });
-
-      return transaction;
-    };
-
-    // When called inside another transaction, use its session.
     if (!ownsSession) {
-      return await execute();
+      // The caller owns the outer transaction.
+      // Do not commit or abort its session here.
+      return await executeTransfer(data, session);
     }
-
-    let result;
 
     await session.withTransaction(
       async () => {
-        result = await execute();
+        result = await executeTransfer(data, session);
       },
       {
         readPreference: 'primary',
@@ -562,13 +678,54 @@ async function transfer(options) {
       }
     );
 
-    return result;
+  } catch (err) {
+    failure = err;
 
   } finally {
     if (ownsSession) {
       await session.endSession();
     }
   }
+
+  if (failure) {
+    // A concurrent request may have posted the same
+    // reference first. Recognize it only if every
+    // operation detail matches.
+    if (
+      ownsSession &&
+      failure.code === 11000
+    ) {
+      const [source, destination] = await Promise.all([
+        Account.findOne({
+          ...data.from,
+          asset: data.asset
+        }),
+
+        Account.findOne({
+          ...data.to,
+          asset: data.asset
+        })
+      ]);
+
+      if (source && destination) {
+        const existing = await findExistingTransaction({
+          reference: data.reference,
+          asset: data.asset,
+          amountUnits: data.amountUnits,
+          fromAccount: source,
+          toAccount: destination
+        });
+
+        if (existing) {
+          return existing;
+        }
+      }
+    }
+
+    throw failure;
+  }
+
+  return result;
 }
 
 // --------------------------------------------------
@@ -595,7 +752,7 @@ async function getBalance({
   }).lean();
 
   return account
-    ? fromUnits(account.balanceUnits)
+    ? fromUnits(readBalanceUnits(account.balanceUnits))
     : '0';
 }
 
