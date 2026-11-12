@@ -9,11 +9,10 @@ const app = express();
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(express.json());
-['index.html', 'style.css', 'app.js'].forEach(function (f) {
-  app.get(f === 'index.html' ? '/' : '/' + f, function (req, res) {
-    res.sendFile(path.join(__dirname, f));
-  });
-});
+const file = (p) => path.join(__dirname, p);
+app.get('/', (req, res) => res.sendFile(file('index.html')));
+app.get(['/style.css', '/css/style.css'], (req, res) => res.sendFile(file('css/style.css')));
+app.get(['/app.js', '/js/app.js'], (req, res) => res.sendFile(file('js/app.js')));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
