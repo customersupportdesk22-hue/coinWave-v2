@@ -1,181 +1,458 @@
+
 (function () {
+  'use strict';
+
   var body = document.getElementById('rows');
   var search = document.getElementById('search');
-  var coins = [];
+  var year = document.getElementById('year');
 
-  function fmtPrice(p) {
-    if (p == null) return '—';
-    if (p >= 1) return '$' + p.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (!body) {
+    console.error('CoinWave: Missing element with id="rows".');
+    return;
+  }
+
+  var coins = [];
+  var sort = { key: 'rank', dir: 1 };
+  var cols = ['rank', 'name', 'price', 'change24h'];
+  var heads = document.querySelectorAll('thead th');
+
+  function number(value) {
+    var n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function fmtPrice(value) {
+    var p = number(value);
+    if (p === null) return '—';
+
+    if (p >= 1) {
+      return '$' + p.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
     if (p >= 0.01) return '$' + p.toFixed(4);
+
     return '$' + p.toFixed(8).replace(/0+$/, '');
   }
 
-  function change(c) {
-    if (c == null || Math.abs(c) < 0.005) return { text: '0.00%', cls: 'flat' };
+  function change(value) {
+    var c = number(value);
+
+    if (c === null || Math.abs(c) < 0.005) {
+      return { text: '0.00%', cls: 'flat' };
+    }
+
     var up = c > 0;
-    return { text: (up ? '+' : '−') + Math.abs(c).toFixed(2) + '%', cls: up ? 'up' : 'down' };
+
+    return {
+      text: (up ? '+' : '−') + Math.abs(c).toFixed(2) + '%',
+      cls: up ? 'up' : 'down'
+    };
   }
 
   function td(cls, child) {
     var el = document.createElement('td');
+
     if (cls) el.className = cls;
-    if (typeof child === 'string') el.textContent = child; else if (child) el.appendChild(child);
+
+    if (typeof child === 'string') {
+      el.textContent = child;
+    } else if (child) {
+      el.appendChild(child);
+    }
+
     return el;
   }
 
   function row(c) {
     var tr = document.createElement('tr');
-    tr.appendChild(td('rank hide-sm', String(c.rank)));
-    var box = document.createElement('div'); box.className = 'coin';
-    var img = document.createElement('img'); img.src = c.image; img.alt = ''; img.loading = 'lazy';
+
+    tr.appendChild(td('rank hide-sm', String(c.rank || '—')));
+
+    var box = document.createElement('div');
+    box.className = 'coin';
+
+    if (c.image) {
+      var img = document.createElement('img');
+      img.src = c.image;
+      img.alt = '';
+      img.loading = 'lazy';
+      img.onerror = function () {
+        this.style.display = 'none';
+      };
+      box.appendChild(img);
+    }
+
     var txt = document.createElement('div');
-    var n = document.createElement('div'); n.className = 'n'; n.textContent = c.name;
-    var s = document.createElement('div'); s.className = 's'; s.textContent = c.symbol;
-    txt.appendChild(n); txt.appendChild(s); box.appendChild(img); box.appendChild(txt);
+
+    var n = document.createElement('div');
+    n.className = 'n';
+    n.textContent = c.name;
+
+    var s = document.createElement('div');
+    s.className = 's';
+    s.textContent = c.symbol;
+
+    txt.appendChild(n);
+    txt.appendChild(s);
+    box.appendChild(txt);
+
     tr.appendChild(td('', box));
+
     c._p = td('num', fmtPrice(c.price));
     tr.appendChild(c._p);
+
     var ch = change(c.change24h);
+
     c._c = td('num ' + ch.cls, ch.text);
     tr.appendChild(c._c);
+
     return tr;
   }
 
   function message(title, text) {
-    body.innerHTML = '';
-    var tr = document.createElement('tr'), cell = document.createElement('td');
-    cell.colSpan = 4; cell.className = 'state';
-    var st = document.createElement('strong'); st.textContent = title;
-    cell.appendChild(st); cell.appendChild(document.createTextNode(text));
-    tr.appendChild(cell); body.appendChild(tr);
+    body.replaceChildren();
+
+    var tr = document.createElement('tr');
+    var cell = document.createElement('td');
+
+    cell.colSpan = 4;
+    cell.className = 'state';
+
+    var strong = document.createElement('strong');
+    strong.textContent = title;
+
+    cell.appendChild(strong);
+    cell.appendChild(document.createTextNode(' ' + text));
+
+    tr.appendChild(cell);
+    body.appendChild(tr);
   }
 
-  var sort = { key: 'rank', dir: 1 };
-  var cols = ['rank', 'name', 'price', 'change24h'];
-  var heads = document.querySelectorAll('thead th');
-
   function sortList(list) {
-    var k = sort.key, d = sort.dir;
+    var k = sort.key;
+    var d = sort.dir;
+
     return list.slice().sort(function (a, b) {
-      var x = a[k], y = b[k];
+      var x = a[k];
+      var y = b[k];
+
       if (x == null) return 1;
       if (y == null) return -1;
-      if (typeof x === 'string') return x.localeCompare(y) * d;
-      return (x - y) * d;
+
+      if (typeof x === 'string') {
+        return x.localeCompare(String(y)) * d;
+      }
+
+      return (Number(x) - Number(y)) * d;
     });
   }
 
   function markHeads() {
     heads.forEach(function (th, i) {
-      var label = th.getAttribute('data-label') || th.textContent.replace(/[▲▼\s]+$/, '');
+      var label = th.getAttribute('data-label') ||
+        th.textContent.replace(/[▲▼\s]+$/, '');
+
       th.setAttribute('data-label', label);
-      th.textContent = label + (cols[i] === sort.key ? (sort.dir === 1 ? ' ▲' : ' ▼') : '');
-      th.setAttribute('aria-sort', cols[i] === sort.key ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none');
+
+      th.textContent = label +
+        (cols[i] === sort.key
+          ? (sort.dir === 1 ? ' ▲' : ' ▼')
+          : '');
+
+      th.setAttribute(
+        'aria-sort',
+        cols[i] === sort.key
+          ? (sort.dir === 1 ? 'ascending' : 'descending')
+          : 'none'
+      );
+    });
+  }
+
+  function render() {
+    var q = search ? search.value.trim().toLowerCase() : '';
+
+    var list = coins.filter(function (c) {
+      return !q ||
+        c.name.toLowerCase().includes(q) ||
+        c.symbol.toLowerCase().includes(q);
+    });
+
+    list = sortList(list);
+
+    if (!list.length) {
+      message('No results', 'Try a different name or symbol.');
+      return;
+    }
+
+    body.replaceChildren();
+
+    list.forEach(function (c) {
+      body.appendChild(row(c));
     });
   }
 
   heads.forEach(function (th, i) {
     th.style.cursor = 'pointer';
+
     th.addEventListener('click', function () {
       var k = cols[i];
-      if (sort.key === k) sort.dir = -sort.dir;
-      else { sort.key = k; sort.dir = (k === 'rank' || k === 'name') ? 1 : -1; }
+
+      if (!k) return;
+
+      if (sort.key === k) {
+        sort.dir *= -1;
+      } else {
+        sort.key = k;
+        sort.dir = (k === 'rank' || k === 'name') ? 1 : -1;
+      }
+
       markHeads();
       render();
     });
   });
 
-  function render() {
-    var q = search.value.trim().toLowerCase();
-    var list = coins.filter(function (c) {
-      return !q || c.name.toLowerCase().indexOf(q) > -1 || c.symbol.toLowerCase().indexOf(q) > -1;
-    });
-    list = sortList(list);
-    if (!list.length) return message('No results', 'Try a different name or symbol.');
-    body.innerHTML = '';
-    list.forEach(function (c) { body.appendChild(row(c)); });
-  }
+  var live = {
+    ws: null,
+    map: {},
+    urls: [
+      'wss://stream.binance.com:443/ws/!miniTicker@arr',
+      'wss://data-stream.binance.vision/ws/!miniTicker@arr'
+    ],
+    i: 0,
+    tries: 0,
+    timer: null
+  };
 
-  // ---- Real-time prices (Binance public stream, runs in the visitor's browser) ----
-  var live = { ws: null, map: {}, urls: ['wss://stream.binance.com:443/ws/!miniTicker@arr', 'wss://data-stream.binance.vision/ws/!miniTicker@arr'], i: 0, tries: 0 };
   var dot = document.createElement('span');
-  dot.textContent = 'Live';
-  dot.style.cssText = 'display:none;margin-left:10px;font-size:13px;font-weight:500;color:#22C55E;vertical-align:middle';
+
+  dot.textContent = ' ● Live';
+  dot.style.cssText =
+    'display:none;margin-left:10px;font-size:13px;' +
+    'font-weight:600;color:#22C55E;vertical-align:middle';
+
   var h2 = document.querySelector('.section-head h2');
+
   if (h2) h2.appendChild(dot);
 
   function buildMap() {
     live.map = {};
-    coins.slice().sort(function (a, b) { return a.rank - b.rank; }).forEach(function (c) {
-      if (!live.map[c.symbol]) live.map[c.symbol] = c;
+
+    coins.forEach(function (c) {
+      if (c.symbol) {
+        live.map[c.symbol.toUpperCase()] = c;
+      }
     });
   }
 
   function flash(el, up) {
-    if (!el || !el.animate) return;
-    el.animate([{ backgroundColor: up ? 'rgba(34,197,94,.28)' : 'rgba(239,68,68,.28)' }, { backgroundColor: 'rgba(0,0,0,0)' }], { duration: 800 });
+    if (!el || typeof el.animate !== 'function') return;
+
+    try {
+      el.animate([
+        {
+          backgroundColor: up
+            ? 'rgba(34,197,94,.28)'
+            : 'rgba(239,68,68,.28)'
+        },
+        { backgroundColor: 'transparent' }
+      ], { duration: 800 });
+    } catch (e) {}
   }
 
   function applyTick(t) {
-    if (!t.s || t.s.slice(-4) !== 'USDT') return;
-    var c = live.map[t.s.slice(0, -4)];
+    if (!t || !t.s || !t.s.endsWith('USDT')) return;
+
+    var symbol = t.s.slice(0, -4).toUpperCase();
+    var c = live.map[symbol];
+
     if (!c) return;
-    var p = parseFloat(t.c), o = parseFloat(t.o);
-    if (!(p > 0) || !(o > 0)) return;
-    var old = c.price;
-    c.price = p; c.change24h = (p - o) / o * 100; c.live = true;
+
+    var p = number(t.c);
+    var o = number(t.o);
+
+    if (p === null || o === null || p <= 0 || o <= 0) return;
+
+    var old = number(c.price);
+
+    c.price = p;
+    c.change24h = ((p - o) / o) * 100;
+    c.live = true;
+
     if (c._p && c._p.isConnected) {
       c._p.textContent = fmtPrice(p);
-      if (old != null && p !== old) flash(c._p, p > old);
+
+      if (old !== null && p !== old) {
+        flash(c._p, p > old);
+      }
+
       var ch = change(c.change24h);
+
       c._c.textContent = ch.text;
       c._c.className = 'num ' + ch.cls;
     }
   }
 
   function connect() {
-    if (live.ws || !coins.length) return;
+    if (live.ws || !coins.length ||
+        typeof WebSocket === 'undefined') return;
+
     var ws;
-    try { ws = new WebSocket(live.urls[live.i % live.urls.length]); } catch (e) { return; }
+
+    try {
+      ws = new WebSocket(live.urls[live.i % live.urls.length]);
+    } catch (e) {
+      scheduleReconnect();
+      return;
+    }
+
     live.ws = ws;
+
+    ws.onopen = function () {
+      live.tries = 0;
+    };
+
     ws.onmessage = function (ev) {
-      var arr; try { arr = JSON.parse(ev.data); } catch (e) { return; }
+      var arr;
+
+      try {
+        arr = JSON.parse(ev.data);
+      } catch (e) {
+        return;
+      }
+
       if (!Array.isArray(arr)) return;
-      live.tries = 0; dot.style.display = 'inline';
+
+      dot.style.display = 'inline';
+
       arr.forEach(applyTick);
     };
-    ws.onclose = ws.onerror = function () {
+
+    ws.onclose = function () {
       if (live.ws !== ws) return;
-      live.ws = null; dot.style.display = 'none';
-      live.i++; live.tries++;
-      setTimeout(connect, Math.min(30000, 2000 * live.tries));
+
+      live.ws = null;
+      dot.style.display = 'none';
+      scheduleReconnect();
+    };
+
+    ws.onerror = function () {
+      try {
+        ws.close();
+      } catch (e) {}
     };
   }
 
-  function setCoins(d) {
-    var old = {};
-    coins.forEach(function (c) { if (c.live) old[c.symbol] = c; });
-    d.forEach(function (c) {
-      var o = old[c.symbol];
-      if (o) { c.price = o.price; c.change24h = o.change24h; c.live = true; }
+  function scheduleReconnect() {
+    if (live.timer) clearTimeout(live.timer);
+
+    live.i++;
+    live.tries++;
+
+    live.timer = setTimeout(
+      connect,
+      Math.min(30000, 2000 * live.tries)
+    );
+  }
+
+  function normalizeCoins(data) {
+    if (!Array.isArray(data)) {
+      if (data && Array.isArray(data.data)) {
+        data = data.data;
+      } else if (data && Array.isArray(data.markets)) {
+        data = data.markets;
+      } else {
+        throw new Error('Invalid market data format');
+      }
+    }
+
+    return data.map(function (c, i) {
+      return {
+        rank: number(c.rank) || i + 1,
+        name: String(c.name || 'Unknown'),
+        symbol: String(c.symbol || '').toUpperCase(),
+        image: c.image || '',
+        price: number(c.price),
+        change24h: number(c.change24h)
+      };
+    }).filter(function (c) {
+      return c.symbol.length > 0;
     });
-    coins = d; buildMap(); render(); connect();
+  }
+
+  function setCoins(data) {
+    var old = {};
+
+    coins.forEach(function (c) {
+      if (c.live) old[c.symbol] = c;
+    });
+
+    var updated = normalizeCoins(data);
+
+    updated.forEach(function (c) {
+      var previous = old[c.symbol];
+
+      if (previous) {
+        c.price = previous.price;
+        c.change24h = previous.change24h;
+        c.live = true;
+      }
+    });
+
+    coins = updated;
+
+    buildMap();
+    render();
+    connect();
   }
 
   function load() {
-    message('Loading markets', 'Fetching the latest prices.');
-    fetch('/api/markets')
-      .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+    message('Loading markets', 'Fetching the latest prices...');
+
+    fetch('/api/markets', { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) {
+          throw new Error('Market request failed: ' + r.status);
+        }
+
+        return r.json();
+      })
       .then(setCoins)
-      .catch(function () { message('Prices are unavailable', 'Refresh the page in a minute.'); });
+      .catch(function (e) {
+        console.error('CoinWave market error:', e);
+
+        if (!coins.length) {
+          message(
+            'Prices are unavailable',
+            'Please refresh the page in a minute.'
+          );
+        }
+      });
+  }
+
+  if (search) {
+    search.addEventListener('input', render);
+  }
+
+  if (year) {
+    year.textContent = new Date().getFullYear();
   }
 
   markHeads();
-  search.addEventListener('input', render);
-  document.getElementById('year').textContent = new Date().getFullYear();
   load();
+
   setInterval(function () {
-    fetch('/api/markets').then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (d) { if (d) setCoins(d); }).catch(function () {});
+    fetch('/api/markets', { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('Refresh failed');
+        return r.json();
+      })
+      .then(setCoins)
+      .catch(function (e) {
+        console.warn('CoinWave refresh error:', e);
+      });
   }, 60000);
+
 })();
