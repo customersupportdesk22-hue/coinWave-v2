@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>CoinWave | Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .adm { padding-top: 28px; padding-bottom: 48px; }
+    .adm h1 { font-size: 26px; letter-spacing: -.02em; }
+    .adm .sub { color: var(--muted); margin-top: 4px; }
+    .tabs { display: flex; gap: 8px; margin: 20px 0; border-bottom: 1px solid var(--line); }
+    .tab { background: none; border: 0; color: var(--muted); font: 600 15px var(--font); padding: 10px 4px; margin-right: 12px; cursor: pointer; border-bottom: 2px solid transparent; }
+    .tab.on { color: var(--text); border-bottom-color: var(--accent); }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+    .stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+    .stat .l { color: var(--muted); font-size: 14px; }
+    .stat .v { font-size: 36px; font-weight: 700; letter-spacing: -.02em; margin-top: 6px; font-variant-numeric: tabular-nums; }
+    .msg { color: var(--muted); padding: 12px 0; }
+    .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+    .bar .count { color: var(--muted); font-size: 14px; }
+    .list { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+    .item { border-bottom: 1px solid var(--line); }
+    .item:last-child { border-bottom: 0; }
+    .row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; background: none; border: 0; color: var(--text); font: 16px var(--font); text-align: left; cursor: pointer; }
+    .row img { width: 28px; height: 28px; border-radius: 50%; background: var(--surface-2); }
+    .row .n { flex: 1; font-weight: 600; }
+    .row .n small { display: block; color: var(--muted); font-weight: 400; font-size: 13px; }
+    .badge { font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
+    .badge.set { color: var(--up); background: rgba(34,197,94,.12); }
+    .form { padding: 4px 16px 18px; display: grid; gap: 12px; background: var(--surface-2); }
+    .form label { font-size: 13px; font-weight: 500; display: block; margin-bottom: 4px; color: var(--muted); }
+    .form input { width: 100%; height: 44px; padding: 0 12px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line); color: var(--text); font: 15px var(--font); }
+    .form input:focus { border-color: var(--accent); outline: none; }
+    .form .acts { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .form .note { font-size: 14px; }
+    .ok { color: var(--up); } .bad { color: var(--down); }
+  </style>
+</head>
+<body>
+  <header class="header"><div class="wrap">
+    <a class="logo" href="/">Coin<b>Wave</b></a>
+    <nav class="nav"><a class="link" href="/dashboard">Dashboard</a><button class="btn btn-sm" id="logout">Log out</button></nav>
+  </div></header>
+  <main class="wrap adm">
+    <h1>Admin</h1>
+    <p class="sub">Manage CoinWave.</p>
+    <div class="tabs">
+      <button class="tab on" data-t="overview">Overview</button>
+      <button class="tab" data-t="addresses">Deposit addresses</button>
+    </div>
+
+    <section id="overview"><p class="msg">Loading.</p></section>
+
+    <section id="addresses" style="display:none">
+      <div class="bar">
+        <input id="q" class="search" type="search" placeholder="Search coins" aria-label="Search coins">
+        <span class="count" id="count"></span>
+      </div>
+      <div class="list" id="list"><p class="msg" style="padding:16px">Loading.</p></div>
+    </section>
+  </main>
+  <script>
+    var $ = function (id) { return document.getElementById(id); };
+    function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+    function api(url, opts) {
+      return fetch(url, opts).then(function (r) {
+        if (r.status === 401) { location.href = '/login'; throw new Error('Not logged in.'); }
+        return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Request failed.'); return d; });
+      });
+    }
+
+    document.querySelectorAll('.tab').forEach(function (b) {
+      b.addEventListener('click', function () {
+        document.querySelectorAll('.tab').forEach(function (x) { x.classList.toggle('on', x === b); });
+        $('overview').style.display = b.dataset.t === 'overview' ? 'block' : 'none';
+        $('addresses').style.display = b.dataset.t === 'addresses' ? 'block' : 'none';
+      });
+    });
+
+    // Overview
+    function card(label, value) {
+      var d = el('div', 'stat'); d.appendChild(el('div', 'l', label));
+      d.appendChild(el('div', 'v', Number(value).toLocaleString('en-US'))); return d;
+    }
+    api('/api/auth/admin/stats').then(function (d) {
+      var o = $('overview'); o.innerHTML = ''; var g = el('div', 'stats');
+      g.appendChild(card('Total users', d.total)); g.appendChild(card('New today', d.today)); g.appendChild(card('New in the last 7 days', d.week));
+      o.appendChild(g);
+    }).catch(function (e) { $('overview').innerHTML = ''; $('overview').appendChild(el('p', 'msg', e.message)); });
+
+    // Deposit addresses
+    var saved = {}, items = [];
+    function updateCount() {
+      var n = Object.keys(saved).length;
+      $('count').textContent = n + ' of ' + items.length + ' coins have an address';
+    }
+    function buildItem(c) {
+      var wrap = el('div', 'item'), row = el('button', 'row'); row.type = 'button';
+      var img = el('img'); img.src = c.image; img.alt = ''; img.loading = 'lazy';
+      var n = el('div', 'n', c.name); n.appendChild(el('small', '', c.symbol));
+      var badge = el('span', 'badge'); row.appendChild(img); row.appendChild(n); row.appendChild(badge);
+      var form = el('div', 'form'); form.style.display = 'none';
+      function field(label, id, ph) {
+        var d = el('div'); var l = el('label', '', label); var i = el('input'); i.placeholder = ph || ''; i.autocomplete = 'off'; i.autocapitalize = 'off'; i.spellcheck = false;
+        d.appendChild(l); d.appendChild(i); form.appendChild(d); return i;
+      }
+      var addr = field('Wallet address', 'a', 'Paste the address');
+      var net = field('Network (optional)', 'n', 'For example TRC20, ERC20, BEP20');
+      var memo = field('Memo or tag (optional)', 'm', 'Only if this coin needs one');
+      var acts = el('div', 'acts'), save = el('button', 'btn btn-primary btn-sm', 'Save'), clear = el('button', 'btn btn-sm', 'Clear'), note = el('span', 'note');
+      save.type = 'button'; clear.type = 'button';
+      acts.appendChild(save); acts.appendChild(clear); acts.appendChild(note); form.appendChild(acts);
+      function sync() {
+        var s = saved[c.symbol]; badge.textContent = s ? 'Set' : 'Not set'; badge.className = 'badge' + (s ? ' set' : '');
+        addr.value = s ? s.address : ''; net.value = s ? (s.network || '') : ''; memo.value = s ? (s.memo || '') : '';
+        clear.style.display = s ? 'inline-flex' : 'none';
+      }
+      sync();
+      row.addEventListener('click', function () { form.style.display = form.style.display === 'none' ? 'grid' : 'none'; note.textContent = ''; });
+      save.addEventListener('click', function () {
+        note.className = 'note'; note.textContent = 'Saving.';
+        api('/api/admin/addresses/' + encodeURIComponent(c.symbol), { method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address: addr.value, network: net.value, memo: memo.value }) })
+          .then(function (d) { saved[c.symbol] = d; sync(); updateCount(); note.className = 'note ok'; note.textContent = 'Saved.'; })
+          .catch(function (e) { note.className = 'note bad'; note.textContent = e.message; });
+      });
+      clear.addEventListener('click', function () {
+        if (!confirm('Remove the ' + c.symbol + ' deposit address?')) return;
+        api('/api/admin/addresses/' + encodeURIComponent(c.symbol), { method: 'DELETE' })
+          .then(function () { delete saved[c.symbol]; sync(); updateCount(); note.className = 'note ok'; note.textContent = 'Removed.'; })
+          .catch(function (e) { note.className = 'note bad'; note.textContent = e.message; });
+      });
+      wrap.appendChild(row); wrap.appendChild(form); wrap._c = c; return wrap;
+    }
+    Promise.all([api('/api/markets'), api('/api/admin/addresses')]).then(function (r) {
+      var seen = {}; items = r[0].filter(function (c) { if (seen[c.symbol]) return false; seen[c.symbol] = 1; return true; });
+      saved = r[1] || {};
+      var list = $('list'); list.innerHTML = '';
+      items.forEach(function (c) { list.appendChild(buildItem(c)); });
+      updateCount();
+    }).catch(function (e) { $('list').innerHTML = ''; $('list').appendChild(el('p', 'msg', e.message || 'Could not load coins.')); });
+
+    $('q').addEventListener('input', function () {
+      var q = this.value.trim().toLowerCase();
+      document.querySelectorAll('#list .item').forEach(function (it) {
+        var c = it._c; it.style.display = !q || c.name.toLowerCase().indexOf(q) > -1 || c.symbol.toLowerCase().indexOf(q) > -1 ? '' : 'none';
+      });
+    });
+    $('logout').addEventListener('click', function () { fetch('/api/auth/logout', { method: 'POST' }).then(function () { location.href = '/'; }); });
+  </script>
+</body>
+</html>
