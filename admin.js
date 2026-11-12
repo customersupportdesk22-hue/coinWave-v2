@@ -5,6 +5,10 @@ const auth = require('./auth');
 
 const router = express.Router();
 
+/*
+ * CoinWave admin settings.
+ * Reuses the existing Setting model if already registered.
+ */
 const Setting = mongoose.models.Setting || mongoose.model(
   'Setting',
   new mongoose.Schema({
@@ -31,134 +35,156 @@ function asyncHandler(handler) {
   };
 }
 
-// Protect every route in this admin router.
-router.use(asyncHandler(async (req, res, next) => {
-  if (!process.env.JWT_SECRET) {
-    return res.status(500).json({
-      error: 'Server is not configured.'
-    });
-  }
+/*
+ * Deposit-address permissions.
+ *
+ * This depends on the updated auth.js exporting:
+ * auth.requirePermission()
+ *
+ * Super Admin: allowed
+ * Finance Admin: allowed
+ * Support Admin: denied
+ * Customer: denied
+ */
+const addressesPermission = auth.requirePermission(
+  'addresses.manage'
+);
 
-  if (mongoose.connection.readyState !== 1) {
-    return res.status(503).json({
-      error: 'Service is starting. Try again in a moment.'
-    });
-  }
+/*
+ * GET /api/admin/addresses
+ *
+ * Retrieve all configured deposit addresses.
+ */
+router.get(
+  '/addresses',
+  addressesPermission,
+  asyncHandler(async (req, res) => {
+    const doc = await Setting.findOne({
+      key: 'addresses'
+    }).lean();
 
-  const user = await auth.authUser(req);
+    const addresses =
+      doc &&
+      doc.value &&
+      typeof doc.value === 'object' &&
+      !Array.isArray(doc.value)
+        ? doc.value
+        : {};
 
-  if (!user) {
-    return res.status(401).json({
-      error: 'Not logged in.'
-    });
-  }
+    return res.json(addresses);
+  })
+);
 
-  if (!auth.isAdmin(user)) {
-    return res.status(403).json({
-      error: 'You do not have access to this page.'
-    });
-  }
+/*
+ * PUT /api/admin/addresses/:symbol
+ *
+ * Create or update a deposit address.
+ */
+router.put(
+  '/addresses/:symbol',
+  addressesPermission,
+  asyncHandler(async (req, res) => {
+    const sym = String(req.params.symbol || '')
+      .trim()
+      .toUpperCase();
 
-  next();
-}));
+    const body = req.body || {};
 
-// Get all configured deposit addresses.
-router.get('/addresses', asyncHandler(async (req, res) => {
-  const doc = await Setting.findOne({
-    key: 'addresses'
-  }).lean();
+    const address = String(body.address || '').trim();
+    const network = String(body.network || '')
+      .trim()
+      .slice(0, 40);
 
-  const addresses =
-    doc && doc.value && typeof doc.value === 'object'
-      ? doc.value
-      : {};
+    const memo = String(body.memo || '')
+      .trim()
+      .slice(0, 80);
 
-  res.json(addresses);
-}));
-
-// Create or update a deposit address.
-router.put('/addresses/:symbol', asyncHandler(async (req, res) => {
-  const sym = String(req.params.symbol || '')
-    .trim()
-    .toUpperCase();
-
-  const body = req.body || {};
-
-  const address = String(body.address || '').trim();
-  const network = String(body.network || '').trim().slice(0, 40);
-  const memo = String(body.memo || '').trim().slice(0, 80);
-
-  if (!SYMBOL.test(sym)) {
-    return res.status(400).json({
-      error: 'Invalid coin symbol.'
-    });
-  }
-
-  if (
-    address.length < 10 ||
-    address.length > 150 ||
-    !/^[A-Za-z0-9:_\-.]+$/.test(address)
-  ) {
-    return res.status(400).json({
-      error: 'Enter a valid wallet address (10 to 150 characters, no spaces).'
-    });
-  }
-
-  const entry = {
-    address,
-    network,
-    memo,
-    updatedAt: new Date()
-  };
-
-  await Setting.findOneAndUpdate(
-    { key: 'addresses' },
-    {
-      $set: {
-        ['value.' + sym]: entry
-      }
-    },
-    {
-      upsert: true,
-      new: true,
-      runValidators: true,
-      setDefaultsOnInsert: true
+    if (!SYMBOL.test(sym)) {
+      return res.status(400).json({
+        error: 'Invalid coin symbol.'
+      });
     }
-  );
 
-  res.json(entry);
-}));
-
-// Delete a deposit address.
-router.delete('/addresses/:symbol', asyncHandler(async (req, res) => {
-  const sym = String(req.params.symbol || '')
-    .trim()
-    .toUpperCase();
-
-  if (!SYMBOL.test(sym)) {
-    return res.status(400).json({
-      error: 'Invalid coin symbol.'
-    });
-  }
-
-  await Setting.findOneAndUpdate(
-    { key: 'addresses' },
-    {
-      $unset: {
-        ['value.' + sym]: ''
-      }
-    },
-    {
-      runValidators: true
+    if (
+      address.length < 10 ||
+      address.length > 150 ||
+      !/^[A-Za-z0-9:_\-.]+$/.test(address)
+    ) {
+      return res.status(400).json({
+        error: 'Enter a valid wallet address (10 to 150 characters, no spaces).'
+      });
     }
-  );
 
-  res.json({
-    ok: true
-  });
-}));
+    const entry = {
+      address,
+      network,
+      memo,
+      updatedAt: new Date()
+    };
 
-// Centralized error handling for this router.
+    await Setting.findOneAndUpdate(
+      {
+        key: 'addresses'
+      },
+      {
+        $set: {
+          ['value.' + sym]: entry
+        }
+      },
+      {
+        upsert: true,
+        new: true,
+        runValidators: true,
+        setDefaultsOnInsert: true
+      }
+    );
+
+    return res.json(entry);
+  })
+);
+
+/*
+ * DELETE /api/admin/addresses/:symbol
+ *
+ * Delete a configured deposit address.
+ */
+router.delete(
+  '/addresses/:symbol',
+  addressesPermission,
+  asyncHandler(async (req, res) => {
+    const sym = String(req.params.symbol || '')
+      .trim()
+      .toUpperCase();
+
+    if (!SYMBOL.test(sym)) {
+      return res.status(400).json({
+        error: 'Invalid coin symbol.'
+      });
+    }
+
+    await Setting.findOneAndUpdate(
+      {
+        key: 'addresses'
+      },
+      {
+        $unset: {
+          ['value.' + sym]: ''
+        }
+      },
+      {
+        runValidators: true
+      }
+    );
+
+    return res.json({
+      ok: true
+    });
+  })
+);
+
+/*
+ * Centralized error handling.
+ */
 router.use((err, req, res, next) => {
   console.error('CoinWave admin API error:', err);
 
@@ -172,9 +198,15 @@ router.use((err, req, res, next) => {
     });
   }
 
+  if (err && err.name === 'ValidationError') {
+    return res.status(400).json({
+      error: 'The submitted setting is invalid.'
+    });
+  }
+
   res.status(500).json({
     error: 'An unexpected server error occurred.'
   });
-}));
+});
 
 module.exports = router;
