@@ -9,7 +9,9 @@ const fs = require('fs');
 const app = express();
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
+app.set('trust proxy', 1);
 app.use(express.json());
+app.use('/api/auth', require('./auth'));
 
 // Serve a page file from the main folder, or from css/ or js/ if it lives there.
 function sendFirst(res, candidates) {
@@ -20,6 +22,8 @@ function sendFirst(res, candidates) {
   res.status(404).send('Not found');
 }
 app.get('/', (req, res) => sendFirst(res, ['index.html']));
+app.get(['/login', '/signup'], (req, res) => sendFirst(res, ['account.html']));
+app.get('/dashboard', (req, res) => sendFirst(res, ['dashboard.html']));
 app.get(['/style.css', '/css/style.css'], (req, res) => sendFirst(res, ['style.css', 'css/style.css']));
 app.get(['/app.js', '/js/app.js'], (req, res) => sendFirst(res, ['app.js', 'js/app.js']));
 
