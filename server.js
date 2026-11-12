@@ -11,6 +11,7 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.set('trust proxy', 1);
 app.use(express.json());
+app.use(express.static(__dirname));
 app.use('/api/auth', require('./auth'));
 app.use('/api/admin', require('./admin'));
 
