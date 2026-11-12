@@ -33,9 +33,11 @@
     var s = document.createElement('div'); s.className = 's'; s.textContent = c.symbol;
     txt.appendChild(n); txt.appendChild(s); box.appendChild(img); box.appendChild(txt);
     tr.appendChild(td('', box));
-    tr.appendChild(td('num', fmtPrice(c.price)));
+    c._p = td('num', fmtPrice(c.price));
+    tr.appendChild(c._p);
     var ch = change(c.change24h);
-    tr.appendChild(td('num ' + ch.cls, ch.text));
+    c._c = td('num ' + ch.cls, ch.text);
+    tr.appendChild(c._c);
     return tr;
   }
 
@@ -94,11 +96,77 @@
     list.forEach(function (c) { body.appendChild(row(c)); });
   }
 
+  // ---- Real-time prices (Binance public stream, runs in the visitor's browser) ----
+  var live = { ws: null, map: {}, urls: ['wss://stream.binance.com:443/ws/!miniTicker@arr', 'wss://data-stream.binance.vision/ws/!miniTicker@arr'], i: 0, tries: 0 };
+  var dot = document.createElement('span');
+  dot.textContent = 'Live';
+  dot.style.cssText = 'display:none;margin-left:10px;font-size:13px;font-weight:500;color:#22C55E;vertical-align:middle';
+  var h2 = document.querySelector('.section-head h2');
+  if (h2) h2.appendChild(dot);
+
+  function buildMap() {
+    live.map = {};
+    coins.slice().sort(function (a, b) { return a.rank - b.rank; }).forEach(function (c) {
+      if (!live.map[c.symbol]) live.map[c.symbol] = c;
+    });
+  }
+
+  function flash(el, up) {
+    if (!el || !el.animate) return;
+    el.animate([{ backgroundColor: up ? 'rgba(34,197,94,.28)' : 'rgba(239,68,68,.28)' }, { backgroundColor: 'rgba(0,0,0,0)' }], { duration: 800 });
+  }
+
+  function applyTick(t) {
+    if (!t.s || t.s.slice(-4) !== 'USDT') return;
+    var c = live.map[t.s.slice(0, -4)];
+    if (!c) return;
+    var p = parseFloat(t.c), o = parseFloat(t.o);
+    if (!(p > 0) || !(o > 0)) return;
+    var old = c.price;
+    c.price = p; c.change24h = (p - o) / o * 100; c.live = true;
+    if (c._p && c._p.isConnected) {
+      c._p.textContent = fmtPrice(p);
+      if (old != null && p !== old) flash(c._p, p > old);
+      var ch = change(c.change24h);
+      c._c.textContent = ch.text;
+      c._c.className = 'num ' + ch.cls;
+    }
+  }
+
+  function connect() {
+    if (live.ws || !coins.length) return;
+    var ws;
+    try { ws = new WebSocket(live.urls[live.i % live.urls.length]); } catch (e) { return; }
+    live.ws = ws;
+    ws.onmessage = function (ev) {
+      var arr; try { arr = JSON.parse(ev.data); } catch (e) { return; }
+      if (!Array.isArray(arr)) return;
+      live.tries = 0; dot.style.display = 'inline';
+      arr.forEach(applyTick);
+    };
+    ws.onclose = ws.onerror = function () {
+      if (live.ws !== ws) return;
+      live.ws = null; dot.style.display = 'none';
+      live.i++; live.tries++;
+      setTimeout(connect, Math.min(30000, 2000 * live.tries));
+    };
+  }
+
+  function setCoins(d) {
+    var old = {};
+    coins.forEach(function (c) { if (c.live) old[c.symbol] = c; });
+    d.forEach(function (c) {
+      var o = old[c.symbol];
+      if (o) { c.price = o.price; c.change24h = o.change24h; c.live = true; }
+    });
+    coins = d; buildMap(); render(); connect();
+  }
+
   function load() {
     message('Loading markets', 'Fetching the latest prices.');
     fetch('/api/markets')
       .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
-      .then(function (d) { coins = d; render(); })
+      .then(setCoins)
       .catch(function () { message('Prices are unavailable', 'Refresh the page in a minute.'); });
   }
 
@@ -108,6 +176,6 @@
   load();
   setInterval(function () {
     fetch('/api/markets').then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (d) { if (d) { coins = d; render(); } }).catch(function () {});
+      .then(function (d) { if (d) setCoins(d); }).catch(function () {});
   }, 60000);
 })();
