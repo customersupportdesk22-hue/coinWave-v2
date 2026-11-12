@@ -21,7 +21,7 @@
 <body>
   <header class="header"><div class="wrap">
     <a class="logo" href="/">Coin<b>Wave</b></a>
-    <nav class="nav"><a class="link" href="/#markets">Markets</a><button class="btn btn-sm" id="logout">Log out</button></nav>
+    <nav class="nav"><a class="link" href="/#markets">Markets</a><a class="link" id="adminLink" href="/admin" style="display:none">Admin</a><button class="btn btn-sm" id="logout">Log out</button></nav>
   </div></header>
   <main class="wrap dash">
     <h1 id="hello">&nbsp;</h1>
@@ -34,7 +34,7 @@
   </main>
   <script>
     fetch('/api/auth/me').then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
-      .then(function (u) { document.getElementById('hello').textContent = 'Welcome, ' + u.name; document.getElementById('email').textContent = u.email; })
+      .then(function (u) { document.getElementById('hello').textContent = 'Welcome, ' + u.name; document.getElementById('email').textContent = u.email; if (u.isAdmin) document.getElementById('adminLink').style.display = 'inline'; })
       .catch(function () { location.href = '/login'; });
     document.getElementById('logout').addEventListener('click', function () {
       fetch('/api/auth/logout', { method: 'POST' }).then(function () { location.href = '/'; });
