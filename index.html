@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,6 +22,8 @@
       --cw-muted: #64708a;
       --cw-border: #e7ebf3;
       --cw-bg: #f5f8ff;
+      --cw-green: #15965d;
+      --cw-red: #dc4555;
     }
 
     * { box-sizing: border-box; }
@@ -123,7 +126,6 @@
       padding: 0 0 42px;
     }
 
-    /* Existing hero artwork is retained without changing its source or design. */
     .hero-art {
       display: block;
       width: 100%;
@@ -242,8 +244,19 @@
       box-shadow: 0 12px 35px rgba(16,42,92,.06);
     }
 
-    table { width: 100%; border-collapse: collapse; min-width: 480px; }
-    th, td { padding: 17px 20px; text-align: left; border-bottom: 1px solid #edf0f6; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 900px;
+    }
+
+    th, td {
+      padding: 17px 20px;
+      text-align: left;
+      border-bottom: 1px solid #edf0f6;
+      white-space: nowrap;
+    }
+
     th {
       color: #68758f;
       background: #f8faff;
@@ -261,12 +274,12 @@
     .coin img { width: 30px; height: 30px; border-radius: 50%; object-fit: contain; }
     .coin .n { font-weight: 700; }
     .coin .s { margin-top: 2px; color: #7a879d; font-size: 12px; }
-    .up { color: #15965d; }
-    .down { color: #dc4555; }
+    .up { color: var(--cw-green); }
+    .down { color: var(--cw-red); }
     .flat { color: #758198; }
     .state { padding: 28px; text-align: center; color: #71809a; }
     .state strong { display: block; margin-bottom: 6px; color: var(--cw-navy); }
-    .live-indicator { margin-left: 10px; color: #15965d; font-size: 12px; font-weight: 700; }
+    .live-indicator { margin-left: 10px; color: var(--cw-green); font-size: 12px; font-weight: 700; }
 
     .asset-grid {
       display: grid;
@@ -378,6 +391,7 @@
     .cols h3 { margin: 0 0 14px; color: #fff; font-size: 15px; }
     .cols a { display: block; width: fit-content; margin: 9px 0; color: #b9c9e7; }
     .cols a:hover { color: var(--cw-cyan); }
+
     .risk {
       margin: 34px 0 18px;
       padding-top: 20px;
@@ -386,6 +400,7 @@
       font-size: 12px;
       line-height: 1.7;
     }
+
     .copy { margin: 0; color: #8799bd; font-size: 12px; }
 
     @media (max-width: 900px) {
@@ -457,54 +472,54 @@
         <div class="section-heading">
           <div>
             <h2>Popular Digital Assets</h2>
-            <p>Select an asset to find it in the live market list.</p>
+            <p>Select an asset to view its dedicated market details.</p>
           </div>
         </div>
 
         <div class="asset-grid">
-          <button class="asset-card" type="button" data-asset-symbol="BTC" aria-label="View Bitcoin market">
+          <button class="asset-card" type="button" data-asset-symbol="BTC" aria-label="View Bitcoin details">
             <img src="https://assets.coincap.io/assets/icons/btc@2x.png" alt="Bitcoin logo" loading="lazy">
             <span class="asset-meta"><span class="asset-name">Bitcoin</span><span class="asset-symbol">BTC</span></span>
             <span class="asset-hint" aria-hidden="true">›</span>
           </button>
 
-          <button class="asset-card" type="button" data-asset-symbol="ETH" aria-label="View Ethereum market">
+          <button class="asset-card" type="button" data-asset-symbol="ETH" aria-label="View Ethereum details">
             <img src="https://assets.coincap.io/assets/icons/eth@2x.png" alt="Ethereum logo" loading="lazy">
             <span class="asset-meta"><span class="asset-name">Ethereum</span><span class="asset-symbol">ETH</span></span>
             <span class="asset-hint" aria-hidden="true">›</span>
           </button>
 
-          <button class="asset-card" type="button" data-asset-symbol="BNB" aria-label="View BNB market">
+          <button class="asset-card" type="button" data-asset-symbol="BNB" aria-label="View BNB details">
             <img src="https://assets.coincap.io/assets/icons/bnb@2x.png" alt="BNB logo" loading="lazy">
             <span class="asset-meta"><span class="asset-name">BNB</span><span class="asset-symbol">BNB</span></span>
             <span class="asset-hint" aria-hidden="true">›</span>
           </button>
 
-          <button class="asset-card" type="button" data-asset-symbol="SOL" aria-label="View Solana market">
+          <button class="asset-card" type="button" data-asset-symbol="SOL" aria-label="View Solana details">
             <img src="https://assets.coincap.io/assets/icons/sol@2x.png" alt="Solana logo" loading="lazy">
             <span class="asset-meta"><span class="asset-name">Solana</span><span class="asset-symbol">SOL</span></span>
             <span class="asset-hint" aria-hidden="true">›</span>
           </button>
 
-          <button class="asset-card" type="button" data-asset-symbol="XRP" aria-label="View XRP market">
+          <button class="asset-card" type="button" data-asset-symbol="XRP" aria-label="View XRP details">
             <img src="https://assets.coincap.io/assets/icons/xrp@2x.png" alt="XRP logo" loading="lazy">
             <span class="asset-meta"><span class="asset-name">XRP</span><span class="asset-symbol">XRP</span></span>
             <span class="asset-hint" aria-hidden="true">›</span>
           </button>
 
-          <button class="asset-card" type="button" data-asset-symbol="ADA" aria-label="View Cardano market">
+          <button class="asset-card" type="button" data-asset-symbol="ADA" aria-label="View Cardano details">
             <img src="https://assets.coincap.io/assets/icons/ada@2x.png" alt="Cardano logo" loading="lazy">
             <span class="asset-meta"><span class="asset-name">Cardano</span><span class="asset-symbol">ADA</span></span>
             <span class="asset-hint" aria-hidden="true">›</span>
           </button>
 
-          <button class="asset-card" type="button" data-asset-symbol="DOGE" aria-label="View Dogecoin market">
+          <button class="asset-card" type="button" data-asset-symbol="DOGE" aria-label="View Dogecoin details">
             <img src="https://assets.coincap.io/assets/icons/doge@2x.png" alt="Dogecoin logo" loading="lazy">
             <span class="asset-meta"><span class="asset-name">Dogecoin</span><span class="asset-symbol">DOGE</span></span>
             <span class="asset-hint" aria-hidden="true">›</span>
           </button>
 
-          <button class="asset-card" type="button" data-asset-symbol="TRX" aria-label="View TRON market">
+          <button class="asset-card" type="button" data-asset-symbol="TRX" aria-label="View TRON details">
             <img src="https://assets.coincap.io/assets/icons/trx@2x.png" alt="TRON logo" loading="lazy">
             <span class="asset-meta"><span class="asset-name">TRON</span><span class="asset-symbol">TRX</span></span>
             <span class="asset-hint" aria-hidden="true">›</span>
@@ -516,7 +531,10 @@
     <section id="markets" class="section section-white">
       <div class="wrap">
         <div class="section-head">
-          <h2>Crypto Markets</h2>
+          <div>
+            <h2>Crypto Markets</h2>
+            <span class="live-indicator">● Market data</span>
+          </div>
           <input id="search" class="search" type="search" placeholder="Search coins" aria-label="Search coins">
         </div>
 
@@ -525,13 +543,15 @@
             <thead>
               <tr>
                 <th class="hide-sm">#</th>
-                <th>Name</th>
+                <th>Asset</th>
                 <th class="num">Price</th>
-                <th class="num">24h</th>
+                <th class="num">24h Change</th>
+                <th class="num">24h Trading Volume</th>
+                <th class="num">Market Cap</th>
               </tr>
             </thead>
             <tbody id="rows">
-              <tr><td colspan="4" class="state">Loading market data…</td></tr>
+              <tr><td colspan="6" class="state">Loading market data…</td></tr>
             </tbody>
           </table>
         </div>
@@ -548,44 +568,44 @@
         </div>
 
         <div class="discover-grid">
-          <a class="discover-card" href="#markets">
+          <a class="discover-card" href="/discover/markets" data-discover-page="markets">
             <span class="discover-icon" aria-hidden="true">↗</span>
             <h3>Explore Markets</h3>
             <p>Browse available digital assets and review the latest market prices and 24-hour movements.</p>
             <span class="discover-action">Explore markets →</span>
           </a>
 
-          <a class="discover-card" href="/login">
+          <a class="discover-card" href="/discover/trade" data-discover-page="trade">
             <span class="discover-icon" aria-hidden="true">⇄</span>
             <h3>Buy &amp; Sell Crypto</h3>
             <p>Sign in to access the customer account and the trading options made available to your account.</p>
             <span class="discover-action">Access your account →</span>
           </a>
 
-          <a class="discover-card" href="#security">
+          <a class="discover-card" href="/discover/security" data-discover-page="security">
             <span class="discover-icon" aria-hidden="true">◇</span>
             <h3>Security &amp; Protection</h3>
             <p>Learn about account protection, responsible account access and safe handling of your credentials.</p>
             <span class="discover-action">Read security guidance →</span>
           </a>
 
-          <a class="discover-card" href="#transactions">
+          <a class="discover-card" href="/discover/transactions" data-discover-page="transactions">
             <span class="discover-icon" aria-hidden="true">⌁</span>
             <h3>Transaction Process</h3>
             <p>Understand the key stages involved in submitting and reviewing a transaction on the platform.</p>
             <span class="discover-action">How it works →</span>
           </a>
 
-          <a class="discover-card" href="/login">
+          <a class="discover-card" href="/discover/account" data-discover-page="account">
             <span class="discover-icon" aria-hidden="true">▣</span>
-            <h3>Account &amp; Verification</h3>
+               <h3>Account &amp; Verification</h3>
             <p>Access your account to manage your profile and complete any identity checks requested by the platform.</p>
             <span class="discover-action">Continue to account →</span>
           </a>
 
-          <a class="discover-card" href="#support">
+          <a class="discover-card" href="/discover/support" data-discover-page="support">
             <span class="discover-icon" aria-hidden="true">?</span>
-               <h3>Customer Support</h3>
+            <h3>Customer Support</h3>
             <p>Find the support access point and sign in to continue with account-related assistance.</p>
             <span class="discover-action">View support information →</span>
           </a>
@@ -648,7 +668,7 @@
           <h3>Account &amp; Support</h3>
           <a href="/login">Customer login</a>
           <a href="/signup">Create account</a>
-          <a href="#support">Support information</a>
+          <a href="/discover/support">Support information</a>
         </div>
         <div>
           <h3>Legal</h3>
@@ -661,6 +681,54 @@
       <p class="copy">&copy; <span id="year"></span> CoinWave. All rights reserved.</p>
     </div>
   </footer>
+
+  <script>
+    // Set the current copyright year.
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Navigate to a dedicated asset page instead of opening a modal.
+    // Capture phase prevents older card-click handlers from opening a popup.
+    document.addEventListener('click', function (event) {
+      const assetCard = event.target.closest('[data-asset-symbol]');
+      if (!assetCard) return;
+
+      const symbol = String(assetCard.getAttribute('data-asset-symbol') || '')
+        .trim()
+        .toUpperCase();
+
+      if (!/^[A-Z0-9]{2,15}$/.test(symbol)) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      if (typeof event.stopImmediatePropagation === 'function') {
+        event.stopImmediatePropagation();
+      }
+
+      window.location.href = '/asset?symbol=' + encodeURIComponent(symbol);
+    }, true);
+
+    // Ensure Discover cards always navigate to their individual pages.
+    document.addEventListener('click', function (event) {
+      const card = event.target.closest('[data-discover-page]');
+      if (!card) return;
+
+      const page = card.getAttribute('data-discover-page');
+      const allowedPages = [
+        'markets',
+        'trade',
+        'security',
+        'transactions',
+        'account',
+        'support'
+      ];
+
+      if (!allowedPages.includes(page)) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      window.location.href = '/discover/' + page;
+    }, true);
+  </script>
 
   <script src="/app.js" defer></script>
 </body>
