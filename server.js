@@ -125,10 +125,7 @@ function isTrustedOrigin(origin, req) {
 
   const ownOrigin = `${req.protocol}://${req.get('host')}`;
 
-  return (
-    normalized === ownOrigin ||
-    allowedOrigins.has(normalized)
-  );
+  return normalized === ownOrigin || allowedOrigins.has(normalized);
 }
 
 app.use((req, res, next) => {
@@ -189,10 +186,7 @@ function sendFirst(res, candidates, noStore = false) {
     }
 
     try {
-      if (
-        fs.existsSync(filePath) &&
-        fs.statSync(filePath).isFile()
-      ) {
+      if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
         if (noStore) {
           res.set('Cache-Control', 'no-store');
         }
@@ -232,34 +226,72 @@ app.get('/privacy', (req, res) => {
 });
 
 // --------------------------------------------------
+// ASSET DETAIL PAGE
+// --------------------------------------------------
+
+app.get('/asset', (req, res) => {
+  const symbol = String(req.query.symbol || '')
+    .trim()
+    .toUpperCase();
+
+  if (!/^[A-Z0-9]{1,15}$/.test(symbol)) {
+    return res.status(400).send(
+      'A valid asset symbol is required.'
+    );
+  }
+
+  res.set('Cache-Control', 'no-store');
+
+  return sendFirst(res, ['asset.html'], true);
+});
+
+// --------------------------------------------------
+// DISCOVER PAGES
+// --------------------------------------------------
+
+const discoverPages = new Set([
+  'markets',
+  'buy-sell',
+  'security',
+  'transactions',
+  'account',
+  'support'
+]);
+
+app.get('/discover/:page', (req, res) => {
+  const page = String(req.params.page || '').toLowerCase();
+
+  if (!discoverPages.has(page)) {
+    return res.status(404).send('Discover page not found.');
+  }
+
+  res.set('Cache-Control', 'no-store');
+
+  return sendFirst(res, ['discover.html'], true);
+});
+
+// --------------------------------------------------
 // EXPLICIT PUBLIC CSS AND JAVASCRIPT
 // --------------------------------------------------
 
 app.get(['/style.css', '/css/style.css'], (req, res) => {
   res.set('Cache-Control', 'no-cache');
-
-  sendFirst(res, [
-    'style.css',
-    'css/style.css'
-  ]);
+  sendFirst(res, ['style.css', 'css/style.css']);
 });
 
 app.get(['/app.js', '/js/app.js'], (req, res) => {
   res.set('Cache-Control', 'no-cache');
-
-  sendFirst(res, [
-    'app.js',
-    'js/app.js'
-  ]);
+  sendFirst(res, ['app.js', 'js/app.js']);
 });
 
-// CoinWave banner
 app.get('/coinwave-banner.png', (req, res) => {
   sendFirst(res, ['coinwave-banner.png']);
 });
 
-// Public assets folder only.
-// Never place .env, backend files or private keys here.
+// --------------------------------------------------
+// PUBLIC ASSETS DIRECTORY
+// --------------------------------------------------
+
 const assetsDirectory = path.join(ROOT, 'assets');
 
 if (fs.existsSync(assetsDirectory)) {
@@ -301,14 +333,10 @@ function requireDatabase(req, res, next) {
   }
 
   return res.status(503).json({
-    error: 'Database is temporarily unavailable.',
+    error: 'Database is temporarily unavailable. Please try again shortly.',
     database: dbState
   });
 }
-
-// --------------------------------------------------
-// HEALTH CHECK
-// --------------------------------------------------
 
 app.get('/api/health', (req, res) => {
   res.set('Cache-Control', 'no-store');
@@ -327,9 +355,7 @@ app.get('/api/health', (req, res) => {
 // --------------------------------------------------
 
 app.use('/api/auth', requireDatabase, require('./auth'));
-
 app.use('/api/admin', requireDatabase, require('./admin'));
-
 app.use('/api/orders', requireDatabase, require('./orders'));
 
 // --------------------------------------------------
@@ -348,24 +374,16 @@ let marketRequest = null;
 // --------------------------------------------------
 
 const marketLimits = new Map();
-
 const MARKET_WINDOW_MS = 60 * 1000;
 const MARKET_MAX_REQUESTS = 60;
 
 function marketRateLimit(req, res, next) {
   const now = Date.now();
-
-  const ip =
-    req.ip ||
-    req.socket.remoteAddress ||
-    'unknown';
+  const ip = req.ip || req.socket.remoteAddress || 'unknown';
 
   let record = marketLimits.get(ip);
 
-  if (
-    !record ||
-    now - record.start >= MARKET_WINDOW_MS
-  ) {
+  if (!record || now - record.start >= MARKET_WINDOW_MS) {
     record = {
       start: now,
       count: 0
@@ -383,29 +401,22 @@ function marketRateLimit(req, res, next) {
     }
   }
 
-  res.set(
-    'X-RateLimit-Limit',
-    String(MARKET_MAX_REQUESTS)
-  );
+  res.set('X-RateLimit-Limit', String(MARKET_MAX_REQUESTS));
 
   res.set(
     'X-RateLimit-Remaining',
-    String(
-      Math.max(0, MARKET_MAX_REQUESTS - record.count)
-    )
+    String(Math.max(0, MARKET_MAX_REQUESTS - record.count))
   );
 
   if (record.count > MARKET_MAX_REQUESTS) {
     res.set(
       'Retry-After',
-      String(
-        Math.max(
-          1,
-          Math.ceil(
-            (record.start + MARKET_WINDOW_MS - now) / 1000
-          )
+      String(Math.max(
+        1,
+        Math.ceil(
+          (record.start + MARKET_WINDOW_MS - now) / 1000
         )
-      )
+      ))
     );
 
     return res.status(429).json({
@@ -426,16 +437,15 @@ async function fetchJson(url) {
     typeof fetch !== 'function' ||
     typeof AbortController !== 'function'
   ) {
-    throw new Error(
-      'This server requires Node.js 18 or newer.'
-    );
+    throw new Error('This server requires Node.js 18 or newer.');
   }
 
   const controller = new AbortController();
 
-  const timer = setTimeout(() => {
-    controller.abort();
-  }, API_TIMEOUT_MS);
+  const timer = setTimeout(
+    () => controller.abort(),
+    API_TIMEOUT_MS
+  );
 
   try {
     const response = await fetch(url, {
@@ -452,7 +462,6 @@ async function fetchJson(url) {
     }
 
     return await response.json();
-
   } finally {
     clearTimeout(timer);
   }
@@ -473,9 +482,7 @@ function numberOrNull(value) {
 
   const number = Number(value);
 
-  return Number.isFinite(number)
-    ? number
-    : null;
+  return Number.isFinite(number) ? number : null;
 }
 
 function sortByMarketCap(data) {
@@ -486,10 +493,7 @@ function sortByMarketCap(data) {
   return data
     .filter(coin => {
       const symbol = String(coin?.symbol || '');
-
-      const marketCap = numberOrNull(
-        coin?.marketCap
-      );
+      const marketCap = numberOrNull(coin?.marketCap);
 
       return (
         /^[A-Z0-9]{1,15}$/.test(symbol) &&
@@ -498,8 +502,7 @@ function sortByMarketCap(data) {
       );
     })
     .sort((a, b) =>
-      numberOrNull(b.marketCap) -
-      numberOrNull(a.marketCap)
+      numberOrNull(b.marketCap) - numberOrNull(a.marketCap)
     )
     .map((coin, index) => ({
       ...coin,
@@ -532,9 +535,7 @@ async function fromCoinGecko() {
     symbol: String(coin.symbol || '').toUpperCase(),
     image: coin.image || null,
     price: numberOrNull(coin.current_price),
-    change24h: numberOrNull(
-      coin.price_change_percentage_24h
-    ),
+    change24h: numberOrNull(coin.price_change_percentage_24h),
     volume24h: numberOrNull(coin.total_volume),
     marketCap: numberOrNull(coin.market_cap)
   }));
@@ -603,10 +604,7 @@ async function refreshMarkets() {
     try {
       const data = await source.getData();
 
-      if (
-        !Array.isArray(data) ||
-        data.length === 0
-      ) {
+      if (!Array.isArray(data) || data.length === 0) {
         throw new Error('No valid market data returned');
       }
 
@@ -615,12 +613,9 @@ async function refreshMarkets() {
         data
       };
 
-      console.log(
-        `${source.name} market data updated`
-      );
+      console.log(`${source.name} market data updated`);
 
       return data;
-
     } catch (error) {
       console.error(
         `${source.name} market error:`,
@@ -636,59 +631,43 @@ async function refreshMarkets() {
     return cache.data;
   }
 
-  throw new Error(
-    'Market data is temporarily unavailable'
-  );
+  throw new Error('Market data is temporarily unavailable');
 }
 
 // --------------------------------------------------
 // MARKET API
 // --------------------------------------------------
 
-app.get(
-  '/api/markets',
-  marketRateLimit,
-  async (req, res) => {
-    res.set('Cache-Control', 'no-store');
+app.get('/api/markets', marketRateLimit, async (req, res) => {
+  res.set('Cache-Control', 'no-store');
 
-    if (
-      cache.data &&
-      Date.now() - cache.time < CACHE_MS
-    ) {
-      return res.json(cache.data);
-    }
+  if (cache.data && Date.now() - cache.time < CACHE_MS) {
+    return res.json(cache.data);
+  }
 
-    try {
-      if (!marketRequest) {
-        marketRequest = refreshMarkets().finally(() => {
-          marketRequest = null;
-        });
-      }
-
-      const data = await marketRequest;
-
-      if (
-        cache.time &&
-        Date.now() - cache.time >= CACHE_MS
-      ) {
-        res.set('X-Market-Data-Stale', 'true');
-      }
-
-      return res.json(data);
-
-    } catch (error) {
-      console.error(
-        'Market API error:',
-        error.message
-      );
-
-      return res.status(503).json({
-        error: 'Market data is temporarily unavailable.',
-        message: 'Please try again shortly.'
+  try {
+    if (!marketRequest) {
+      marketRequest = refreshMarkets().finally(() => {
+        marketRequest = null;
       });
     }
+
+    const data = await marketRequest;
+
+    if (cache.time && Date.now() - cache.time >= CACHE_MS) {
+      res.set('X-Market-Data-Stale', 'true');
+    }
+
+    return res.json(data);
+  } catch (error) {
+    console.error('Market API error:', error.message);
+
+    return res.status(503).json({
+      error: 'Market data is temporarily unavailable.',
+      message: 'Please try again shortly.'
+    });
   }
-);
+});
 
 // --------------------------------------------------
 // API NOT FOUND
@@ -705,10 +684,7 @@ app.use('/api', (req, res) => {
 // --------------------------------------------------
 
 app.use((error, req, res, next) => {
-  console.error(
-    'CoinWave server error:',
-    error.message
-  );
+  console.error('CoinWave server error:', error.message);
 
   if (res.headersSent) {
     return next(error);
@@ -744,19 +720,13 @@ app.use((error, req, res, next) => {
 async function startServer() {
   if (process.env.MONGO_URI) {
     try {
-      await mongoose.connect(
-        process.env.MONGO_URI,
-        {
-          serverSelectionTimeoutMS: 10000
-        }
-      );
+      await mongoose.connect(process.env.MONGO_URI, {
+        serverSelectionTimeoutMS: 10000
+      });
 
       dbState = 'connected';
 
-      console.log(
-        'MongoDB connection established'
-      );
-
+      console.log('MongoDB connection established');
     } catch (error) {
       dbState = 'error';
 
@@ -764,23 +734,14 @@ async function startServer() {
         'MongoDB connection failed:',
         error.message
       );
-
-      // Public pages and market data can remain available.
-      // Database APIs return 503 until MongoDB reconnects.
     }
-
   } else {
     dbState = 'not_configured';
-
-    console.error(
-      'MONGO_URI is not configured'
-    );
+    console.error('MONGO_URI is not configured');
   }
 
   const server = app.listen(PORT, () => {
-    console.log(
-      `CoinWave v2 running on port ${PORT}`
-    );
+    console.log(`CoinWave v2 running on port ${PORT}`);
   });
 
   server.requestTimeout = 30000;
@@ -791,11 +752,7 @@ async function startServer() {
 }
 
 startServer().catch(error => {
-  console.error(
-    'CoinWave startup error:',
-    error.message
-  );
-
+  console.error('CoinWave startup error:', error.message);
   process.exit(1);
 });
 
