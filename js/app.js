@@ -2,558 +2,134 @@
 (function () {
   'use strict';
 
-  // --------------------------------------------------
-  // COINWAVE MARKET APPLICATION
-  // Compatible with the existing homepage:
-  // #rows, #search, #year and /api/markets
-  // --------------------------------------------------
-
   var body = document.getElementById('rows');
   var search = document.getElementById('search');
   var year = document.getElementById('year');
+  var coins = [];
+  var refreshTimer = null;
 
   if (!body || !search) {
-    console.error('CoinWave: Required market table elements are missing.');
+    console.error('CoinWave: market table elements were not found.');
     return;
   }
 
-  var coins = [];
-  var loading = false;
-  var destroyed = false;
-  var refreshTimer = null;
+  var assetSymbols = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'ADA', 'DOGE', 'TRX'];
 
-  var favorites = readStorage('coinwave_favorites', []);
-  var alerts = readStorage('coinwave_alerts', []);
-
-  if (!Array.isArray(favorites)) favorites = [];
-  if (!Array.isArray(alerts)) alerts = [];
-
-  var activeFilter = 'all';
-  var sort = { key: 'rank', dir: 1 };
-
-  var columns = ['rank', 'name', 'price', 'change24h'];
-  var heads = document.querySelectorAll('#markets thead th');
-
-  // --------------------------------------------------
-  // STORAGE
-  // --------------------------------------------------
-
-  function readStorage(key, fallback) {
-    try {
-      var value = localStorage.getItem(key);
-      return value ? JSON.parse(value) : fallback;
-    } catch (error) {
-      return fallback;
-    }
-  }
-
-  function saveStorage(key, value) {
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch (error) {
-      console.warn('CoinWave: Could not save browser data.');
-    }
-  }
-
-  // --------------------------------------------------
-  // FORMATTING
-  // --------------------------------------------------
-
-  function numeric(value) {
-    if (value === null || value === undefined || value === '') {
-      return null;
-    }
-
-    var result = Number(value);
-    return Number.isFinite(result) ? result : null;
+  function number(value) {
+    var n = Number(value);
+    return value == null || value === '' || !Number.isFinite(n) ? null : n;
   }
 
   function fmtPrice(value) {
-    var price = numeric(value);
-
-    if (price === null) return '—';
-
-    if (price >= 1) {
-      return '$' + price.toLocaleString('en-US', {
+    var p = number(value);
+    if (p === null) return '—';
+    if (p >= 1) {
+      return '$' + p.toLocaleString('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       });
     }
-
-    if (price >= 0.01) {
-      return '$' + price.toFixed(4);
-    }
-
-    return '$' + price.toFixed(8).replace(/0+$/, '');
+    if (p >= 0.01) return '$' + p.toFixed(4);
+    return '$' + p.toFixed(8).replace(/0+$/, '');
   }
 
-  function formatChange(value) {
-    var amount = numeric(value);
+  function fmtCompact(value) {
+    var n = number(value);
+    if (n === null) return '—';
+    if (Math.abs(n) >= 1e12) return '$' + (n / 1e12).toFixed(2) + 'T';
+    if (Math.abs(n) >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
+    if (Math.abs(n) >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+    if (Math.abs(n) >= 1e3) return '$' + (n / 1e3).toFixed(2) + 'K';
+    return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  }
 
-    if (amount === null || Math.abs(amount) < 0.005) {
+  function change(value) {
+    var c = number(value);
+    if (c === null || Math.abs(c) < 0.005) {
       return { text: '0.00%', cls: 'flat' };
     }
-
-    var positive = amount > 0;
-
+    var up = c > 0;
     return {
-      text: (positive ? '+' : '−') +
-        Math.abs(amount).toFixed(2) + '%',
-      cls: positive ? 'up' : 'down'
+      text: (up ? '+' : '−') + Math.abs(c).toFixed(2) + '%',
+      cls: up ? 'up' : 'down'
     };
   }
 
-  function makeCell(className, content) {
-    var cell = document.createElement('td');
-
-    if (className) cell.className = className;
-
-    if (typeof content === 'string') {
-      cell.textContent = content;
-    } else if (content) {
-      cell.appendChild(content);
-    }
-
-    return cell;
+  function td(cls, content) {
+    var el = document.createElement('td');
+    if (cls) el.className = cls;
+    if (typeof content === 'string') el.textContent = content;
+    else if (content) el.appendChild(content);
+    return el;
   }
 
-  // --------------------------------------------------
-  // NOTIFICATIONS AND TOASTS
-  // --------------------------------------------------
-
-  function toast(message) {
-    var element = document.getElementById('cw-toast');
-
-    if (!element) {
-      element = document.createElement('div');
-      element.id = 'cw-toast';
-      element.setAttribute('role', 'status');
-      element.setAttribute('aria-live', 'polite');
-
-      element.style.cssText =
-        'position:fixed;z-index:9999;left:50%;bottom:24px;' +
-        'transform:translate(-50%,15px);padding:13px 18px;' +
-        'max-width:calc(100% - 30px);border-radius:11px;' +
-        'background:#06133f;color:#fff;font-size:13px;' +
-        'font-weight:600;box-shadow:0 8px 30px #0003;' +
-        'opacity:0;visibility:hidden;transition:.2s ease;';
-
-      document.body.appendChild(element);
-    }
-
-    element.textContent = message;
-    element.style.opacity = '1';
-    element.style.visibility = 'visible';
-    element.style.transform = 'translate(-50%,0)';
-
-    clearTimeout(toast.timer);
-
-    toast.timer = setTimeout(function () {
-      element.style.opacity = '0';
-      element.style.visibility = 'hidden';
-      element.style.transform = 'translate(-50%,15px)';
-    }, 3000);
-  }
-
-  // --------------------------------------------------
-  // FAVORITES / WATCHLIST
-  // --------------------------------------------------
-
-  function isFavorite(symbol) {
-    return favorites.indexOf(symbol) !== -1;
-  }
-
-  function toggleFavorite(symbol) {
-    if (isFavorite(symbol)) {
-      favorites = favorites.filter(function (item) {
-        return item !== symbol;
-      });
-
-      toast(symbol + ' removed from your watchlist.');
-    } else {
-      favorites.push(symbol);
-      toast(symbol + ' added to your watchlist.');
-    }
-
-    saveStorage('coinwave_favorites', favorites);
-    render();
-  }
-
-  // --------------------------------------------------
-  // PRICE ALERTS
-  // --------------------------------------------------
-
-  function setPriceAlert(coin) {
-    var currentPrice = numeric(coin.price);
-
-    if (currentPrice === null || currentPrice <= 0) {
-      toast('The current price is unavailable.');
-      return;
-    }
-
-    var answer = window.prompt(
-      'Enter your target price in USD for ' +
-      coin.name + '. Current price: ' + fmtPrice(currentPrice)
-    );
-
-    if (answer === null) return;
-
-    var target = Number(answer);
-
-    if (!Number.isFinite(target) || target <= 0) {
-      toast('Enter a valid price greater than zero.');
-      return;
-    }
-
-    if (!window.confirm(
-      'Create a price alert for ' + coin.symbol +
-      ' at ' + fmtPrice(target) + '?'
-    )) {
-      return;
-    }
-
-    alerts.push({
-      symbol: coin.symbol,
-      name: coin.name,
-      target: target,
-      direction: target >= currentPrice ? 'above' : 'below',
-      triggered: false,
-      created: Date.now()
-    });
-
-    saveStorage('coinwave_alerts', alerts);
-
-    if (
-      'Notification' in window &&
-      Notification.permission === 'default'
-    ) {
-      Notification.requestPermission().catch(function () {});
-    }
-
-    toast('Price alert created for ' + coin.symbol + '.');
-  }
-
-  function checkAlerts(coin) {
-    var price = numeric(coin.price);
-
-    if (price === null) return;
-
-    var updated = false;
-
-    alerts.forEach(function (alert) {
-      if (alert.triggered || alert.symbol !== coin.symbol) return;
-
-      var reached =
-        (alert.direction === 'above' && price >= alert.target) ||
-        (alert.direction === 'below' && price <= alert.target);
-
-      if (!reached) return;
-
-      alert.triggered = true;
-      updated = true;
-
-      var message =
-        coin.name + ' reached ' + fmtPrice(alert.target);
-
-      toast(message);
-
-      if (
-        'Notification' in window &&
-        Notification.permission === 'granted'
-      ) {
-        try {
-          new Notification('CoinWave price alert', {
-            body: message
-          });
-        } catch (error) {}
-      }
-    });
-
-    if (updated) {
-      saveStorage('coinwave_alerts', alerts);
-    }
-  }
-
-  // --------------------------------------------------
-  // MARKET FILTERS
-  // --------------------------------------------------
-
-  function addStyles() {
-    if (document.getElementById('cw-market-styles')) return;
-
-    var style = document.createElement('style');
-    style.id = 'cw-market-styles';
-
-    style.textContent = `
-      .cw-filters {
-        display:flex;
-        flex-wrap:wrap;
-        gap:8px;
-        margin:0 0 15px;
-      }
-
-      .cw-filter {
-        padding:8px 13px;
-        border:1px solid #dce4f1;
-        border-radius:9px;
-        background:#fff;
-        color:#64708a;
-        font-size:12px;
-        font-weight:700;
-        cursor:pointer;
-      }
-
-      .cw-filter.active {
-        color:#fff;
-        background:#087cf0;
-        border-color:#087cf0;
-      }
-
-      .cw-actions {
-        display:flex;
-        align-items:center;
-        gap:6px;
-      }
-
-      .cw-action {
-        min-width:29px;
-        height:29px;
-        padding:0 6px;
-        border:1px solid #e1e8f4;
-        border-radius:7px;
-        background:#fff;
-        color:#68758f;
-        font-size:12px;
-        cursor:pointer;
-      }
-
-      .cw-action:hover {
-        border-color:#087cf0;
-        color:#087cf0;
-      }
-
-      .cw-action.favorite {
-        color:#c18b00;
-        background:#fff8df;
-        border-color:#ffe18a;
-      }
-
-      .cw-live {
-        display:inline-flex;
-        align-items:center;
-        gap:6px;
-        margin-left:10px;
-        color:#16a765;
-        font-size:11px;
-        font-weight:700;
-      }
-
-      .cw-live::before {
-        content:"";
-        width:7px;
-        height:7px;
-        border-radius:50%;
-        background:currentColor;
-      }
-
-      .cw-live.offline {
-        color:#d97706;
-      }
-
-      .cw-coin-name {
-        padding:0;
-        border:0;
-        background:transparent;
-        color:inherit;
-        font:inherit;
-        text-align:left;
-        cursor:pointer;
-      }
-
-      .cw-coin-name:hover .n {
-        color:#087cf0;
-      }
-
-      .cw-filter:focus-visible,
-      .cw-action:focus-visible,
-      .cw-coin-name:focus-visible {
-        outline:3px solid #087cf055;
-        outline-offset:2px;
-      }
-
-      @media(max-width:640px) {
-        .cw-filters {
-          flex-wrap:nowrap;
-          overflow-x:auto;
-          padding-bottom:5px;
-        }
-
-        .cw-filter {
-          flex-shrink:0;
-        }
-
-        .cw-actions {
-          gap:4px;
-        }
-      }
-    `;
-
-    document.head.appendChild(style);
-  }
-
-  function createFilters() {
-    var section = document.querySelector('#markets .section-head');
-
-    if (!section || document.getElementById('cw-filters')) return;
-
-    var filters = document.createElement('div');
-    filters.id = 'cw-filters';
-    filters.className = 'cw-filters';
-
-    [
-      { id: 'all', label: 'All assets' },
-      { id: 'gainers', label: 'Gainers' },
-      { id: 'losers', label: 'Losers' },
-      { id: 'favorites', label: '★ Watchlist' }
-    ].forEach(function (option) {
-      var button = document.createElement('button');
-
-      button.type = 'button';
-      button.className = 'cw-filter';
-      button.dataset.filter = option.id;
-      button.textContent = option.label;
-
-      button.addEventListener('click', function () {
-        activeFilter = option.id;
-        updateFilters();
-        render();
-      });
-
-      filters.appendChild(button);
-    });
-
-    section.insertAdjacentElement('afterend', filters);
-    updateFilters();
-  }
-
-  function updateFilters() {
-    document.querySelectorAll('.cw-filter').forEach(function (button) {
-      var selected = button.dataset.filter === activeFilter;
-
-      button.classList.toggle('active', selected);
-      button.setAttribute('aria-pressed', selected ? 'true' : 'false');
-    });
-  }
-
-  // --------------------------------------------------
-  // MARKET TABLE ROWS
-  // --------------------------------------------------
-
-  function createRow(coin) {
+  function row(coin) {
     var tr = document.createElement('tr');
-
-    tr.appendChild(makeCell(
-      'rank hide-sm',
-      String(coin.rank == null ? '—' : coin.rank)
-    ));
+    tr.appendChild(td('rank hide-sm', String(coin.rank == null ? '—' : coin.rank)));
 
     var box = document.createElement('div');
     box.className = 'coin';
 
-    if (coin.image && /^https?:\/\//i.test(coin.image)) {
-      var image = document.createElement('img');
+    var img = document.createElement('img');
+    img.src = coin.image || '';
+    img.alt = (coin.name || 'Coin') + ' logo';
+    img.loading = 'lazy';
+    img.onerror = function () {
+      img.style.visibility = 'hidden';
+    };
 
-      image.src = coin.image;
-      image.alt = coin.name + ' logo';
-      image.loading = 'lazy';
-
-      image.onerror = function () {
-        image.style.visibility = 'hidden';
-      };
-
-      box.appendChild(image);
-    }
-
-    var nameButton = document.createElement('button');
-    nameButton.type = 'button';
-    nameButton.className = 'cw-coin-name';
-    nameButton.title = coin.name;
-
-    var text = document.createElement('div');
-
+    var txt = document.createElement('div');
     var name = document.createElement('div');
     name.className = 'n';
     name.textContent = coin.name || 'Unknown coin';
 
     var symbol = document.createElement('div');
     symbol.className = 's';
-    symbol.textContent = coin.symbol;
+    symbol.textContent = String(coin.symbol || '').toUpperCase();
 
-    text.appendChild(name);
-    text.appendChild(symbol);
-    nameButton.appendChild(text);
-    box.appendChild(nameButton);
+    txt.appendChild(name);
+    txt.appendChild(symbol);
+    box.appendChild(img);
+    box.appendChild(txt);
 
-    tr.appendChild(makeCell('', box));
+    var assetCell = td('', box);
+    assetCell.classList.add('asset-name-cell');
+    tr.appendChild(assetCell);
 
-    coin._priceCell = makeCell('num', fmtPrice(coin.price));
-    tr.appendChild(coin._priceCell);
+    coin._p = td('num', fmtPrice(coin.price));
+    tr.appendChild(coin._p);
 
-    var formatted = formatChange(coin.change24h);
+    var ch = change(coin.change24h);
+    coin._c = td('num ' + ch.cls, ch.text);
+    tr.appendChild(coin._c);
 
-    coin._changeCell = makeCell(
-      'num ' + formatted.cls,
-      formatted.text
-    );
+    coin._v = td('num', fmtCompact(coin.volume24h));
+    tr.appendChild(coin._v);
 
-    tr.appendChild(coin._changeCell);
+    coin._m = td('num', fmtCompact(coin.marketCap));
+    tr.appendChild(coin._m);
 
-    var actionCell = document.createElement('td');
-    actionCell.className = 'cw-actions';
+    tr.setAttribute('data-asset-symbol', String(coin.symbol || '').toUpperCase());
+    tr.tabIndex = 0;
+    tr.style.cursor = 'pointer';
 
-    var star = document.createElement('button');
-    star.type = 'button';
-    star.className = 'cw-action' +
-      (isFavorite(coin.symbol) ? ' favorite' : '');
-    star.textContent = isFavorite(coin.symbol) ? '★' : '☆';
-    star.title = isFavorite(coin.symbol)
-      ? 'Remove from watchlist'
-      : 'Add to watchlist';
-
-    star.setAttribute('aria-label', star.title);
-
-    star.addEventListener('click', function () {
-      toggleFavorite(coin.symbol);
+    tr.addEventListener('click', function () {
+      openAsset(coin.symbol);
     });
 
-    var alertButton = document.createElement('button');
-    alertButton.type = 'button';
-    alertButton.className = 'cw-action';
-    alertButton.textContent = 'Alert';
-    alertButton.title = 'Create price alert';
-
-    alertButton.addEventListener('click', function () {
-      setPriceAlert(coin);
+    tr.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') openAsset(coin.symbol);
     });
-
-    actionCell.appendChild(star);
-    actionCell.appendChild(alertButton);
-    tr.appendChild(actionCell);
 
     return tr;
   }
 
-  // --------------------------------------------------
-  // TABLE MESSAGES
-  // --------------------------------------------------
-
-  function showMessage(title, description) {
-    body.replaceChildren();
+  function message(title, description) {
+    body.innerHTML = '';
 
     var tr = document.createElement('tr');
     var cell = document.createElement('td');
-
-    cell.colSpan = Math.max(4, heads.length);
+    cell.colSpan = 6;
     cell.className = 'state';
 
     var strong = document.createElement('strong');
@@ -561,57 +137,59 @@
 
     cell.appendChild(strong);
     cell.appendChild(document.createTextNode(description));
-
     tr.appendChild(cell);
     body.appendChild(tr);
   }
 
-  // --------------------------------------------------
-  // SORTING
-  // --------------------------------------------------
+  var sort = { key: 'rank', dir: 1 };
+  var columns = ['rank', 'name', 'price', 'change24h', 'volume24h', 'marketCap'];
+  var heads = document.querySelectorAll('thead th');
 
-  function sortCoins(list) {
+  function sortList(list) {
+    var key = sort.key;
+    var direction = sort.dir;
+
     return list.slice().sort(function (a, b) {
-      var x = a[sort.key];
-      var y = b[sort.key];
+      var x = a[key];
+      var y = b[key];
 
-      if (x === null || x === undefined) return 1;
-      if (y === null || y === undefined) return -1;
+      if (x == null) return 1;
+      if (y == null) return -1;
 
       if (typeof x === 'string') {
-        return x.localeCompare(String(y)) * sort.dir;
+        return x.localeCompare(y) * direction;
       }
 
-      return (Number(x) - Number(y)) * sort.dir;
+      return (Number(x) - Number(y)) * direction;
     });
   }
 
-  function updateHeadings() {
+  function markHeads() {
     heads.forEach(function (th, index) {
-      var key = columns[index];
-
       var label = th.getAttribute('data-label') ||
         th.textContent.replace(/[▲▼\s]+$/, '');
 
       th.setAttribute('data-label', label);
-
       th.textContent = label +
-        (key === sort.key
+        (columns[index] === sort.key
           ? (sort.dir === 1 ? ' ▲' : ' ▼')
           : '');
 
       th.setAttribute(
         'aria-sort',
-        key === sort.key
+        columns[index] === sort.key
           ? (sort.dir === 1 ? 'ascending' : 'descending')
           : 'none'
       );
+
+      th.tabIndex = 0;
+      th.setAttribute('role', 'button');
+      th.style.cursor = 'pointer';
     });
   }
 
   function changeSort(index) {
     var key = columns[index];
-
     if (!key) return;
 
     if (sort.key === key) {
@@ -621,14 +199,11 @@
       sort.dir = (key === 'rank' || key === 'name') ? 1 : -1;
     }
 
-    updateHeadings();
+    markHeads();
     render();
   }
 
   heads.forEach(function (th, index) {
-    th.style.cursor = 'pointer';
-    th.tabIndex = 0;
-
     th.addEventListener('click', function () {
       changeSort(index);
     });
@@ -641,206 +216,323 @@
     });
   });
 
-  // --------------------------------------------------
-  // RENDER MARKETS
-  // --------------------------------------------------
-
   function render() {
     var query = search.value.trim().toLowerCase();
 
     var list = coins.filter(function (coin) {
-      var matchesSearch =
-        !query ||
-        String(coin.name).toLowerCase().includes(query) ||
-        String(coin.symbol).toLowerCase().includes(query);
-
-      var matchesFilter = true;
-
-      if (activeFilter === 'gainers') {
-        matchesFilter = numeric(coin.change24h) > 0;
-      } else if (activeFilter === 'losers') {
-        matchesFilter = numeric(coin.change24h) < 0;
-      } else if (activeFilter === 'favorites') {
-        matchesFilter = isFavorite(coin.symbol);
-      }
-
-      return matchesSearch && matchesFilter;
+      return !query ||
+        String(coin.name || '').toLowerCase().includes(query) ||
+        String(coin.symbol || '').toLowerCase().includes(query);
     });
 
-    list = sortCoins(list);
+    list = sortList(list);
 
     if (!list.length) {
-      if (!coins.length) {
-        showMessage(
-          'Market data unavailable',
-          'Prices could not be loaded. Please try again shortly.'
-        );
-      } else if (activeFilter === 'favorites' && !favorites.length) {
-        showMessage(
-          'Your watchlist is empty',
-          'Use the star beside a coin to add it to your watchlist.'
-        );
-      } else {
-        showMessage(
-          'No matching coins',
-          'Try another search or market filter.'
-        );
-      }
-
+      message(
+        coins.length ? 'No results found' : 'No market data',
+        coins.length
+          ? 'Try another asset name or symbol.'
+          : 'Market data has not loaded yet.'
+      );
       return;
     }
 
-    body.replaceChildren();
-
+    body.innerHTML = '';
     list.forEach(function (coin) {
-      body.appendChild(createRow(coin));
+      body.appendChild(row(coin));
     });
   }
 
-  search.addEventListener('input', render);
-
   // --------------------------------------------------
-  // LIVE MARKET STATUS
+  // ASSET DETAILS AND CUSTOMER ACTIONS
   // --------------------------------------------------
 
-  var liveStatus = document.createElement('span');
+  var modal = null;
 
-  liveStatus.className = 'cw-live offline';
-  liveStatus.textContent = 'Connecting';
-  liveStatus.setAttribute('role', 'status');
-  liveStatus.setAttribute('aria-live', 'polite');
+  function createModal() {
+    if (modal) return modal;
 
-  var marketHeading =
-    document.querySelector('#markets .section-head h2');
+    var style = document.createElement('style');
+    style.textContent = `
+      .cw-modal-backdrop {
+        position:fixed; inset:0; z-index:99999;
+        background:rgba(5,13,32,.72);
+        display:flex; align-items:center; justify-content:center;
+        padding:18px; overflow-y:auto;
+      }
+      .cw-modal {
+        width:100%; max-width:440px; background:#fff;
+        color:#101a35; border-radius:18px; padding:22px;
+        box-shadow:0 20px 70px rgba(0,0,0,.3);
+        position:relative; font-family:inherit;
+      }
+      .cw-modal-close {
+        position:absolute; right:15px; top:12px;
+        border:0; background:#edf2fa; border-radius:50%;
+        width:34px; height:34px; font-size:21px; cursor:pointer;
+      }
+      .cw-modal-heading {display:flex;align-items:center;gap:12px;margin:12px 0 20px}
+      .cw-modal-heading img {width:42px;height:42px;object-fit:contain}
+      .cw-modal-heading h3 {margin:0;font-size:20px}
+      .cw-modal-heading small {color:#68758f}
+      .cw-modal-stats {display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .cw-modal-stat {background:#f2f6fc;border-radius:11px;padding:13px}
+      .cw-modal-stat span {display:block;color:#68758f;font-size:12px;margin-bottom:6px}
+      .cw-modal-stat strong {font-size:15px;overflow-wrap:anywhere}
+      .cw-modal-actions {display:flex;gap:10px;margin-top:20px}
+      .cw-modal-actions a {
+        flex:1;text-align:center;text-decoration:none;padding:13px 8px;
+        border-radius:10px;font-weight:700;color:#fff;background:#087cf0;
+      }
+      .cw-modal-actions a.sell {background:#14213d}
+      .cw-modal-change.up {color:#16a765}
+      .cw-modal-change.down {color:#df4454}
+    `;
+    document.head.appendChild(style);
 
-  if (marketHeading) {
-    marketHeading.appendChild(liveStatus);
+    modal = document.createElement('div');
+    modal.className = 'cw-modal-backdrop';
+    modal.hidden = true;
+    modal.setAttribute('role', 'presentation');
+
+    modal.innerHTML = `
+      <section class="cw-modal" role="dialog" aria-modal="true"
+        aria-labelledby="cw-modal-title">
+        <button type="button" class="cw-modal-close"
+          aria-label="Close asset details">&times;</button>
+        <div class="cw-modal-heading">
+          <img id="cw-asset-image" alt="">
+          <div>
+            <h3 id="cw-modal-title">Asset</h3>
+            <small id="cw-asset-symbol"></small>
+          </div>
+        </div>
+        <div class="cw-modal-stats">
+          <div class="cw-modal-stat"><span>Current price</span><strong id="cw-asset-price">—</strong></div>
+          <div class="cw-modal-stat"><span>24h change</span><strong id="cw-asset-change">—</strong></div>
+          <div class="cw-modal-stat"><span>24h volume</span><strong id="cw-asset-volume">—</strong></div>
+          <div class="cw-modal-stat"><span>Market cap</span><strong id="cw-asset-cap">—</strong></div>
+          <div class="cw-modal-stat"><span>Market rank</span><strong id="cw-asset-rank">—</strong></div>
+        </div>
+        <div class="cw-modal-actions">
+          <a id="cw-buy-link" href="/login?side=buy">Buy</a>
+          <a id="cw-sell-link" class="sell" href="/login?side=sell">Sell</a>
+        </div>
+      </section>
+    `;
+
+    document.body.appendChild(modal);
+
+    modal.querySelector('.cw-modal-close').addEventListener('click', closeAsset);
+
+    modal.addEventListener('click', function (event) {
+      if (event.target === modal) closeAsset();
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && !modal.hidden) closeAsset();
+    });
+
+    return modal;
   }
 
-  function setLiveStatus(connected) {
-    liveStatus.textContent = connected
-      ? 'Live prices'
-      : 'Connecting';
+  function openAsset(symbol) {
+    symbol = String(symbol || '').toUpperCase();
+    var coin = coins.find(function (item) {
+      return String(item.symbol || '').toUpperCase() === symbol;
+    });
 
-    liveStatus.classList.toggle('offline', !connected);
+    if (!coin) {
+      coin = {
+        symbol: symbol,
+        name: symbol,
+        price: null,
+        change24h: null,
+        volume24h: null,
+        marketCap: null,
+        rank: null
+      };
+    }
+
+    createModal();
+
+    document.getElementById('cw-modal-title').textContent = coin.name || symbol;
+    document.getElementById('cw-asset-symbol').textContent = symbol;
+
+    var image = document.getElementById('cw-asset-image');
+    image.src = coin.image || '';
+    image.alt = (coin.name || symbol) + ' logo';
+    image.hidden = !coin.image;
+
+    document.getElementById('cw-asset-price').textContent = fmtPrice(coin.price);
+
+    var changeValue = change(coin.change24h);
+    var changeEl = document.getElementById('cw-asset-change');
+    changeEl.textContent = changeValue.text;
+    changeEl.className = 'cw-modal-change ' + changeValue.cls;
+
+    document.getElementById('cw-asset-volume').textContent = fmtCompact(coin.volume24h);
+    document.getElementById('cw-asset-cap').textContent = fmtCompact(coin.marketCap);
+    document.getElementById('cw-asset-rank').textContent =
+      coin.rank == null ? '—' : '#' + coin.rank;
+
+    document.getElementById('cw-buy-link').href =
+      '/login?asset=' + encodeURIComponent(symbol) + '&side=buy';
+
+    document.getElementById('cw-sell-link').href =
+      '/login?asset=' + encodeURIComponent(symbol) + '&side=sell';
+
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
   }
 
+  function closeAsset() {
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.style.overflow = '';
+  }
+
+  // Bind popular asset cards and buttons already present in the homepage.
+  document.querySelectorAll(
+    '.asset-card, .popular-asset, [data-asset-symbol], [data-asset]'
+  ).forEach(function (element) {
+    if (element.closest('tr')) return;
+
+    var symbol = element.getAttribute('data-asset-symbol') ||
+      element.getAttribute('data-asset');
+
+    if (!symbol) {
+      var symbolNode = element.querySelector(
+        '[data-symbol], .asset-symbol, .symbol'
+      );
+      if (symbolNode) symbol = symbolNode.textContent;
+    }
+
+    if (!symbol) return;
+
+    symbol = symbol.trim().toUpperCase();
+    if (!assetSymbols.includes(symbol)) return;
+
+    element.style.cursor = 'pointer';
+
+    element.addEventListener('click', function (event) {
+      if (event.target.closest('a')) return;
+      if (event.target.closest('button')) {
+        event.preventDefault();
+      }
+      openAsset(symbol);
+    });
+  });
+
   // --------------------------------------------------
-  // BINANCE LIVE PRICE STREAM
+  // LIVE MARKET DATA
   // --------------------------------------------------
 
   var live = {
-    socket: null,
+    ws: null,
     map: {},
     urls: [
       'wss://stream.binance.com:443/ws/!miniTicker@arr',
       'wss://data-stream.binance.vision/ws/!miniTicker@arr'
     ],
-    serverIndex: 0,
-    attempts: 0,
+    index: 0,
+    tries: 0,
     reconnectTimer: null
   };
 
-  function buildCoinMap() {
+  var liveDot = document.createElement('span');
+  liveDot.className = 'live-indicator';
+  liveDot.textContent = ' ● Live';
+  liveDot.setAttribute('role', 'status');
+  liveDot.setAttribute('aria-live', 'polite');
+  liveDot.hidden = true;
+
+  var heading = document.querySelector('.section-head h2');
+  if (heading) heading.appendChild(liveDot);
+
+  function buildMap() {
     live.map = {};
 
-    coins.forEach(function (coin) {
-      live.map[coin.symbol.toUpperCase()] = coin;
+    coins.slice().sort(function (a, b) {
+      return (Number(a.rank) || 999999) - (Number(b.rank) || 999999);
+    }).forEach(function (coin) {
+      var symbol = String(coin.symbol || '').toUpperCase();
+      if (symbol && !live.map[symbol]) live.map[symbol] = coin;
     });
   }
 
-  function flashPrice(element, positive) {
-    if (!element || typeof element.animate !== 'function') return;
+  function flash(element, up) {
+    if (!element || !element.animate) return;
 
-    try {
-      element.animate([
-        {
-          backgroundColor: positive
-            ? 'rgba(22,167,101,.25)'
-            : 'rgba(224,68,84,.25)'
-        },
-        { backgroundColor: 'transparent' }
-      ], { duration: 800 });
-    } catch (error) {}
+    element.animate([
+      { backgroundColor: up ? 'rgba(22,167,101,.24)' : 'rgba(224,68,84,.24)' },
+      { backgroundColor: 'rgba(0,0,0,0)' }
+    ], { duration: 800 });
   }
 
-  function applyLiveTick(tick) {
+  function applyTick(tick) {
     if (!tick || !tick.s || tick.s.slice(-4) !== 'USDT') return;
 
-    var symbol = tick.s.slice(0, -4).toUpperCase();
-    var coin = live.map[symbol];
-
+    var coin = live.map[tick.s.slice(0, -4)];
     if (!coin) return;
 
-    var price = numeric(tick.c);
-    var opening = numeric(tick.o);
+    var price = parseFloat(tick.c);
+    var open = parseFloat(tick.o);
+    if (!(price > 0) || !(open > 0)) return;
 
-    if (price === null || opening === null || price <= 0 || opening <= 0) {
-      return;
-    }
-
-    var previous = numeric(coin.price);
-
+    var previous = coin.price;
     coin.price = price;
-    coin.change24h = ((price - opening) / opening) * 100;
+    coin.change24h = ((price - open) / open) * 100;
     coin.live = true;
 
-    if (coin._priceCell && coin._priceCell.isConnected) {
-      coin._priceCell.textContent = fmtPrice(price);
-
-      if (previous !== null && previous !== price) {
-        flashPrice(coin._priceCell, price > previous);
+    if (coin._p && coin._p.isConnected) {
+      coin._p.textContent = fmtPrice(price);
+      if (previous != null && price !== Number(previous)) {
+        flash(coin._p, price > Number(previous));
       }
 
-      var formatted = formatChange(coin.change24h);
-
-      coin._changeCell.textContent = formatted.text;
-      coin._changeCell.className = 'num ' + formatted.cls;
+      var updatedChange = change(coin.change24h);
+      coin._c.textContent = updatedChange.text;
+      coin._c.className = 'num ' + updatedChange.cls;
     }
 
-    checkAlerts(coin);
+    if (modal && !modal.hidden &&
+        document.getElementById('cw-asset-symbol').textContent ===
+        String(coin.symbol).toUpperCase()) {
+      document.getElementById('cw-asset-price').textContent = fmtPrice(coin.price);
+
+      var modalChange = change(coin.change24h);
+      var modalChangeEl = document.getElementById('cw-asset-change');
+      modalChangeEl.textContent = modalChange.text;
+      modalChangeEl.className = 'cw-modal-change ' + modalChange.cls;
+    }
   }
 
   function scheduleReconnect() {
-    if (destroyed || live.reconnectTimer) return;
+    if (live.reconnectTimer) return;
 
-    live.serverIndex++;
-    live.attempts++;
-
-    var delay = Math.min(30000, 2000 * live.attempts);
+    live.index++;
+    live.tries++;
 
     live.reconnectTimer = setTimeout(function () {
       live.reconnectTimer = null;
-      connectLivePrices();
-    }, delay);
+      connect();
+    }, Math.min(30000, 2000 * live.tries));
   }
 
-  function connectLivePrices() {
-    if (
-      destroyed ||
-      live.socket ||
-      !coins.length ||
-      typeof WebSocket === 'undefined'
-    ) {
-      return;
-    }
+  function connect() {
+    if (live.ws || !coins.length || !('WebSocket' in window)) return;
 
     var socket;
 
     try {
-      socket = new WebSocket(
-        live.urls[live.serverIndex % live.urls.length]
-      );
+      socket = new WebSocket(live.urls[live.index % live.urls.length]);
     } catch (error) {
       scheduleReconnect();
       return;
     }
 
-    live.socket = socket;
-
-    socket.onopen = function () {
-      setLiveStatus(false);
-    };
+    live.ws = socket;
 
     socket.onmessage = function (event) {
       var data;
@@ -853,17 +545,16 @@
 
       if (!Array.isArray(data)) return;
 
-      live.attempts = 0;
-      setLiveStatus(true);
-
-      data.forEach(applyLiveTick);
+      live.tries = 0;
+      liveDot.hidden = false;
+      data.forEach(applyTick);
     };
 
     socket.onclose = function () {
-      if (live.socket !== socket) return;
+      if (live.ws !== socket) return;
 
-      live.socket = null;
-      setLiveStatus(false);
+      live.ws = null;
+      liveDot.hidden = true;
       scheduleReconnect();
     };
 
@@ -874,152 +565,81 @@
     };
   }
 
-  // --------------------------------------------------
-  // NORMALIZE BACKEND MARKET RESPONSE
-  // --------------------------------------------------
-
-  function normalizeMarkets(data) {
+  function setCoins(data) {
     if (!Array.isArray(data)) {
-      if (data && Array.isArray(data.data)) {
-        data = data.data;
-      } else if (data && Array.isArray(data.markets)) {
-        data = data.markets;
-      } else {
-        throw new Error('Invalid market response.');
-      }
+      throw new Error('Unexpected market response');
     }
 
-    return data.map(function (coin, index) {
-      return {
-        rank: numeric(coin.rank) || index + 1,
-        name: String(coin.name || 'Unknown coin'),
-        symbol: String(coin.symbol || '').toUpperCase(),
-        image: coin.image || '',
-        price: numeric(coin.price),
-        change24h: numeric(coin.change24h)
-      };
-    }).filter(function (coin) {
-      return coin.symbol.length > 0;
-    });
-  }
-
-  function updateMarkets(data) {
     var previousLive = {};
 
     coins.forEach(function (coin) {
       if (coin.live) {
-        previousLive[coin.symbol] = coin;
+        previousLive[String(coin.symbol || '').toUpperCase()] = coin;
       }
     });
 
-    var updated = normalizeMarkets(data);
-
-    updated.forEach(function (coin) {
-      var previous = previousLive[coin.symbol];
+    coins = data.filter(function (coin) {
+      return coin && typeof coin === 'object' && coin.symbol;
+    }).map(function (coin) {
+      var item = Object.assign({}, coin);
+      var previous = previousLive[String(item.symbol).toUpperCase()];
 
       if (previous) {
-        coin.price = previous.price;
-        coin.change24h = previous.change24h;
-        coin.live = true;
+        item.price = previous.price;
+        item.change24h = previous.change24h;
+        item.live = true;
       }
 
-      checkAlerts(coin);
+      item.volume24h = number(item.volume24h);
+      item.marketCap = number(item.marketCap);
+
+      return item;
     });
 
-    coins = updated;
-
-    buildCoinMap();
-    updateHeadings();
+    buildMap();
     render();
-
-    if (!live.socket) {
-      connectLivePrices();
-    }
+    connect();
   }
 
-  // --------------------------------------------------
-  // BACKEND MARKET API
-  // --------------------------------------------------
+  function load() {
+    message('Loading markets', 'Fetching the latest market information.');
 
-  function loadMarkets() {
-    if (loading || destroyed) return;
-
-    loading = true;
-
-    if (!coins.length) {
-      showMessage(
-        'Loading markets',
-        'Fetching the latest cryptocurrency prices.'
-      );
-    }
-
-    fetch('/api/markets', {
-      method: 'GET',
-      cache: 'no-store',
-      headers: {
-        Accept: 'application/json'
-      }
-    })
+    fetch('/api/markets')
       .then(function (response) {
-        if (!response.ok) {
-          throw new Error('Market API returned ' + response.status);
-        }
-
+        if (!response.ok) throw new Error('Market request failed');
         return response.json();
       })
-      .then(updateMarkets)
-      .catch(function (error) {
-        console.error('CoinWave market loading error:', error);
-
-        // Keep previously loaded market data visible if refresh fails.
-        if (!coins.length) {
-          showMessage(
-            'Prices are temporarily unavailable',
-            'Check your connection and try refreshing the page.'
-          );
-        }
-      })
-      .finally(function () {
-        loading = false;
+      .then(setCoins)
+      .catch(function () {
+        message(
+          'Prices are unavailable',
+          'Check your connection or try refreshing the page.'
+        );
       });
   }
 
-  // --------------------------------------------------
-  // INITIALIZE
-  // --------------------------------------------------
+  markHeads();
+  search.addEventListener('input', render);
 
-  addStyles();
-  createFilters();
-  updateHeadings();
+  if (year) year.textContent = new Date().getFullYear();
 
-  if (year) {
-    year.textContent = new Date().getFullYear();
-  }
+  load();
 
-  loadMarkets();
+  refreshTimer = setInterval(function () {
+    fetch('/api/markets')
+      .then(function (response) {
+        return response.ok ? response.json() : null;
+      })
+      .then(function (data) {
+        if (data) setCoins(data);
+      })
+      .catch(function () {});
+  }, 60000);
 
-  // Refresh backend market data every minute.
-  refreshTimer = setInterval(loadMarkets, 60000);
-
-  // Clean up when leaving the page.
-  window.addEventListener('pagehide', function () {
-    destroyed = true;
-
-    if (refreshTimer) {
-      clearInterval(refreshTimer);
-    }
-
-    if (live.reconnectTimer) {
-      clearTimeout(live.reconnectTimer);
-    }
-
-    if (live.socket) {
-      try {
-        live.socket.close();
-      } catch (error) {}
-
-      live.socket = null;
-    }
+  window.addEventListener('beforeunload', function () {
+    if (refreshTimer) clearInterval(refreshTimer);
+    if (live.reconnectTimer) clearTimeout(live.reconnectTimer);
+    if (live.ws) live.ws.close();
   });
 
 })();
