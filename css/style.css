@@ -536,3 +536,20 @@ tbody tr:hover {
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
 }
+/* CoinWave mobile market spacing */
+@media (max-width: 600px) {
+  table th,
+  table td {
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+  }
+
+  table tbody tr {
+    height: auto !important;
+  }
+
+  table td img {
+    width: 32px;
+    height: 32px;
+  }
+}
