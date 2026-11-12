@@ -76,6 +76,22 @@
     var ch = change(c.change24h);
     c._c = td('num ' + ch.cls, ch.text);
     tr.appendChild(c._c);
+
+    // Make each market row open the matching asset details page.
+    var symbol = String(c.symbol || '').toUpperCase();
+    tr.classList.add('market-row');
+    tr.tabIndex = 0;
+    tr.setAttribute('role', 'link');
+    tr.setAttribute('aria-label', 'Open ' + (c.name || symbol) + ' asset details');
+    tr.addEventListener('click', function () {
+      if (symbol) window.location.href = '/asset?symbol=' + encodeURIComponent(symbol);
+    });
+    tr.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        if (symbol) window.location.href = '/asset?symbol=' + encodeURIComponent(symbol);
+      }
+    });
     return tr;
   }
 
@@ -280,6 +296,7 @@
         var nameWrap = document.createElement('span');
         var name = document.createElement('span');
         name.className = 'mover-name';
+        name.title = c.name || symbol;
         name.textContent = c.name || symbol;
         var ticker = document.createElement('span');
         ticker.className = 'mover-symbol';
@@ -288,6 +305,7 @@
         identity.appendChild(nameWrap);
         var price = document.createElement('span');
         price.className = 'mover-price';
+        price.setAttribute('aria-label', 'Current price');
         price.textContent = money(c.price);
         var change = document.createElement('span');
         change.className = 'mover-change ' + (Number(c.change24h) >= 0 ? 'up' : 'down');
