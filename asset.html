@@ -22,23 +22,37 @@
       --red: #dc4656;
       --surface: #ffffff;
       --background: #f5f8fd;
+      --shadow: 0 8px 28px rgba(18, 43, 83, .045);
+      --shadow-hover: 0 12px 32px rgba(18, 43, 83, .09);
     }
 
     * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+    }
 
     body {
       margin: 0;
       background: var(--background);
       color: var(--text);
-      font-family: Inter, Arial, sans-serif;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
 
     button, a { font: inherit; }
 
+    button:focus-visible,
+    a:focus-visible {
+      outline: 3px solid rgba(8,124,240,.35);
+      outline-offset: 3px;
+    }
+
     .topbar {
-      background: var(--navy);
+      background: linear-gradient(115deg, var(--navy), var(--navy-2));
       color: white;
       padding: 16px 20px;
+      box-shadow: 0 3px 16px rgba(7,21,47,.12);
     }
 
     .topbar-inner {
@@ -62,14 +76,18 @@
 
     .back-button {
       border: 1px solid rgba(255,255,255,.25);
-      background: transparent;
+      background: rgba(255,255,255,.04);
       color: white;
       padding: 9px 15px;
       border-radius: 9px;
       cursor: pointer;
+      transition: background .2s, border-color .2s;
     }
 
-    .back-button:hover { background: rgba(255,255,255,.1); }
+    .back-button:hover {
+      background: rgba(255,255,255,.12);
+      border-color: rgba(255,255,255,.45);
+    }
 
     main {
       width: min(100% - 32px, 1000px);
@@ -85,16 +103,22 @@
     .breadcrumb a {
       color: var(--blue);
       text-decoration: none;
+      font-weight: 700;
     }
+
+    .breadcrumb a:hover { text-decoration: underline; }
 
     .asset-card, .stats-card, .market-card {
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 17px;
-      box-shadow: 0 8px 28px rgba(18, 43, 83, .045);
+      box-shadow: var(--shadow);
     }
 
-    .asset-card { padding: 27px; }
+    .asset-card {
+      padding: 27px;
+      transition: box-shadow .2s;
+    }
 
     .asset-heading {
       display: flex;
@@ -102,20 +126,45 @@
       gap: 17px;
     }
 
+    .asset-logo-wrap {
+      width: 68px;
+      height: 68px;
+      flex: 0 0 68px;
+      position: relative;
+    }
+
     .asset-logo {
       width: 68px;
       height: 68px;
       border-radius: 50%;
       object-fit: contain;
-      background: #f4f7fc;
-      padding: 8px;
+      background: #fff;
+      padding: 7px;
       border: 1px solid var(--line);
+      box-shadow: 0 3px 12px rgba(18,43,83,.07);
+    }
+
+    .asset-logo-fallback {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(145deg, var(--navy), var(--blue));
+      color: #fff;
+      border: 3px solid #eaf3ff;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -.5px;
+      box-shadow: 0 3px 12px rgba(18,43,83,.1);
     }
 
     .asset-name {
       margin: 0 0 5px;
       font-size: 25px;
       font-weight: 800;
+      letter-spacing: -.5px;
     }
 
     .asset-symbol {
@@ -123,6 +172,7 @@
       font-size: 14px;
       font-weight: 700;
       text-transform: uppercase;
+      letter-spacing: .7px;
     }
 
     .price-area {
@@ -133,6 +183,7 @@
       color: var(--muted);
       font-size: 13px;
       margin-bottom: 8px;
+      font-weight: 600;
     }
 
     .price {
@@ -140,6 +191,8 @@
       font-weight: 800;
       letter-spacing: -1.5px;
       overflow-wrap: anywhere;
+      color: var(--navy);
+      line-height: 1.2;
     }
 
     .change {
@@ -182,12 +235,13 @@
       cursor: pointer;
       text-decoration: none;
       text-align: center;
-      transition: opacity .2s, transform .2s;
+      transition: opacity .2s, transform .2s, box-shadow .2s;
     }
 
     .trade-button:hover {
-      opacity: .9;
-      transform: translateY(-1px);
+      opacity: .95;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(18,43,83,.12);
     }
 
     .buy { background: var(--green); }
@@ -197,6 +251,7 @@
       margin: 30px 0 14px;
       font-size: 19px;
       font-weight: 800;
+      letter-spacing: -.3px;
     }
 
     .stats-grid {
@@ -205,23 +260,37 @@
       gap: 14px;
     }
 
-    .stats-card { padding: 21px; }
+    .stats-card {
+      padding: 21px;
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .stats-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-hover);
+    }
 
     .stat-label {
       color: var(--muted);
       font-size: 13px;
       margin-bottom: 11px;
+      font-weight: 600;
     }
 
     .stat-value {
       font-size: 19px;
       font-weight: 800;
       overflow-wrap: anywhere;
+      color: var(--navy);
     }
 
     .market-card {
       padding: 20px;
       margin-top: 20px;
+    }
+
+    .market-card h2 {
+      color: var(--navy);
     }
 
     .market-row {
@@ -236,31 +305,37 @@
     .market-row:last-child { border-bottom: 0; }
 
     .market-row span:first-child { color: var(--muted); }
-    .market-row strong { text-align: right; }
+    .market-row strong {
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
 
     .status {
       color: var(--muted);
       font-size: 13px;
       margin-top: 16px;
+      line-height: 1.5;
     }
 
     .error {
       padding: 22px;
       color: var(--red);
       background: #fff0f1;
+      border: 1px solid #ffd8dc;
       border-radius: 12px;
       display: none;
       margin-top: 20px;
+      line-height: 1.5;
     }
 
-    /* Added Trade View section */
+    /* Trade View */
     .chart-card {
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 17px;
       padding: 20px;
       margin-top: 30px;
-      box-shadow: 0 8px 28px rgba(18, 43, 83, .045);
+      box-shadow: var(--shadow);
     }
 
     .chart-heading {
@@ -280,6 +355,10 @@
     .chart-provider {
       color: var(--muted);
       font-size: 11px;
+      font-weight: 700;
+      background: var(--blue-light);
+      padding: 6px 9px;
+      border-radius: 7px;
     }
 
     .chart-frame {
@@ -311,6 +390,8 @@
       padding: 25px 15px;
       color: var(--muted);
       font-size: 12px;
+      border-top: 1px solid var(--line);
+      background: #fff;
     }
 
     @media (max-width: 650px) {
@@ -319,7 +400,13 @@
       .stats-grid { grid-template-columns: 1fr; gap: 10px; }
       .stats-card { padding: 17px; }
       .stat-value { font-size: 17px; }
-      .asset-logo { width: 58px; height: 58px; }
+      .asset-logo-wrap,
+      .asset-logo,
+      .asset-logo-fallback {
+        width: 58px;
+        height: 58px;
+      }
+      .asset-logo-wrap { flex-basis: 58px; }
       .asset-name { font-size: 21px; }
       .chart-card { padding: 14px; }
       .chart-frame { height: 350px; }
@@ -329,6 +416,14 @@
       .actions { grid-template-columns: 1fr; }
       .brand { font-size: 19px; }
       .chart-frame { height: 300px; }
+      .market-row { font-size: 13px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
     }
   </style>
 </head>
@@ -350,13 +445,17 @@
 
     <section class="asset-card">
       <div class="asset-heading">
-        <img
-          id="assetLogo"
-          class="asset-logo"
-          src=""
-          alt="Cryptocurrency logo"
-          hidden
-        >
+        <div class="asset-logo-wrap">
+          <img
+            id="assetLogo"
+            class="asset-logo"
+            src=""
+            alt="Cryptocurrency logo"
+            hidden
+          >
+          <div id="assetLogoFallback" class="asset-logo-fallback" aria-hidden="true"></div>
+        </div>
+
         <div>
           <h1 class="asset-name" id="assetName">Loading asset...</h1>
           <div class="asset-symbol" id="assetSymbol">---</div>
@@ -385,7 +484,6 @@
       <div class="error" id="errorMessage" role="alert"></div>
     </section>
 
-    <!-- Added Trade View chart -->
     <h2 class="section-title">Trade View</h2>
     <section class="chart-card">
       <div class="chart-heading">
@@ -459,6 +557,7 @@
         name: document.getElementById('assetName'),
         symbol: document.getElementById('assetSymbol'),
         logo: document.getElementById('assetLogo'),
+        logoFallback: document.getElementById('assetLogoFallback'),
         price: document.getElementById('assetPrice'),
         change: document.getElementById('assetChange'),
         volume: document.getElementById('assetVolume'),
@@ -473,7 +572,6 @@
 
       document.getElementById('year').textContent = new Date().getFullYear();
 
-      // Return to the actual previous page where browser history exists.
       function goBack() {
         if (window.history.length > 1) {
           window.history.back();
@@ -514,7 +612,118 @@
         elements.status.textContent = 'Market data unavailable.';
       }
 
-      // Only known TradingView market pairs are enabled.
+      /*
+       * Asset-specific logo sources.
+       * CoinCap supplies individual cryptocurrency icon files.
+       * API-provided image is used as a fallback if the selected
+       * CoinCap logo cannot be loaded.
+       */
+      const logoSymbols = {
+        BTC: 'btc',
+        ETH: 'eth',
+        BNB: 'bnb',
+        SOL: 'sol',
+        XRP: 'xrp',
+        ADA: 'ada',
+        DOGE: 'doge',
+        TRX: 'trx',
+        LTC: 'ltc',
+        DOT: 'dot',
+        LINK: 'link',
+        AVAX: 'avax',
+        BCH: 'bch',
+        ETC: 'etc',
+        XLM: 'xlm',
+        TON: 'ton',
+        SHIB: 'shib',
+        UNI: 'uni',
+        NEAR: 'near',
+        APT: 'apt',
+        ATOM: 'atom',
+        FIL: 'fil',
+        ICP: 'icp',
+        CRO: 'cro',
+        HBAR: 'hbar',
+        VET: 'vet',
+        ALGO: 'algo',
+        XMR: 'xmr',
+        EOS: 'eos',
+        AAVE: 'aave',
+        MKR: 'mkr',
+        ARB: 'arb',
+        OP: 'op',
+        SUI: 'sui',
+        PEPE: 'pepe',
+        USDT: 'usdt',
+        USDC: 'usdc',
+        DAI: 'dai'
+      };
+
+      function showLogoFallback(coinSymbol) {
+        elements.logo.hidden = true;
+        elements.logo.removeAttribute('src');
+        elements.logoFallback.textContent =
+          String(coinSymbol || '?').slice(0, 4);
+        elements.logoFallback.style.display = 'flex';
+      }
+
+      function loadAssetLogo(coinSymbol, apiImage, assetName) {
+        const shortSymbol = String(coinSymbol || '').toUpperCase();
+        const logoCode = logoSymbols[shortSymbol];
+
+        elements.logo.hidden = true;
+        elements.logoFallback.style.display = 'none';
+        elements.logo.onerror = null;
+
+        const candidates = [];
+
+        if (logoCode) {
+          candidates.push(
+            'https://assets.coincap.io/assets/icons/' +
+            encodeURIComponent(logoCode) + '@2x.png'
+          );
+        }
+
+        if (
+          apiImage &&
+          typeof apiImage === 'string' &&
+          /^https?:\/\//i.test(apiImage) &&
+          !candidates.includes(apiImage)
+        ) {
+          candidates.push(apiImage);
+        }
+
+        let index = 0;
+
+        function tryNextLogo() {
+          if (index >= candidates.length) {
+            showLogoFallback(shortSymbol);
+            return;
+          }
+
+          const candidate = candidates[index++];
+
+          elements.logo.onload = function () {
+            elements.logo.hidden = false;
+            elements.logoFallback.style.display = 'none';
+          };
+
+          elements.logo.onerror = function () {
+            tryNextLogo();
+          };
+
+          elements.logo.src = candidate;
+          elements.logo.alt = assetName + ' (' + shortSymbol + ') logo';
+        }
+
+        if (!candidates.length) {
+          showLogoFallback(shortSymbol);
+          return;
+        }
+
+        tryNextLogo();
+      }
+
       function loadTradeView(coinSymbol) {
         const pairs = {
           BTC: 'BINANCE:BTCUSDT',
@@ -541,14 +750,16 @@
 
         const pair = pairs[coinSymbol];
         const frame = document.getElementById('chartFrame');
-        const message = document.getElementById('chartMessage');
 
         document.getElementById('chartTitle').textContent =
           coinSymbol + ' Market Chart';
 
         if (!pair) {
+          const message = document.createElement('div');
+          message.className = 'chart-message';
           message.textContent =
             'A TradingView chart is not currently configured for this asset. Market information remains available above.';
+          frame.replaceChildren(message);
           return;
         }
 
@@ -587,13 +798,16 @@
 
         elements.name.textContent = name;
         elements.symbol.textContent = coinSymbol;
-        elements.breadcrumb.textContent = name;
+        elements.breadc
+rumb.textContent = name;
         elements.price.textContent = formatMoney(asset.price);
         elements.volume.textContent = formatCompact(asset.volume24h);
         elements.marketCap.textContent = formatCompact(asset.marketCap);
         elements.rank.textContent = asset.rank ? '#' + asset.rank : '—';
         elements.infoName.textContent = name;
         elements.infoSymbol.textContent = coinSymbol;
+
+        loadAssetLogo(coinSymbol, asset.image, name);
 
         const change = Number(asset.change24h);
 
@@ -609,15 +823,6 @@
         } else {
           elements.change.textContent = '24h change unavailable';
           elements.change.className = 'change neutral';
-        }
-
-        if (asset.image) {
-          elements.logo.src = asset.image;
-          elements.logo.alt = name + ' logo';
-          elements.logo.hidden = false;
-          elements.logo.onerror = function () {
-            elements.logo.hidden = true;
-          };
         }
 
         document.getElementById('buySymbol').textContent = coinSymbol;
@@ -640,6 +845,7 @@
         if (!/^[A-Z0-9]{1,15}$/.test(symbol)) {
           showError('Invalid asset symbol. Return to the markets page and select a cryptocurrency.');
           elements.name.textContent = 'Asset not found';
+          showLogoFallback('?');
           return;
         }
 
@@ -656,9 +862,17 @@
             throw new Error('The market service returned an error.');
           }
 
-          const markets = await response.json();
+          const payload = await response.json();
 
-          if (!Array.isArray(markets)) {
+          const markets = Array.isArray(payload)
+            ? payload
+            : Array.isArray(payload.markets)
+              ? payload.markets
+              : Array.isArray(payload.data)
+                ? payload.data
+                : null;
+
+          if (!markets) {
             throw new Error('The market service returned invalid data.');
           }
 
@@ -679,7 +893,7 @@
 
       loadAsset();
 
-      // Refresh the selected asset's market information every minute.
+      // Refresh selected asset market information every minute.
       window.setInterval(loadAsset, 60000);
     })();
   </script>
