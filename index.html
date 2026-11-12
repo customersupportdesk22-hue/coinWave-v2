@@ -1,15 +1,20 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CoinWave | Buy, Sell and Trade Cryptocurrency</title>
+
+  <meta name="description" content="Explore cryptocurrency markets, follow live prices and discover digital asset trading with CoinWave.">
   <meta name="theme-color" content="#06133f">
-  <meta name="description" content="Explore cryptocurrency markets, compare live prices and access crypto trading services with CoinWave.">
-  <title>CoinWave | Crypto Markets</title>
+  <meta name="robots" content="index, follow">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="/style.css">
 
   <style>
@@ -25,8 +30,14 @@
       --cw-bg: #f5f8ff;
     }
 
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 90px;
+    }
 
     body {
       margin: 0;
@@ -35,12 +46,21 @@
       background: var(--cw-bg);
     }
 
-    a { text-decoration: none; }
+    a {
+      text-decoration: none;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
 
     .wrap {
       width: min(1160px, calc(100% - 40px));
       margin: 0 auto;
     }
+
+    /* HEADER */
 
     .header {
       position: sticky;
@@ -82,7 +102,9 @@
       box-shadow: 0 5px 18px rgba(0,145,255,.3);
     }
 
-    .logo b { color: var(--cw-cyan); }
+    .logo b {
+      color: var(--cw-cyan);
+    }
 
     .nav {
       display: flex;
@@ -94,6 +116,10 @@
       color: #e5efff;
       font-weight: 600;
       padding: 10px 12px;
+    }
+
+    .nav .link:hover {
+      color: var(--cw-cyan);
     }
 
     .btn {
@@ -131,15 +157,18 @@
       box-shadow: 0 7px 20px rgba(255,196,0,.2);
     }
 
+    /* HERO */
+
     .hero {
       position: relative;
       overflow: hidden;
       color: #fff;
-      background: radial-gradient(ellipse at 80% 15%, #075bb4 0, transparent 42%), var(--cw-navy);
-      padding: 0 0 42px;
+      background:
+        radial-gradient(ellipse at 80% 15%, #075bb4 0, transparent 42%),
+        var(--cw-navy);
+      padding: 0 0 48px;
     }
 
-    /* Existing homepage image deliberately preserved */
     .hero-art {
       display: block;
       width: 100%;
@@ -150,7 +179,7 @@
     }
 
     .hero-copy {
-      padding: 34px 0 0;
+      padding: 36px 0 0;
       text-align: center;
     }
 
@@ -166,19 +195,19 @@
     }
 
     .hero h1 {
-      margin: 12px auto;
-      max-width: 800px;
-      font-size: clamp(30px, 5vw, 48px);
+      margin: 14px auto;
+      max-width: 820px;
+      font-size: clamp(30px, 5vw, 49px);
       line-height: 1.12;
       letter-spacing: -1.5px;
     }
 
     .hero-copy p {
-      max-width: 650px;
+      max-width: 660px;
       margin: 0 auto;
       color: #d8e6ff;
       font-size: 17px;
-      line-height: 1.65;
+      line-height: 1.7;
     }
 
     .actions {
@@ -186,7 +215,7 @@
       justify-content: center;
       flex-wrap: wrap;
       gap: 12px;
-      margin-top: 24px;
+      margin-top: 25px;
     }
 
     .actions .btn:not(.btn-primary) {
@@ -196,35 +225,51 @@
     }
 
     .trust-strip {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 24px;
       margin-top: 30px;
+      color: #dce9ff;
+      font-size: 13px;
     }
 
-    .trust-item {
-      padding: 17px;
-      text-align: center;
-      border: 1px solid rgba(255,255,255,.14);
-      border-radius: 14px;
-      background: rgba(255,255,255,.06);
+    .trust-strip span::before {
+      content: "✓";
+      margin-right: 7px;
+      color: var(--cw-cyan);
+      font-weight: 800;
     }
 
-    .trust-item strong {
-      display: block;
-      color: #fff;
-      font-size: 15px;
-    }
-
-    .trust-item span {
-      display: block;
-      margin-top: 4px;
-      color: #c5d7f5;
-      font-size: 12px;
-    }
+    /* GENERAL SECTIONS */
 
     .section {
-      padding: 58px 0;
+      padding: 64px 0;
+    }
+
+    .section-heading {
+      max-width: 700px;
+      margin: 0 auto 30px;
+      text-align: center;
+    }
+
+    .section-heading h2 {
+      margin: 0 0 10px;
+      color: var(--cw-navy);
+      font-size: clamp(25px, 4vw, 34px);
+      letter-spacing: -.7px;
+    }
+
+    .section-heading p {
+      margin: 0;
+      color: var(--cw-muted);
+      line-height: 1.7;
+    }
+
+    /* MARKETS */
+
+    #markets {
+      padding: 60px 0 70px;
     }
 
     .section-head {
@@ -242,16 +287,10 @@
       letter-spacing: -.7px;
     }
 
-    .section-subtitle {
-      margin: 7px 0 0;
-      color: var(--cw-muted);
-      line-height: 1.6;
-    }
-
     .search {
-      width: min(300px, 100%);
-      min-height: 44px;
-      padding: 0 15px;
+      width: min(320px, 100%);
+      min-height: 46px;
+      padding: 0 16px;
       border: 1px solid #dce4f1;
       border-radius: 12px;
       outline: none;
@@ -279,7 +318,8 @@
       min-width: 480px;
     }
 
-    th, td {
+    th,
+    td {
       padding: 17px 20px;
       text-align: left;
       border-bottom: 1px solid #edf0f6;
@@ -291,6 +331,17 @@
       font-size: 12px;
       letter-spacing: .8px;
       text-transform: uppercase;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    th[role="button"] {
+      cursor: pointer;
+    }
+
+    th[role="button"]:focus-visible {
+      outline: 2px solid var(--cw-blue);
+      outline-offset: -3px;
     }
 
     td {
@@ -298,9 +349,107 @@
       font-weight: 600;
     }
 
-    tbody tr:last-child td { border-bottom: 0; }
-    .num { text-align: right; }
-    .hide-sm { width: 65px; }
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    tbody tr:hover {
+      background: #f8faff;
+    }
+
+    .num {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .hide-sm {
+      width: 65px;
+    }
+
+    /* ELEMENTS CREATED BY app.js */
+
+    .live-indicator {
+      display: inline-flex;
+      align-items: center;
+      margin-left: 12px;
+      color: #159b64;
+      font-size: 12px;
+      font-weight: 700;
+      vertical-align: middle;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    .live-indicator[hidden] {
+      display: none;
+    }
+
+    .coin {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 150px;
+    }
+
+    .coin img {
+      display: block;
+      flex: 0 0 34px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      object-fit: contain;
+      background: #f1f5fb;
+    }
+
+    .coin .n {
+      color: var(--cw-ink);
+      font-weight: 700;
+    }
+
+    .coin .s {
+      margin-top: 3px;
+      color: var(--cw-muted);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .7px;
+    }
+
+    td.up {
+      color: #159b64;
+    }
+
+    td.down {
+      color: #df4759;
+    }
+
+    td.flat {
+      color: #78849a;
+    }
+
+    td.state {
+      padding: 32px 20px;
+      color: var(--cw-muted);
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    td.state strong {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--cw-navy);
+      font-size: 16px;
+    }
+
+    /* MARKET INFORMATION */
+
+    .market-note {
+      margin-top: 16px;
+      color: var(--cw-muted);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    /* CHART */
 
     .chart-card {
       overflow: hidden;
@@ -322,103 +471,129 @@
     .chart-head h3 {
       margin: 0;
       color: var(--cw-navy);
+      font-size: 17px;
     }
 
     .chart-tag {
-      color: var(--cw-blue);
-      font-size: 12px;
+      padding: 6px 11px;
+      border-radius: 20px;
+      color: #0754a8;
+      background: #eaf4ff;
+      font-size: 11px;
       font-weight: 700;
     }
 
     .chart-frame {
-      width: 100%;
-      height: 480px;
-      border: 0;
       display: block;
-    }
-
-    .asset-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 20px;
-    }
-
-    .asset-chip {
-      display: inline-flex;
-      align-items: center;
-      padding: 11px 16px;
-      border: 1px solid var(--cw-border);
-      border-radius: 30px;
-      color: var(--cw-navy);
+      width: 100%;
+      height: 440px;
+      border: 0;
       background: #fff;
-      font-size: 13px;
-      font-weight: 700;
     }
 
-    .info-grid {
+    /* POPULAR ASSETS */
+
+    .asset-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+    }
+
+    .asset-card {
+      padding: 19px 12px;
+      border: 1px solid var(--cw-border);
+      border-radius: 15px;
+      background: #fff;
+      text-align: center;
+      box-shadow: 0 7px 22px rgba(16,42,92,.04);
+    }
+
+    .asset-card strong {
+      display: block;
+      color: var(--cw-navy);
+      font-size: 17px;
+    }
+
+    .asset-card span {
+      display: block;
+      margin-top: 5px;
+      color: var(--cw-muted);
+      font-size: 12px;
+    }
+
+    /* INFORMATION CARDS */
+
+    .feature-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 18px;
     }
 
-    .info-card {
-      padding: 24px;
+    .feature-card {
+      padding: 25px;
       border: 1px solid var(--cw-border);
       border-radius: 17px;
       background: #fff;
       box-shadow: 0 8px 25px rgba(16,42,92,.04);
     }
 
-    .info-card .icon {
-      width: 43px;
-      height: 43px;
+    .feature-icon {
+      width: 44px;
+      height: 44px;
       display: grid;
       place-items: center;
-      margin-bottom: 16px;
+      margin-bottom: 17px;
       border-radius: 13px;
-      color: var(--cw-blue);
-      background: #eaf3ff;
+      color: #0754a8;
+      background: #eaf4ff;
       font-size: 21px;
-      font-weight: 800;
     }
 
-    .info-card h3 {
+    .feature-card h3 {
       margin: 0 0 9px;
       color: var(--cw-navy);
+      font-size: 18px;
     }
 
-    .info-card p {
+    .feature-card p {
       margin: 0;
       color: var(--cw-muted);
       font-size: 14px;
       line-height: 1.7;
     }
 
-    .cta-panel {
-      padding: 35px;
-      border-radius: 20px;
+    /* CTA */
+
+    .cta {
+      padding: 48px 25px;
+      border-radius: 22px;
       color: #fff;
+      background:
+        radial-gradient(circle at 90% 10%, rgba(18,200,244,.28), transparent 35%),
+        linear-gradient(120deg, #06133f, #0754a8);
       text-align: center;
-      background: linear-gradient(120deg, #06133f, #075bb4);
     }
 
-    .cta-panel h2 {
-      margin: 0 0 10px;
-      font-size: clamp(24px, 4vw, 34px);
+    .cta h2 {
+      margin: 0 0 12px;
+      font-size: clamp(25px, 4vw, 34px);
     }
 
-    .cta-panel p {
+    .cta p {
       max-width: 600px;
       margin: 0 auto;
       color: #d8e6ff;
-      line-height: 1.6;
+      line-height: 1.7;
     }
 
-    .cta-panel .btn { margin-top: 20px; }
+    .cta .btn {
+      margin-top: 22px;
+    }
+
+    /* FOOTER */
 
     .footer {
-      padding: 46px 0 24px;
+      padding: 48px 0 24px;
       color: #d6e1f7;
       background: #06133f;
     }
@@ -438,11 +613,14 @@
     .cols a {
       display: block;
       width: fit-content;
-      margin: 9px 0;
+      margin: 10px 0;
       color: #b9c9e7;
+      font-size: 14px;
     }
 
-    .cols a:hover { color: var(--cw-cyan); }
+    .cols a:hover {
+      color: var(--cw-cyan);
+    }
 
     .risk {
       margin: 34px 0 18px;
@@ -459,38 +637,147 @@
       font-size: 12px;
     }
 
-    @media (max-width: 760px) {
-      .nav { gap: 7px; }
-      .nav .link { display: none; }
-      .trust-strip { grid-template-columns: 1fr; }
-      .info-grid { grid-template-columns: 1fr; }
-      .chart-frame { height: 390px; }
+    /* RESPONSIVE */
+
+    @media (max-width: 800px) {
+      .asset-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .feature-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .chart-frame {
+        height: 380px;
+      }
     }
 
     @media (max-width: 640px) {
-      .wrap { width: min(100% - 28px, 1160px); }
-      .header .wrap { min-height: 66px; }
-      .logo { font-size: 23px; }
-      .logo-mark { width: 34px; height: 34px; }
-      .nav .btn-sm { min-height: 36px; padding: 0 11px; font-size: 13px; }
-      .hero { padding-bottom: 34px; }
-      .hero-art { min-height: 190px; max-height: 230px; }
-      .hero-copy { padding-top: 26px; }
-      .hero-copy p { font-size: 15px; }
-      .section { padding: 42px 0 54px; }
-      .section-head { align-items: stretch; flex-direction: column; }
-      .search { width: 100%; }
-      th, td { padding: 14px 12px; }
-      .cols { grid-template-columns: 1fr 1fr; }
-      .cols > div:last-child { grid-column: 1 / -1; }
-      .cta-panel { padding: 27px 18px; }
+      .wrap {
+        width: min(100% - 28px, 1160px);
+      }
+
+      .header .wrap {
+        min-height: 66px;
+      }
+
+      .logo {
+        font-size: 23px;
+      }
+
+      .logo-mark {
+        width: 34px;
+        height: 34px;
+      }
+
+      .nav {
+        gap: 7px;
+      }
+
+      .nav .link {
+        display: none;
+      }
+
+      .nav .btn-sm {
+        min-height: 36px;
+        padding: 0 11px;
+        font-size: 13px;
+      }
+
+      .hero {
+        padding-bottom: 36px;
+      }
+
+      .hero-art {
+        min-height: 190px;
+        max-height: 230px;
+      }
+
+      .hero-copy {
+        padding-top: 26px;
+      }
+
+      .hero-copy p {
+        font-size: 15px;
+      }
+
+      .trust-strip {
+        gap: 12px;
+        font-size: 11px;
+      }
+
+      .section {
+        padding: 46px 0;
+      }
+
+      #markets {
+        padding: 44px 0 54px;
+      }
+
+      .section-head {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .section-head h2 {
+        font-size: 26px;
+      }
+
+      .search {
+        width: 100%;
+      }
+
+      th,
+      td {
+        padding: 14px 12px;
+      }
+
+      .asset-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .feature-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-frame {
+        height: 340px;
+      }
+
+      .cols {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .cols > div:last-child {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .nav .btn-sm {
+        padding: 0 8px;
+        font-size: 12px;
+      }
+
+      .logo {
+        font-size: 20px;
+      }
+
+      .trust-strip {
+        flex-direction: column;
+        align-items: center;
+      }
     }
   </style>
 </head>
 
 <body>
+
+  <!-- HEADER -->
   <header class="header">
     <div class="wrap">
+
       <a class="logo" href="/" aria-label="CoinWave home">
         <span class="logo-mark" aria-hidden="true">₿</span>
         <span>Coin<b>Wave</b></span>
@@ -502,152 +789,269 @@
         <a class="btn btn-sm" href="/login">Log in</a>
         <a class="btn btn-sm btn-primary" href="/signup">Sign up</a>
       </nav>
+
     </div>
   </header>
 
   <main>
+
+    <!-- HERO -->
     <section class="hero">
-      <img class="hero-art" src="/coinwave-banner.png" alt="CoinWave crypto trading brand banner">
+
+      <img
+        class="hero-art"
+        src="/coinwave-banner.png"
+        alt="CoinWave crypto trading brand banner"
+      >
 
       <div class="wrap hero-copy">
+
         <span class="eyebrow">Trade · Buy · Sell · Grow</span>
-        <h1>Buy and sell crypto with prices you can check.</h1>
-        <p>Explore cryptocurrency markets, compare prices and access your CoinWave account when you are ready to trade.</p>
+
+        <h1>
+          Buy and sell cryptocurrency with confidence.
+        </h1>
+
+        <p>
+          Explore digital asset markets, follow cryptocurrency prices
+          and discover trading opportunities with CoinWave.
+        </p>
 
         <div class="actions">
-          <a class="btn btn-primary" href="/signup">Create account</a>
-          <a class="btn" href="#markets">Explore markets</a>
+          <a class="btn btn-primary" href="/signup">
+            Create account
+          </a>
+
+          <a class="btn" href="#markets">
+            Explore markets
+          </a>
         </div>
 
         <div class="trust-strip">
-          <div class="trust-item">
-            <strong>Explore markets</strong>
-            <span>Compare supported digital assets</span>
-          </div>
-          <div class="trust-item">
-            <strong>Track prices</strong>
-            <span>Follow market movements</span>
-          </div>
-          <div class="trust-item">
-            <strong>Your account</strong>
-            <span>Access your CoinWave dashboard</span>
-          </div>
+          <span>Explore crypto markets</span>
+          <span>Follow live prices</span>
+          <span>Easy market search</span>
         </div>
+
       </div>
     </section>
 
-    <section id="markets" class="section">
+    <!-- MARKETS -->
+    <section id="markets">
+
       <div class="wrap">
+
         <div class="section-head">
-          <div>
-            <h2>Crypto markets</h2>
-            <p class="section-subtitle">Explore available assets and compare their market prices.</p>
-          </div>
-          <input id="search" class="search" type="search" placeholder="Search coins" aria-label="Search coins">
+          <h2>Cryptocurrency Markets</h2>
+
+          <input
+            id="search"
+            class="search"
+            type="search"
+            placeholder="Search by coin name or symbol..."
+            aria-label="Search cryptocurrency markets"
+            autocomplete="off"
+          >
         </div>
 
         <div class="table-card">
-          <table>
+
+          <table aria-label="Cryptocurrency market prices">
+
             <thead>
               <tr>
-                <th class="hide-sm">#</th>
+                <th class="hide-sm">Rank</th>
                 <th>Name</th>
-                <th class="num">Price</th>
-                <th class="num">24h</th>
+                <th class="num">Price (USD)</th>
+                <th class="num">24h Change</th>
               </tr>
             </thead>
+
+            <!-- Required by app.js -->
             <tbody id="rows">
               <tr>
-                <td colspan="4">Loading market data...</td>
+                <td colspan="4" class="state">
+                  <strong>Loading markets</strong>
+                  Cryptocurrency prices will appear here.
+                </td>
               </tr>
             </tbody>
+
           </table>
+
         </div>
+
+        <p class="market-note">
+          Market prices are provided through the CoinWave market
+          service. Cryptocurrency prices can change rapidly.
+          Live updates depend on market data provider availability.
+        </p>
+
       </div>
     </section>
 
-    <section id="chart" class="section" style="background:#edf4ff">
+    <!-- CHART -->
+    <section class="section" id="chart">
+
       <div class="wrap">
-        <div class="section-head">
-          <div>
-            <h2>Market chart</h2>
-            <p class="section-subtitle">View a market chart to follow cryptocurrency price movements.</p>
-          </div>
+
+        <div class="section-heading">
+          <h2>Bitcoin Market Chart</h2>
+          <p>
+            Follow Bitcoin price movements using the market chart below.
+          </p>
         </div>
 
         <div class="chart-card">
+
           <div class="chart-head">
-            <h3>Bitcoin / USDT</h3>
-            <span class="chart-tag">Market overview</span>
+            <h3>BTC / USDT</h3>
+            <span class="chart-tag">TradingView</span>
           </div>
+
           <iframe
             class="chart-frame"
             title="Bitcoin USDT market chart"
-            src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_coinwave&symbol=BINANCE%3ABTCUSDT&interval=60&hidesidetoolbar=0&symboledit=1&saveimage=0&toolbarbg=f1f3f6&theme=light&style=1&timezone=Etc%2FUTC&withdateranges=1&hideideas=1&studies=[]"
+            src="https://s.tradingview.com/widgetembed/?frameElementId=coinwave-btc-chart&symbol=BINANCE%3ABTCUSDT&interval=60&hidesidetoolbar=0&symboledit=0&saveimage=0&toolbarbg=f5f8ff&theme=light&style=1&timezone=Etc%2FUTC&withdateranges=1&hideideas=1&studies=%5B%5D&locale=en"
             loading="lazy"
-            allowfullscreen>
-          </iframe>
+            allowfullscreen
+          ></iframe>
+
         </div>
 
-        <div class="asset-list" aria-label="Popular crypto assets">
-          <span class="asset-chip">Bitcoin (BTC)</span>
-          <span class="asset-chip">Ethereum (ETH)</span>
-          <span class="asset-chip">BNB</span>
-          <span class="asset-chip">Solana (SOL)</span>
-          <span class="asset-chip">XRP</span>
-          <span class="asset-chip">Dogecoin (DOGE)</span>
-        </div>
       </div>
     </section>
 
+    <!-- POPULAR ASSETS -->
     <section class="section">
+
       <div class="wrap">
-        <div class="section-head">
-          <div>
-            <h2>Explore CoinWave</h2>
-            <p class="section-subtitle">A simple place to explore supported cryptocurrency markets.</p>
+
+        <div class="section-heading">
+          <h2>Popular Digital Assets</h2>
+          <p>
+            Explore some of the most recognised cryptocurrencies
+            in the digital asset market.
+          </p>
+        </div>
+
+        <div class="asset-grid">
+
+          <div class="asset-card">
+            <strong>BTC</strong>
+            <span>Bitcoin</span>
           </div>
+
+          <div class="asset-card">
+            <strong>ETH</strong>
+            <span>Ethereum</span>
+          </div>
+
+          <div class="asset-card">
+            <strong>BNB</strong>
+            <span>BNB</span>
+          </div>
+
+          <div class="asset-card">
+            <strong>SOL</strong>
+            <span>Solana</span>
+          </div>
+
+          <div class="asset-card">
+            <strong>XRP</strong>
+            <span>XRP</span>
+          </div>
+
         </div>
 
-        <div class="info-grid">
-          <article class="info-card">
-            <div class="icon" aria-hidden="true">↗</div>
-            <h3>Explore prices</h3>
-            <p>Review available cryptocurrency market information and compare displayed prices before making a decision.</p>
-          </article>
-
-          <article class="info-card">
-            <div class="icon" aria-hidden="true">◈</div>
-            <h3>Manage your account</h3>
-            <p>Register or log in to access the CoinWave account features available to you.</p>
-          </article>
-
-          <article class="info-card">
-            <div class="icon" aria-hidden="true">◎</div>
-            <h3>Get support</h3>
-            <p>Contact the CoinWave support team through the support options made available on the platform.</p>
-          </article>
-        </div>
       </div>
     </section>
 
-    <section class="section" style="padding-top:0">
+        <!-- COINWAVE INFORMATION -->
+    <section class="section">
+
       <div class="wrap">
-        <div class="cta-panel">
-          <h2>Ready to explore CoinWave?</h2>
-          <p>Create an account to access the platform, or log in if you already have one.</p>
+
+        <div class="section-heading">
+          <h2>Discover CoinWave</h2>
+          <p>
+            A simple place to explore cryptocurrency markets
+            and access your trading account.
+          </p>
+        </div>
+
+        <div class="feature-grid">
+
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">↗</div>
+            <h3>Explore Markets</h3>
+            <p>
+              Browse cryptocurrency prices and compare market
+              movements from one convenient market page.
+            </p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">◈</div>
+            <h3>Follow Prices</h3>
+            <p>
+              Follow available market price updates and monitor
+              changes in supported digital assets.
+            </p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">✓</div>
+            <h3>Your Account</h3>
+            <p>
+              Create an account or sign in to access the
+              CoinWave services available to your account.
+            </p>
+          </article>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ACCOUNT CTA -->
+    <section class="section">
+
+      <div class="wrap">
+
+        <div class="cta">
+
+          <h2>Start exploring CoinWave</h2>
+
+          <p>
+            Create your account to get started, or sign in if
+            you already have a CoinWave account.
+          </p>
+
           <div class="actions">
-            <a class="btn btn-primary" href="/signup">Create your account</a>
-            <a class="btn" href="/login">Log in</a>
+            <a class="btn btn-primary" href="/signup">
+              Create your account
+            </a>
+
+            <a class="btn" href="/login">
+              Sign in
+            </a>
           </div>
+
         </div>
+
       </div>
     </section>
+
   </main>
 
+  <!-- FOOTER -->
   <footer class="footer">
+
     <div class="wrap">
+
       <div class="cols">
+
         <div>
           <h3>CoinWave</h3>
           <a href="/">Home</a>
@@ -656,10 +1060,10 @@
         </div>
 
         <div>
-          <h3>Account & Support</h3>
-          <a href="/login">Log in</a>
+          <h3>Account</h3>
           <a href="/signup">Create account</a>
-          <a href="/support">Support</a>
+          <a href="/login">Log in</a>
+          <a href="/support">Contact support</a>
         </div>
 
         <div>
@@ -667,16 +1071,28 @@
           <a href="/terms">Terms of service</a>
           <a href="/privacy">Privacy policy</a>
         </div>
+
       </div>
 
       <p class="risk">
-        Cryptocurrency prices can change rapidly. Crypto assets are volatile and you may lose some or all of the money you invest. Information displayed on this website is for general information and is not financial, investment, tax or legal advice. Always assess the risks before making a transaction.
+        Cryptocurrency assets are volatile and involve risk.
+        You may lose some or all of the money you invest.
+        Market information is provided for general information
+        and should not be treated as financial advice.
+        Review the applicable CoinWave terms before using
+        any trading service.
       </p>
 
-      <p class="copy">&copy; <span id="year"></span> CoinWave. All rights reserved.</p>
+      <p class="copy">
+        &copy; <span id="year"></span> CoinWave. All rights reserved.
+      </p>
+
     </div>
+
   </footer>
 
-  <script src="/app.js"></script>
+  <!-- Must load after the elements used by app.js -->
+  <script src="/app.js" defer></script>
+
 </body>
 </html>
