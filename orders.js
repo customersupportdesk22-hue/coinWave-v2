@@ -925,7 +925,6 @@ router.get('/:reference', requireCustomerAuth, async (req, res, next) => {
 
 router.get(
   '/admin/config',
-  auth.authUser,
   requirePermission('fees.manage'),
   async (req, res, next) => {
     try {
@@ -938,7 +937,6 @@ router.get(
 
 router.put(
   '/admin/config',
-  auth.authUser,
   requirePermission('fees.manage'),
   async (req, res, next) => {
     try {
@@ -1034,7 +1032,6 @@ router.put(
 
 router.get(
   '/admin/prices',
-  auth.authUser,
   requirePermission('fees.manage'),
   async (req, res, next) => {
     try {
@@ -1051,7 +1048,6 @@ router.get(
 
 router.put(
   '/admin/prices/:asset',
-  auth.authUser,
   requirePermission('fees.manage'),
   async (req, res, next) => {
     try {
@@ -1096,7 +1092,6 @@ router.put(
 
 router.delete(
   '/admin/prices/:asset',
-  auth.authUser,
   requirePermission('fees.manage'),
   async (req, res, next) => {
     try {
@@ -1129,7 +1124,6 @@ router.delete(
 
 router.get(
   '/admin',
-  auth.authUser,
   requirePermission('orders.view'),
   async (req, res, next) => {
     try {
@@ -1200,7 +1194,6 @@ router.get(
 
 router.post(
   '/admin/:reference/verify-payment',
-  auth.authUser,
   requirePermission('orders.manage'),
   async (req, res, next) => {
     try {
@@ -1253,7 +1246,6 @@ router.post(
 
 router.post(
   '/admin/:reference/approve',
-  auth.authUser,
   requirePermission('orders.manage'),
   async (req, res, next) => {
     try {
@@ -1297,7 +1289,6 @@ router.post(
 
 router.post(
   '/admin/:reference/complete',
-  auth.authUser,
   requirePermission('orders.manage'),
   async (req, res, next) => {
     try {
@@ -1389,7 +1380,6 @@ router.post(
 
 router.post(
   '/admin/:reference/reject',
-  auth.authUser,
   requirePermission('orders.manage'),
   async (req, res, next) => {
     try {
@@ -1471,7 +1461,6 @@ router.post(
 
 router.post(
   '/admin/inventory/fund',
-  auth.authUser,
   requirePermission('ledger.manage'),
   async (req, res, next) => {
     try {
@@ -1528,7 +1517,6 @@ router.post(
 
 router.get(
   '/admin/balances/:userId',
-  auth.authUser,
   requirePermission('ledger.view'),
   async (req, res, next) => {
     try {
