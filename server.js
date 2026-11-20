@@ -368,7 +368,40 @@ app.get('/api/health', (req, res) => {
 
 // Do not let Mongoose buffer protected API requests while the
 // database is disconnected or still connecting.
-app.use('/api/auth', requireDatabase, require('./auth'));
+const authRoutes = require('./auth');
+const ledger = require('./ledger');
+app.use('/api/auth', requireDatabase, authRoutes);
+
+// Authenticated, read-only customer wallet summary. Balances are sourced
+// from the double-entry ledger; market prices are only used for USD estimates.
+app.get('/api/wallet/me', requireDatabase, authRoutes.authUser, async (req, res, next) => {
+  try {
+    const userId = String(req.user._id || req.user.id);
+    const accounts = await ledger.Account.find({
+      ownerType: 'user',
+      ownerId: userId,
+      bucket: { $in: ['available', 'locked'] }
+    }).select('asset bucket balanceUnits').sort({ asset: 1, bucket: 1 }).lean();
+
+    const markets = Array.isArray(cache.data) ? cache.data : [];
+    const prices = new Map(markets.map(coin => [String(coin.symbol || '').toUpperCase(), numberOrNull(coin.price)]));
+    const grouped = new Map();
+
+    for (const account of accounts) {
+      const asset = String(account.asset || '').toUpperCase();
+      if (!asset) continue;
+      if (!grouped.has(asset)) grouped.set(asset, { asset, available: '0', locked: '0', priceUsd: prices.get(asset) ?? null });
+      const item = grouped.get(asset);
+      const amount = ledger.fromUnits(String(account.balanceUnits || '0'));
+      item[account.bucket] = amount;
+    }
+
+    res.set('Cache-Control', 'no-store');
+    return res.json({ balances: Array.from(grouped.values()), asOf: new Date().toISOString() });
+  } catch (error) {
+    return next(error);
+  }
+});
 app.use('/api/admin', requireDatabase, require('./admin'));
 app.use('/api/orders', requireDatabase, require('./orders'));
 
