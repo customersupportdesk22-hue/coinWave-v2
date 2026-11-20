@@ -851,11 +851,29 @@ const userId = getUserId(req);
   }
 });
 
+// Resolve the signed-in customer from the secure session cookie.
+// auth.authUser returns a user document; it is not Express middleware.
+async function requireCustomerAuth(req, res, next) {
+  try {
+    const user = await auth.authUser(req);
+    if (!user) {
+      return res.status(401).json({ error: 'Authentication required.' });
+    }
+    if (user.accountStatus === 'suspended') {
+      return res.status(403).json({ error: 'This account is suspended.' });
+    }
+    req.user = user;
+    return next();
+  } catch (error) {
+    return next(error);
+  }
+}
+
 // --------------------------------------------------
 // CUSTOMER ORDER HISTORY
 // --------------------------------------------------
 
-router.get('/my', auth.authUser, async (req, res, next) => {
+router.get('/my', requireCustomerAuth, async (req, res, next) => {
   try {
     const userId = getUserId(req);
 
@@ -902,7 +920,7 @@ router.get('/my', auth.authUser, async (req, res, next) => {
 // CUSTOMER ORDER DETAIL
 // --------------------------------------------------
 
-router.get('/:reference', auth.authUser, async (req, res, next) => {
+router.get('/:reference', requireCustomerAuth, async (req, res, next) => {
   try {
     const order = await Order.findOne({
       reference: req.params.reference,
