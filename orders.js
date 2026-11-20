@@ -898,6 +898,26 @@ router.get('/my', requireCustomerAuth, async (req, res, next) => {
   }
 });
 
+// Customer submits the blockchain transaction reference for a sell order.
+router.post('/:reference/transaction', requireCustomerAuth, async (req, res, next) => {
+  try {
+    const reference = normalizeReference(req.params.reference);
+    const order = await Order.findOne({ reference, userId: getUserId(req) });
+    if (!order) throw httpError(404, 'ORDER_NOT_FOUND', 'Order not found.');
+    if (order.side !== 'sell' || order.status !== 'pending_payment') {
+      throw httpError(409, 'INVALID_ORDER_STATUS', 'A transaction hash can only be submitted for a sell order awaiting crypto deposit.');
+    }
+    const txHash = String(req.body?.transactionHash || '').trim();
+    if (!/^[A-Za-z0-9:_-]{20,200}$/.test(txHash)) {
+      throw httpError(400, 'INVALID_TX_HASH', 'Enter a valid blockchain transaction hash.');
+    }
+    order.metadata = { ...(order.metadata || {}), customerTransactionHash: txHash, transactionSubmittedAt: new Date() };
+    await order.save();
+    await writeAudit('order.crypto_transaction.submitted', req, { reference, asset: order.asset });
+    res.json({ message: 'Transaction hash submitted for administrator review.', transactionHash: txHash });
+  } catch (error) { next(error); }
+});
+
 // --------------------------------------------------
 // CUSTOMER ORDER DETAIL
 // --------------------------------------------------
