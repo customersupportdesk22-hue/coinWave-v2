@@ -374,7 +374,15 @@ app.use('/api/auth', requireDatabase, authRoutes);
 
 // Authenticated, read-only customer wallet summary. Balances are sourced
 // from the double-entry ledger; market prices are only used for USD estimates.
-app.get('/api/wallet/me', requireDatabase, authRoutes.authUser, async (req, res, next) => {
+app.get('/api/wallet/me', requireDatabase, async (req, res, next) => {
+  const customer = await authRoutes.authUser(req).catch(() => null);
+  if (!customer) {
+    return res.status(401).json({ error: 'Authentication required.' });
+  }
+  if (customer.accountStatus === 'suspended') {
+    return res.status(403).json({ error: 'This account is suspended.' });
+  }
+  req.user = customer;
   try {
     const userId = String(req.user._id || req.user.id);
     const accounts = await ledger.Account.find({
