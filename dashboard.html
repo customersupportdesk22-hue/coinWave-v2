@@ -468,11 +468,11 @@
   </main>
 
   <nav class="mobile-bottom" aria-label="Dashboard navigation">
-    <a class="active" href="#overview"><span>▦</span>Home</a>
-    <a href="#assets"><span>◈</span>Assets</a>
-    <a href="#markets"><span>↗</span>Markets</a>
-    <a href="#activity"><span>◷</span>Activity</a>
-    <a href="#account"><span>♙</span>Account</a>
+    <a class="active" href="/dashboard"><span>▦</span>Home</a>
+    <a href="/wallet"><span>◈</span>Assets</a>
+    <a href="/markets"><span>↗</span>Markets</a>
+    <a href="/activity"><span>◷</span>Activity</a>
+    <a href="/profile"><span>♙</span>Account</a>
   </nav>
 
   <script>
@@ -637,7 +637,7 @@
 
         var note = 'Balances are read from your CoinWave ledger. USD estimates use available live market prices.';
         if (unpriced) note += ' ' + unpriced + ' asset(s) do not currently have a market price, so the USD totals are partial estimates.';
-        if (!balances.length) note = 'No ledger balances are currently recorded for this account.';
+        if (!balances.length) note = 'Your wallet has no credited assets yet. Buy orders are credited after payment verification and administrator completion; selling requires an existing available balance.';
         setText('walletMessage', note);
       })
       .catch(function (error) {
