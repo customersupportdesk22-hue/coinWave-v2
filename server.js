@@ -251,7 +251,15 @@ app.get('/asset', (req, res) => {
   return sendFirst(res, ['asset.html'], true);
 });
 
+// Canonical Discover slugs used by discover.html, plus legacy aliases
+// retained so existing bookmarks and older homepage links keep working.
 const discoverPages = new Set([
+  'explore-markets',
+  'buy-sell-crypto',
+  'security-protection',
+  'transaction-process',
+  'account-verification',
+  'customer-support',
   'markets',
   'buy-sell',
   'security',
@@ -259,6 +267,13 @@ const discoverPages = new Set([
   'account',
   'support'
 ]);
+
+// The Discover overview is served at /discover. Individual sections
+// are served by the same page shell and selected by their URL slug.
+app.get('/discover', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  return sendFirst(res, ['discover.html'], true);
+});
 
 app.get('/discover/:page', (req, res) => {
   const page = String(req.params.page || '').toLowerCase();
