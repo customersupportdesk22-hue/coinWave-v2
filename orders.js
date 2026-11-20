@@ -401,6 +401,23 @@ const Order =
   mongoose.models.CWOrder ||
   mongoose.model('CWOrder', orderSchema);
 
+const Setting = mongoose.models.Setting || mongoose.model('Setting', new mongoose.Schema({
+  key: { type: String, required: true, unique: true, index: true },
+  value: { type: mongoose.Schema.Types.Mixed, default: {} }
+}, { minimize: false }));
+
+async function getSettlementWallet(asset) {
+  const doc = await Setting.findOne({ key: 'addresses' }).lean();
+  const item = doc && doc.value && doc.value[asset];
+  if (!item || !item.address || !item.network) return null;
+  return {
+    address: String(item.address),
+    network: String(item.network),
+    memo: String(item.memo || ''),
+    updatedAt: item.updatedAt || null
+  };
+}
+
 // --------------------------------------------------
 // CONFIGURATION
 // --------------------------------------------------
@@ -460,32 +477,28 @@ async function saveConfig(value, userId) {
   return document.value;
 }
 
+let marketPriceProvider = null;
+
 async function getAssetPrice(asset) {
-  const price = await AssetPrice.findOne({
-    asset,
-    enabled: true
-  }).lean();
+  const price = await AssetPrice.findOne({ asset, enabled: true }).lean();
+  let priceUsd = price && price.priceUsd;
+  let source = price && price.source;
 
-  if (!price) {
-    throw httpError(
-      404,
-      'ASSET_PRICE_UNAVAILABLE',
-      `No active price is configured for ${asset}.`
-    );
+  // Admin-entered prices take precedence. Otherwise use the same market feed
+  // rendered on the customer Markets page so quotes and displayed prices agree.
+  if (!price && typeof marketPriceProvider === 'function') {
+    const live = await marketPriceProvider(asset);
+    priceUsd = live && live.priceUsd;
+    source = live && live.source || 'market-feed';
   }
 
-  const units = decimalToUnits(price.priceUsd);
-
-  if (units <= 0n) {
-    throw httpError(400, 'INVALID_ASSET_PRICE', 'Asset price is invalid.');
+  if (!priceUsd) {
+    throw httpError(404, 'ASSET_PRICE_UNAVAILABLE', `No current market price is available for ${asset}.`);
   }
 
-  return {
-    asset,
-    priceUsd: unitsToDecimal(units),
-    priceUnits: units,
-    source: price.source
-  };
+  const units = decimalToUnits(priceUsd);
+  if (units <= 0n) throw httpError(400, 'INVALID_ASSET_PRICE', 'Asset price is invalid.');
+  return { asset, priceUsd: unitsToDecimal(units), priceUnits: units, source };
 }
 
 function calculateQuote({ side, quantity, priceUnits, feePercent, currency, rate }) {
@@ -723,6 +736,13 @@ const userId = getUserId(req);
     }
 
     const reference = randomReference('CW');
+    const settlementWallet = quote.side === 'sell'
+      ? await getSettlementWallet(quote.asset)
+      : null;
+
+    if (quote.side === 'sell' && !settlementWallet) {
+      throw httpError(503, 'SELL_ADDRESS_UNAVAILABLE', `CoinWave has not configured an active ${quote.asset} receiving address yet. Please contact support or try later.`);
+    }
 
     const order = new Order({
       reference,
@@ -742,51 +762,13 @@ const userId = getUserId(req);
       status: 'pending_payment',
       executionMode,
       metadata: {
-        priceSource: quote.priceSource
+        priceSource: quote.priceSource,
+        settlementWallet: settlementWallet,
+        externalCryptoDepositRequired: quote.side === 'sell'
       }
     });
 
     await order.save();
-
-    try {
-      const accountBucket =
-        quote.side === 'sell' ? 'available' : 'available';
-
-      const reserveAmount =
-        quote.side === 'sell'
-          ? quote.quantity
-          : null;
-
-      if (reserveAmount) {
-        const reserveReference = `ORDER-RESERVE-${reference}`;
-
-        await ledger.transfer({
-          reference: reserveReference,
-          description: `Reserve ${quote.asset} for sell order ${reference}`,
-          asset: quote.asset,
-          amount: reserveAmount,
-          from: {
-            ownerType: 'user',
-            ownerId: userId,
-            bucket: accountBucket
-          },
-          to: {
-            ownerType: 'user',
-            ownerId: userId,
-            bucket: 'locked'
-          },
-          metadata: {
-            orderReference: reference
-          }
-        });
-
-        order.ledgerReference = reserveReference;
-        await order.save();
-      }
-    } catch (error) {
-      await Order.deleteOne({ _id: order._id });
-      throw error;
-    }
 
     await writeAudit('order.created', req, {
       reference,
@@ -927,11 +909,11 @@ router.get('/:reference', requireCustomerAuth, async (req, res, next) => {
       userId: getUserId(req)
     }).lean();
 
-    if (!order) {
-      throw httpError(404, 'ORDER_NOT_FOUND', 'Order not found.');
-    }
-
-    res.json({ order });
+    if (!order) throw httpError(404, 'ORDER_NOT_FOUND', 'Order not found.');
+    const settlementWallet = order.side === 'sell'
+      ? (order.metadata && order.metadata.settlementWallet) || null
+      : null;
+    res.json({ order, settlementWallet });
   } catch (error) {
     next(error);
   }
@@ -1238,10 +1220,12 @@ router.post(
         );
       }
 
+      const paymentReference = String(req.body?.paymentReference || '').trim().slice(0, 120);
+      if (order.side === 'sell' && !paymentReference) {
+        throw httpError(400, 'TX_HASH_REQUIRED', 'Enter the blockchain transaction hash after independently verifying the incoming crypto transfer.');
+      }
       order.status = 'payment_verified';
-      order.paymentReference = String(
-        req.body?.paymentReference || ''
-      ).trim().slice(0, 120);
+      order.paymentReference = paymentReference;
 
       order.paymentVerifiedAt = new Date();
       order.paymentVerifiedBy = getUserId(req);
@@ -1336,25 +1320,22 @@ router.post(
       const userId = order.userId;
 
       if (order.side === 'sell') {
-        const releaseReference = `ORDER-SELL-RELEASE-${reference}`;
-
+        // The customer sends crypto to the admin-configured receiving address.
+        // Admin verification is a manual attestation; no chain API is connected.
+        const releaseReference = `ORDER-SELL-DEPOSIT-${reference}`;
         await ledger.transfer({
           reference: releaseReference,
-          description: `Release sold crypto for order ${reference}`,
+          description: `Record admin-verified external crypto deposit for sell order ${reference}`,
           asset: order.asset,
           amount: order.quantity,
-          from: {
-            ownerType: 'user',
-            ownerId: userId,
-            bucket: 'locked'
-          },
-          to: {
-            ownerType: 'platform',
-            ownerId: null,
-            bucket: 'inventory'
-          },
+          from: { ownerType: 'platform', ownerId: null, bucket: 'external_clearing' },
+          to: { ownerType: 'platform', ownerId: null, bucket: 'inventory' },
+          allowNegativeSource: true,
           metadata: {
-            orderReference: reference
+            orderReference: reference,
+            blockchainTransactionHash: order.paymentReference,
+            externalSettlementVerified: true,
+            attestedBy: String(getUserId(req))
           }
         });
       } else {
@@ -1605,5 +1586,8 @@ router.Order = Order;
 router.AssetPrice = AssetPrice;
 router.TradingConfig = TradingConfig;
 router.buildQuote = buildQuote;
+router.setMarketPriceProvider = function (provider) {
+  marketPriceProvider = typeof provider === 'function' ? provider : null;
+};
 
 module.exports = router;
