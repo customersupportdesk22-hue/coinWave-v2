@@ -233,6 +233,10 @@ app.get('/trade', (req, res) => {
   sendFirst(res, ['trade.html'], true);
 });
 
+app.get('/order', (req, res) => {
+  sendFirst(res, ['order.html'], true);
+});
+
 app.get('/admin', (req, res) => {
   sendFirst(res, ['admin.html'], true);
 });
@@ -439,7 +443,8 @@ app.get('/api/wallet/me', requireDatabase, async (req, res, next) => {
   }
 });
 app.use('/api/admin', requireDatabase, require('./admin'));
-app.use('/api/orders', requireDatabase, require('./orders'));
+const ordersRoutes = require('./orders');
+app.use('/api/orders', requireDatabase, ordersRoutes);
 
 // --------------------------------------------------
 // MARKET DATA CACHE
@@ -688,6 +693,19 @@ async function refreshMarkets() {
 
   throw new Error('Market data is temporarily unavailable');
 }
+
+// Keep order quotes aligned with the same market feed used by the homepage.
+ordersRoutes.setMarketPriceProvider(async asset => {
+  if (!cache.data || !cache.data.length || Date.now() - cache.time >= CACHE_MS) {
+    if (!marketRequest) {
+      marketRequest = refreshMarkets().finally(() => { marketRequest = null; });
+    }
+    await marketRequest;
+  }
+  const coin = (cache.data || []).find(item => String(item.symbol || '').toUpperCase() === String(asset || '').toUpperCase());
+  if (!coin || !numberOrNull(coin.price) || numberOrNull(coin.price) <= 0) return null;
+  return { priceUsd: String(coin.price), source: 'CoinWave aggregated market feed' };
+});
 
 // --------------------------------------------------
 // MARKET API
