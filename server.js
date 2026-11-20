@@ -653,6 +653,28 @@ async function fromCoinPaprika() {
   return sortByMarketCap(data);
 }
 
+// THIRD MARKET SOURCE: CRYPTOCOMPARE
+// --------------------------------------------------
+async function fromCryptoCompare() {
+  const raw = await fetchJson('https://min-api.cryptocompare.com/data/top/mktcapfull?limit=100&tsym=USD');
+  if (!raw || !Array.isArray(raw.Data)) throw new Error('Invalid CryptoCompare response');
+  const data = raw.Data.map(item => {
+    const info = item.CoinInfo || {};
+    const usd = item.RAW && item.RAW.USD || {};
+    return {
+      rank: numberOrNull(info.SortOrder),
+      name: String(info.FullName || info.Name || ''),
+      symbol: String(info.Name || '').toUpperCase(),
+      image: info.ImageUrl ? 'https://www.cryptocompare.com' + info.ImageUrl : null,
+      price: numberOrNull(usd.PRICE),
+      change24h: numberOrNull(usd.CHANGEPCT24HOUR),
+      volume24h: numberOrNull(usd.VOLUME24HOURTO),
+      marketCap: numberOrNull(usd.MKTCAP)
+    };
+  });
+  return sortByMarketCap(data);
+}
+
 // --------------------------------------------------
 // MARKET DATA REFRESH
 // --------------------------------------------------
@@ -660,7 +682,8 @@ async function fromCoinPaprika() {
 async function refreshMarkets() {
   const sources = [
     { name: 'CoinGecko', getData: fromCoinGecko },
-    { name: 'CoinPaprika', getData: fromCoinPaprika }
+    { name: 'CoinPaprika', getData: fromCoinPaprika },
+    { name: 'CryptoCompare', getData: fromCryptoCompare }
   ];
 
   for (const source of sources) {
