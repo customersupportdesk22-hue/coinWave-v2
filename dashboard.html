@@ -481,189 +481,11 @@
 
     var dashboard = document.getElementById('dashboard');
     var logout = document.getElementById('logout');
-
-    function showError() {
-      location.href = '/login';
-    }
+    var refreshTimer = null;
 
     function setText(id, value) {
       var el = document.getElementById(id);
-      if (el) el.textContent = value || '—';
-    }
-
-    function loadUser() {
-      fetch('/api/auth/me', {
-        credentials: 'same-origin',
-        headers: { 'Accept': 'application/json' }
-      })
-      .then(function (response) {
-        if (!response.ok) throw new Error('Authentication required');
-        return response.json();
-      })
-      .then(function (user) {
-        setText('profileName', user.name);
-        setText('profileEmail', user.email);
-        setText('welcomeName', (user.name || 'Customer').split(' ')[0]);
-        setText('accountName', user.name);
-        setText('accountEmail', user.email);
-        setText('accountCountry', user.country);
-        setText('accountPhone', user.phone);
-        setText('accountCurrency', user.currency);
-
-        var initial = (user.name || 'C').trim().charAt(0).toUpperCase();
-        setText('avatar', initial);
-
-        if (user.isAdmin) {
-          document.getElementById('adminLink').style.display = 'inline';
-        }
-
-        dashboard.hidden = false;
-        loadMarkets();
-        loadWallet();
-        loadActivity();
-      })
-      .catch(showError);
-    }
-
-    function formatUsd(value) {
-      var n = Number(value);
-      if (!Number.isFinite(n)) return '—';
-      return '
-      var n = Number(value);
-      if (!Number.isFinite(n)) return '—';
-      if (n >= 1) {
-        return '$' + n.toLocaleString('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        });
-      }
-      if (n >= 0.01) return '$' + n.toFixed(4);
-      return '$' + n.toFixed(8).replace(/0+$/, '');
-    }
-
-    function loadMarkets() {
-      var rows = document.getElementById('marketRows');
-
-      fetch('/api/markets', { headers: { 'Accept': 'application/json' } })
-      .then(function (response) {
-        if (!response.ok) throw new Error('Market unavailable');
-        return response.json();
-      })
-      .then(function (coins) {
-        if (!Array.isArray(coins)) throw new Error('Invalid market data');
-
-        rows.textContent = '';
-
-        coins.slice(0, 6).forEach(function (coin) {
-          var tr = document.createElement('tr');
-
-          var asset = document.createElement('td');
-          var box = document.createElement('div');
-          box.className = 'market-coin';
-
-          if (coin.image) {
-            var img = document.createElement('img');
-            img.src = coin.image;
-            img.alt = '';
-            img.loading = 'lazy';
-            img.onerror = function () { img.style.visibility = 'hidden'; };
-            box.appendChild(img);
-          }
-
-          var nameBox = document.createElement('div');
-          var name = document.createElement('strong');
-          name.textContent = coin.name || 'Unknown';
-          var symbol = document.createElement('small');
-          symbol.textContent = String(coin.symbol || '').toUpperCase();
-          nameBox.appendChild(name);
-          nameBox.appendChild(symbol);
-          box.appendChild(nameBox);
-          asset.appendChild(box);
-
-          var price = document.createElement('td');
-          price.className = 'right';
-          price.textContent = formatPrice(coin.price);
-
-          var change = document.createElement('td');
-          change.className = 'right';
-          var percent = Number(coin.change24h);
-          if (Number.isFinite(percent)) {
-            change.textContent = (percent > 0 ? '+' : '') + percent.toFixed(2) + '%';
-            change.className = 'right ' + (percent > 0 ? 'positive' : percent < 0 ? 'negative' : '');
-          } else {
-            change.textContent = '—';
-          }
-
-          tr.appendChild(asset);
-          tr.appendChild(price);
-          tr.appendChild(change);
-          rows.appendChild(tr);
-        });
-
-        if (!rows.children.length) {
-          rows.textContent = '';
-          var empty = document.createElement('tr');
-          var cell = document.createElement('td');
-          cell.colSpan = 3;
-          cell.textContent = 'No market data is currently available.';
-          cell.style.textAlign = 'center';
-          empty.appendChild(cell);
-          rows.appendChild(empty);
-        }
-      })
-      .catch(function () {
-        rows.textContent = '';
-        var tr = document.createElement('tr');
-        var td = document.createElement('td');
-        td.colSpan = 3;
-        td.textContent = 'Market prices are temporarily unavailable. Please try again later.';
-        td.style.textAlign = 'center';
-        td.style.color = '#929db0';
-        tr.appendChild(td);
-        rows.appendChild(tr);
-      });
-    }
-
-    logout.addEventListener('click', function () {
-      logout.disabled = true;
-      logout.textContent = 'Logging out...';
-
-      fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'same-origin'
-      })
-      .then(function () { location.href = '/'; })
-      .catch(function () {
-        logout.disabled = false;
-        logout.textContent = 'Log out';
-        alert('Could not log out. Please try again.');
-      });
-    });
-
-    document.getElementById('year').textContent = new Date().getFullYear();
-
-    loadUser();
-
-    // Refresh the dashboard market preview every minute.
-    setInterval(function () {
-      if (!dashboard.hidden) {
-        loadMarkets();
-        loadWallet();
-        loadActivity();
-      }
-    }, 60000);
-  })();
-  </script>
-</body>
-</html>
-
- + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-
-    function formatQuantity(value) {
-      var n = Number(value);
-      if (!Number.isFinite(n)) return '—';
-      return n.toLocaleString('en-US', { maximumFractionDigits: 8 });
+      if (el) el.textContent = value == null || value === '' ? '—' : String(value);
     }
 
     function showTableMessage(id, colspan, message) {
@@ -679,28 +501,123 @@
       body.appendChild(row);
     }
 
-    function loadWallet() {
-      fetch('/api/wallet/me', { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+    function formatUsd(value) {
+      var n = Number(value);
+      if (!Number.isFinite(n)) return '—';
+      return '$' + n.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function formatQuantity(value) {
+      var n = Number(value);
+      if (!Number.isFinite(n)) return '—';
+      return n.toLocaleString('en-US', { maximumFractionDigits: 8 });
+    }
+
+    function formatPrice(value) {
+      var n = Number(value);
+      if (!Number.isFinite(n)) return '—';
+      if (n >= 1) return '$' + n.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+      if (n >= 0.01) return '$' + n.toFixed(4);
+      return '$' + n.toFixed(8).replace(/0+$/, '');
+    }
+
+    function loadUser() {
+      fetch('/api/auth/me', {
+        credentials: 'same-origin',
+        headers: { 'Accept': 'application/json' }
+      })
       .then(function (response) {
-        if (!response.ok) throw new Error(response.status === 503 ? 'Wallet service is temporarily unavailable.' : 'Could not load wallet balances.');
+        if (!response.ok) throw new Error('Authentication required');
+        return response.json();
+      })
+      .then(function (user) {
+        user = user || {};
+        setText('profileName', user.name || 'Customer');
+        setText('profileEmail', user.email);
+        setText('welcomeName', (user.name || 'Customer').split(' ')[0]);
+        setText('accountName', user.name);
+        setText('accountEmail', user.email);
+        setText('accountCountry', user.country);
+        setText('accountPhone', user.phone);
+        setText('accountCurrency', user.currency);
+
+        var initial = (user.name || 'C').trim().charAt(0).toUpperCase();
+        setText('avatar', initial || 'C');
+
+        var adminLink = document.getElementById('adminLink');
+        if (adminLink && user.isAdmin) adminLink.style.display = 'inline';
+
+        dashboard.hidden = false;
+        loadMarkets();
+        loadWallet();
+        loadActivity();
+
+        if (refreshTimer) clearInterval(refreshTimer);
+        refreshTimer = setInterval(function () {
+          if (!dashboard.hidden && !document.hidden) {
+            loadMarkets();
+            loadWallet();
+            loadActivity();
+          }
+        }, 60000);
+      })
+      .catch(function () {
+        location.href = '/login';
+      });
+    }
+
+    function loadWallet() {
+      fetch('/api/wallet/me', {
+        credentials: 'same-origin',
+        headers: { 'Accept': 'application/json' }
+      })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error(response.status === 503
+            ? 'Wallet service is temporarily unavailable.'
+            : 'Could not load wallet balances (HTTP ' + response.status + ').');
+        }
         return response.json();
       })
       .then(function (data) {
-        var balances = Array.isArray(data.balances) ? data.balances : [];
-        var total = 0, available = 0, locked = 0;
+        var balances = data && Array.isArray(data.balances) ? data.balances : [];
+        var total = 0;
+        var available = 0;
+        var locked = 0;
+        var unpriced = 0;
         var rows = document.getElementById('walletRows');
+        if (!rows) return;
         rows.textContent = '';
+
         balances.forEach(function (item) {
-          var price = Number(item.priceUsd);
+          var price = item.priceUsd == null ? NaN : Number(item.priceUsd);
           var qtyAvailable = Number(item.available || 0);
           var qtyLocked = Number(item.locked || 0);
+          if (!Number.isFinite(qtyAvailable)) qtyAvailable = 0;
+          if (!Number.isFinite(qtyLocked)) qtyLocked = 0;
           var qtyTotal = qtyAvailable + qtyLocked;
-          var value = Number.isFinite(price) ? qtyTotal * price : 0;
-          var availableValue = Number.isFinite(price) ? qtyAvailable * price : 0;
-          var lockedValue = Number.isFinite(price) ? qtyLocked * price : 0;
-          total += value; available += availableValue; locked += lockedValue;
+
+          if (Number.isFinite(price) && price >= 0) {
+            total += qtyTotal * price;
+            available += qtyAvailable * price;
+            locked += qtyLocked * price;
+          } else {
+            unpriced += 1;
+          }
+
           var tr = document.createElement('tr');
-          [item.asset, formatQuantity(qtyAvailable), formatQuantity(qtyLocked), formatQuantity(qtyTotal)].forEach(function (value, index) {
+          [
+            String(item.asset || '—'),
+            formatQuantity(qtyAvailable),
+            formatQuantity(qtyLocked),
+            formatQuantity(qtyTotal)
+          ].forEach(function (value, index) {
             var td = document.createElement('td');
             td.textContent = value;
             if (index === 3) td.className = 'right';
@@ -708,12 +625,20 @@
           });
           rows.appendChild(tr);
         });
-        if (!balances.length) showTableMessage('walletRows', 4, 'No wallet balances yet. Your assets will appear here when ledger entries are posted.');
+
+        if (!balances.length) {
+          showTableMessage('walletRows', 4, 'No wallet balances yet. Your assets will appear here when ledger entries are posted.');
+        }
+
         setText('totalBalance', formatUsd(total));
         setText('availableBalance', formatUsd(available));
         setText('lockedBalance', formatUsd(locked));
         setText('walletUpdated', 'Updated ' + new Date(data.asOf || Date.now()).toLocaleTimeString());
-        setText('walletMessage', 'Balances are read from your CoinWave ledger. USD estimates use available live market prices; unsupported asset prices are excluded.');
+
+        var note = 'Balances are read from your CoinWave ledger. USD estimates use available live market prices.';
+        if (unpriced) note += ' ' + unpriced + ' asset(s) do not currently have a market price, so the USD totals are partial estimates.';
+        if (!balances.length) note = 'No ledger balances are currently recorded for this account.';
+        setText('walletMessage', note);
       })
       .catch(function (error) {
         setText('totalBalance', 'Unavailable');
@@ -725,15 +650,22 @@
     }
 
     function loadActivity() {
-      fetch('/api/orders/my?page=1&limit=10', { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+      fetch('/api/orders/my?page=1&limit=10', {
+        credentials: 'same-origin',
+        headers: { 'Accept': 'application/json' }
+      })
       .then(function (response) {
-        if (!response.ok) throw new Error('Could not load order activity.');
+        if (!response.ok) {
+          throw new Error('Could not load order activity (HTTP ' + response.status + ').');
+        }
         return response.json();
       })
       .then(function (data) {
-        var orders = Array.isArray(data.orders) ? data.orders : [];
+        var orders = data && Array.isArray(data.orders) ? data.orders : [];
         var body = document.getElementById('activityRows');
+        if (!body) return;
         body.textContent = '';
+
         orders.forEach(function (order) {
           var row = document.createElement('tr');
           var values = [
@@ -742,17 +674,24 @@
             order.asset || '—',
             formatQuantity(order.quantity),
             String(order.status || 'unknown').replace(/_/g, ' '),
-            order.createdAt ? new Date(order.createdAt).toLocaleString() : '—'
+            order.createdAt && !isNaN(new Date(order.createdAt).getTime())
+              ? new Date(order.createdAt).toLocaleString()
+              : '—'
           ];
           values.forEach(function (value) {
             var cell = document.createElement('td');
-            cell.textContent = value;
+            cell.textContent = String(value);
             row.appendChild(cell);
           });
           body.appendChild(row);
         });
-        if (!orders.length) showTableMessage('activityRows', 6, 'No orders have been recorded for this account yet.');
-        setText('activityMessage', orders.length ? 'Showing your latest ' + orders.length + ' order(s). Order status is supplied by the trading backend.' : 'Your order history is currently empty.');
+
+        if (!orders.length) {
+          showTableMessage('activityRows', 6, 'No orders have been recorded for this account yet.');
+        }
+        setText('activityMessage', orders.length
+          ? 'Showing your latest ' + orders.length + ' order(s). Order status is supplied by the trading backend.'
+          : 'Your order history is currently empty.');
       })
       .catch(function (error) {
         showTableMessage('activityRows', 6, error.message || 'Order activity is temporarily unavailable.');
@@ -760,35 +699,23 @@
       });
     }
 
-    function formatPrice(value) {
-      var n = Number(value);
-      if (!Number.isFinite(n)) return '—';
-      if (n >= 1) {
-        return '$' + n.toLocaleString('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        });
-      }
-      if (n >= 0.01) return '$' + n.toFixed(4);
-      return '$' + n.toFixed(8).replace(/0+$/, '');
-    }
-
     function loadMarkets() {
       var rows = document.getElementById('marketRows');
+      if (!rows) return;
 
-      fetch('/api/markets', { headers: { 'Accept': 'application/json' } })
+      fetch('/api/markets', {
+        headers: { 'Accept': 'application/json' }
+      })
       .then(function (response) {
         if (!response.ok) throw new Error('Market unavailable');
         return response.json();
       })
       .then(function (coins) {
         if (!Array.isArray(coins)) throw new Error('Invalid market data');
-
         rows.textContent = '';
 
         coins.slice(0, 6).forEach(function (coin) {
           var tr = document.createElement('tr');
-
           var asset = document.createElement('td');
           var box = document.createElement('div');
           box.className = 'market-coin';
@@ -819,7 +746,7 @@
           var change = document.createElement('td');
           change.className = 'right';
           var percent = Number(coin.change24h);
-          if (Number.isFinite(percent)) {
+          if (coin.change24h != null && Number.isFinite(percent)) {
             change.textContent = (percent > 0 ? '+' : '') + percent.toFixed(2) + '%';
             change.className = 'right ' + (percent > 0 ? 'positive' : percent < 0 ? 'negative' : '');
           } else {
@@ -833,53 +760,36 @@
         });
 
         if (!rows.children.length) {
-          rows.textContent = '';
-          var empty = document.createElement('tr');
-          var cell = document.createElement('td');
-          cell.colSpan = 3;
-          cell.textContent = 'No market data is currently available.';
-          cell.style.textAlign = 'center';
-          empty.appendChild(cell);
-          rows.appendChild(empty);
+          showTableMessage('marketRows', 3, 'No market data is currently available.');
         }
       })
       .catch(function () {
-        rows.textContent = '';
-        var tr = document.createElement('tr');
-        var td = document.createElement('td');
-        td.colSpan = 3;
-        td.textContent = 'Market prices are temporarily unavailable. Please try again later.';
-        td.style.textAlign = 'center';
-        td.style.color = '#929db0';
-        tr.appendChild(td);
-        rows.appendChild(tr);
+        showTableMessage('marketRows', 3, 'Market prices are temporarily unavailable. Please try again later.');
       });
     }
 
-    logout.addEventListener('click', function () {
-      logout.disabled = true;
-      logout.textContent = 'Logging out...';
-
-      fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'same-origin'
-      })
-      .then(function () { location.href = '/'; })
-      .catch(function () {
-        logout.disabled = false;
-        logout.textContent = 'Log out';
-        alert('Could not log out. Please try again.');
+    if (logout) {
+      logout.addEventListener('click', function () {
+        logout.disabled = true;
+        logout.textContent = 'Logging out...';
+        fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'same-origin'
+        })
+        .then(function (response) {
+          if (!response.ok) throw new Error('Logout failed');
+          location.href = '/';
+        })
+        .catch(function () {
+          logout.disabled = false;
+          logout.textContent = 'Log out';
+          alert('Could not log out. Please try again.');
+        });
       });
-    });
+    }
 
-    document.getElementById('year').textContent = new Date().getFullYear();
-
+    setText('year', new Date().getFullYear());
     loadUser();
-
-    // Refresh the dashboard market preview every minute.
-    setInterval(function () {
-      if (!dashboard.hidden) loadMarkets();
-    }, 60000);
   })();
   </script>
 </body>
