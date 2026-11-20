@@ -217,6 +217,22 @@ app.get('/dashboard', (req, res) => {
   sendFirst(res, ['dashboard.html'], true);
 });
 
+app.get('/wallet', (req, res) => {
+  sendFirst(res, ['wallet.html'], true);
+});
+
+app.get('/activity', (req, res) => {
+  sendFirst(res, ['activity.html'], true);
+});
+
+app.get('/profile', (req, res) => {
+  sendFirst(res, ['profile.html'], true);
+});
+
+app.get('/trade', (req, res) => {
+  sendFirst(res, ['trade.html'], true);
+});
+
 app.get('/admin', (req, res) => {
   sendFirst(res, ['admin.html'], true);
 });
