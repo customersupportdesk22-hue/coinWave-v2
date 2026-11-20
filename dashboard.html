@@ -319,7 +319,7 @@
           <div class="eyebrow">COINWAVE CUSTOMER PORTAL</div>
           <h2>Welcome back, <span id="welcomeName">Customer</span> 👋</h2>
           <p>Your crypto journey starts here. Explore markets and manage your account.</p>
-          <a class="banner-link" href="/#markets">Explore crypto markets →</a>
+          <a class="banner-link" href="/markets">Explore crypto markets →</a>
         </div>
 
         <div class="stats-grid">
@@ -372,7 +372,7 @@
               <h3>My assets</h3>
               <p>Your cryptocurrency holdings</p>
             </div>
-            <a href="/#markets">Explore markets →</a>
+            <a href="/markets">Explore markets →</a>
           </div>
           <div class="market-scroll">
             <table class="market-table">
@@ -389,7 +389,7 @@
               <h3>Market watch</h3>
               <p>Live cryptocurrency market information</p>
             </div>
-            <a href="/#markets">View all markets →</a>
+            <a href="/markets">View all markets →</a>
           </div>
           <div class="market-scroll">
             <table class="market-table">
@@ -627,7 +627,7 @@
         });
 
         if (!balances.length) {
-          showTableMessage('walletRows', 4, 'No wallet balances yet. Your assets will appear here when ledger entries are posted.');
+          showTableMessage('walletRows', 4, 'Your wallet currently has no credited assets. Buy orders are added to your available balance only after payment is verified and an administrator completes the order. Selling requires an existing available asset balance.');
         }
 
         setText('totalBalance', formatUsd(total));
