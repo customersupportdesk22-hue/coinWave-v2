@@ -205,8 +205,13 @@ function sendFirst(res, candidates, noStore = false) {
   return res.status(404).send('Page not found');
 }
 
-app.get('/', (req, res) => {
-  sendFirst(res, ['index.html'], true);
+app.get('/', async (req, res) => {
+  // Keep authenticated customers inside their account workspace.
+  const user = await authRoutes.authUser(req).catch(() => null);
+  if (user) {
+    return res.redirect(authRoutes.isAdmin(user) ? '/admin' : '/dashboard');
+  }
+  return sendFirst(res, ['index.html'], true);
 });
 
 app.get(['/login', '/signup'], (req, res) => {
