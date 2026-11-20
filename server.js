@@ -391,6 +391,18 @@ app.get('/api/wallet/me', requireDatabase, async (req, res, next) => {
       bucket: { $in: ['available', 'locked'] }
     }).select('asset bucket balanceUnits').sort({ asset: 1, bucket: 1 }).lean();
 
+    // Populate prices on the first wallet request when the market cache is empty.
+    if ((!cache.data || !cache.data.length) && !marketRequest) {
+      marketRequest = refreshMarkets().finally(() => {
+        marketRequest = null;
+      });
+    }
+    if (marketRequest) {
+      try { await marketRequest; } catch (marketError) {
+        console.warn('Wallet valuation market data unavailable:', marketError.message);
+      }
+    }
+
     const markets = Array.isArray(cache.data) ? cache.data : [];
     const prices = new Map(markets.map(coin => [String(coin.symbol || '').toUpperCase(), numberOrNull(coin.price)]));
     const grouped = new Map();
